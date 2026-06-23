@@ -16,9 +16,11 @@ class ApiClient {
   }
 
   private async getAuthToken(): Promise<string | null> {
-    // TODO: Replace with real Supabase session token
-    return null;
+    const { supabase } = await import('./supabase');
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token ?? null;
   }
+
 
   private async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
     const { body, headers: customHeaders, ...rest } = options;
