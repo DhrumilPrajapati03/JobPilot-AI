@@ -5,45 +5,77 @@ skills, projects, achievements, salary expectations, and
 work preferences.
 """
 
-from fastapi import APIRouter
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, status
+from app.services.auth import get_current_user_id
+from app.services.supabase import get_supabase_client
+from app.models.user import UserProfile
 
 router = APIRouter()
 
 
-class ProfileUpdateRequest(BaseModel):
-    """Request body for profile update."""
-    name: str | None = None
-    headline: str | None = None
-    location: str | None = None
-    salary_range: str | None = None
-    work_preferences: dict | None = None
-    linkedin_url: str | None = None
+@router.get("/", response_model=UserProfile)
+async def get_profile(user_id: str = Depends(get_current_user_id)):
+    """Retrieve the current user's full identity vault profile."""
+    try:
+        supabase = get_supabase_client()
+        # Query the database
+        response = supabase.table("user_profiles").select("*").eq("id", user_id).execute()
+        
+        # If no profile exists yet, insert a default blank profile row
+        if not response.data:
+            insert_response = supabase.table("user_profiles").insert({
+                "id": user_id,
+                "name": "",
+                "headline": "",
+                "location": "",
+                "salary_range": "",
+                "work_preferences": {}
+            }).execute()
+            
+            if not insert_response.data:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Failed to create initial user profile."
+                )
+            return insert_response.data[0]
+            
+        return response.data[0]
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database query failed: {str(e)}"
+        )
 
 
-@router.post("/update")
-async def update_profile(request: ProfileUpdateRequest):
+@router.post("/update", response_model=UserProfile)
+async def update_profile(
+    profile_data: dict,
+    user_id: str = Depends(get_current_user_id)
+):
     """Update user identity vault data.
 
-    Updates the user's professional profile including personal info,
-    salary expectations, and work preferences.
-
-    Args:
-        request: Fields to update in the profile.
+    Updates the profile in the user_profiles table.
     """
-    # TODO: Update profile in Supabase
-    return {"message": "Profile updated", "data": request.model_dump(exclude_none=True)}
+    try:
+        supabase = get_supabase_client()
+        
+        # Ensure the user updates ONLY their own profile by forcing user_id
+        profile_data["id"] = user_id
+        
+        # Upsert: updates existing or inserts if missing
+        response = supabase.table("user_profiles").upsert(profile_data).execute()
+        
+        if not response.data:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to update profile."
+            )
+        return response.data[0]
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update profile: {str(e)}"
+        )
 
-
-@router.get("/")
-async def get_profile():
-    """Retrieve the current user's full identity vault profile."""
-    # TODO: Fetch profile from Supabase
-    return {
-        "name": "",
-        "headline": "",
-        "location": "",
-        "salary_range": "",
-        "work_preferences": {},
-        "linkedin_url": "",
-    }
