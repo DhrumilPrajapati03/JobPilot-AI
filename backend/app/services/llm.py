@@ -24,7 +24,7 @@ def get_llm_client(provider: str = "groq"):
         if not settings.GROQ_API_KEY or settings.GROQ_API_KEY == "your-groq-api-key":
             raise ValueError("GROQ_API_KEY is not set in environment or .env file.")
         return ChatGroq(
-            model="llama-3.1-70b-versatile",
+            model="llama-3.3-70b-versatile",
             api_key=settings.GROQ_API_KEY,
             temperature=0.0
         )

@@ -15,6 +15,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/use-auth';
 
 const STATS = [
   { label: 'Total Applications', value: '0', icon: FileText, trend: null },
@@ -25,13 +26,19 @@ const STATS = [
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const displayName =
+    user?.user_metadata?.full_name ||
+    user?.user_metadata?.name ||
+    user?.email?.split('@')[0] ||
+    'there';
 
   return (
     <div className="page-dashboard">
       {/* Welcome Section */}
       <div className="dashboard-welcome">
         <div>
-          <h2 className="dashboard-welcome-title">Welcome back, Dhrumil 👋</h2>
+          <h2 className="dashboard-welcome-title">Welcome back, {displayName} 👋</h2>
           <p className="dashboard-welcome-subtitle">
             Here's your job application overview. Let's land that next role.
           </p>
