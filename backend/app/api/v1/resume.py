@@ -4,11 +4,13 @@ Handles base resume uploads, structured updates, and storage.
 """
 
 import uuid
+from app.services.vector_store import embed_resume
 from fastapi import APIRouter, Depends, File, UploadFile, HTTPException, status
 from app.services.auth import get_current_user, CurrentUser
 from app.services.supabase import get_supabase_client
 from app.services.parser import extract_text_from_pdf, extract_text_from_docx, parse_resume_text
 from app.models.resume import Resume
+from app.services.vector_store import embed_resume
 
 router = APIRouter()
 
@@ -84,6 +86,11 @@ async def save_base_resume(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to save resume."
             )
+        try:
+            saved_resume = Resume(**response.data[0])
+            embed_resume(current_user.id, saved_resume)
+        except Exception as embedding_error:
+            print(f"Warning: Failed to update vector database: {str(embedding_error)}")
         return response.data[0]
     except HTTPException:
         raise
@@ -157,6 +164,11 @@ async def upload_resume(
         save_response = supabase.table("resumes").upsert(resume_dict).execute()
         if not save_response.data:
             raise Exception("No data returned from database upsert.")
+        try:
+            saved_resume = Resume(**save_response.data[0])
+            embed_resume(current_user.id, saved_resume)
+        except Exception as embedding_error:
+            print(f"Warning: Failed to update vector database: {str(embedding_error)}")
         return save_response.data[0]
     except Exception as e:
         raise HTTPException(
