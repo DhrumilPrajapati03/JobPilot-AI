@@ -4,9 +4,9 @@
 | Field | Detail |
 |---|---|
 | Author | Dhrumil — AI/ML Engineer |
-| Version | v1.2 — June 2026 (Dual renderer: LaTeX/Tectonic + HTML/WeasyPrint) |
+| Version | v1.3 — June 2026 (Auto-Apply Agent + 5 Remote Platforms) |
 | Scope | Single Developer Build — Full Stack AI Product — 100% Free Stack |
-| Documents Included | PRD · Architecture · Security · Frontend Spec · Tickets · Timeline · Platform Integration · Resume Engine · LaTeX Setup |
+| Documents Included | PRD · Architecture · Security · Frontend Spec · Tickets · Timeline · Platform Integration · Resume Engine · LaTeX Setup · Auto-Apply Engine |
 
 ---
 
@@ -21,6 +21,7 @@
 7. [Job Platform Integration Spec](#document-7--job-platform-integration-spec)
 8. [Resume Tailoring Engine Spec](#document-8--resume-tailoring-engine-spec)
 9. [LaTeX Resume Engine — Full Setup Guide](#document-9--latex-resume-engine--full-setup-guide)
+10. [Auto-Apply Engine — Platform Spec & Implementation](#document-10--auto-apply-engine--platform-spec--implementation)
 
 ---
 
@@ -91,6 +92,8 @@ Remote job seekers face three critical friction points:
 | HR Contact Finder | Search & enrich HR/recruiter contacts for a company via web/API | P2 |
 | Analytics Dashboard | Response rate, open rate, application stats, weekly summary | P2 |
 | Email Integration | Connect Gmail/Outlook to send cold emails directly from app | P2 |
+| Auto-Apply Agent | Playwright-based agent fills and submits job forms on target platforms with human approval gate | P2 |
+| Remote Job Discovery | Ingest jobs from WeWorkRemotely, Wellfound, RemoteOK, Remote4Me, Himalayas via RSS/API/scrape | P1 |
 
 ---
 
@@ -179,6 +182,7 @@ JD Input
   → [DM Writer Agent]
   → [Review & Approve (Human)]
   → [Tracker Update Agent]
+  → [Auto-Apply Agent]  ← new: Playwright fills form, human clicks submit
 ```
 
 ### Individual Agent Specs
@@ -192,6 +196,7 @@ JD Input
 | Email Writer | Draft cold email + 2-part follow-up sequence personalised to HR contact | LLM, HR contact data, email templates |
 | DM Writer | Short LinkedIn connection request + follow-up DM pair | LLM, company research |
 | Tracker Agent | Log application details, update status, set follow-up reminders | PostgreSQL write, calendar API |
+| Auto-Apply Agent | Playwright fills application form on target platform; pauses for human to review and click submit | Playwright, platform adapters, Identity Vault |
 
 ---
 
@@ -507,15 +512,28 @@ External APIs           → Anthropic, OpenAI, Hunter.io, Resend, Adzuna
 
 ---
 
-## Platform Integration Tickets (Woven into Sprints 2 & 4)
+## Platform Integration & Auto-Apply Tickets (Woven into Sprints 2, 4, 5, 6)
 
 | ID | Ticket | SP | Type | Sprint |
 |---|---|---|---|---|
-| JP-049 | LinkedIn/Naukri profile PDF import → LLM parse → Identity Vault seed | 5 | Backend | Sprint 2 |
+| JP-049 | LinkedIn/Naukri/Wellfound profile PDF import → LLM parse → Identity Vault seed | 5 | Backend | Sprint 2 |
+| JP-063 | RemoteOK API: poll JSON feed every 6h, parse salary + tech stack | 5 | Backend | Sprint 4 |
+| JP-064 | Himalayas API: poll job feed every 4h, full JD in response | 5 | Backend | Sprint 4 |
+| JP-065 | Remote4Me Playwright scraper: search results + JD detail page | 8 | Backend | Sprint 4 |
+| JP-066 | Job deduplication service: hash by company + role + URL across all sources | 5 | Backend | Sprint 4 |
+| JP-067 | Auto-Apply Agent base: Playwright browser pool, session cookie manager | 13 | Agent | Sprint 5 |
+| JP-068 | Himalayas apply adapter: name, email, resume upload, cover letter, LinkedIn | 8 | Agent | Sprint 5 |
+| JP-069 | Wellfound apply adapter: profile fields, resume upload, cover letter | 8 | Agent | Sprint 5 |
+| JP-070 | Greenhouse ATS adapter: detect + fill standardised Greenhouse forms | 8 | Agent | Sprint 6 |
+| JP-071 | Lever ATS adapter: detect + fill standardised Lever forms | 8 | Agent | Sprint 6 |
+| JP-072 | Apply preview UI: Playwright-filled form screenshot before human submits | 8 | Frontend | Sprint 5 |
+| JP-073 | Apply session manager: store per-platform login sessions encrypted | 5 | Backend | Sprint 5 |
+| JP-074 | Apply rate limiter: max N applies/hour per platform, configurable | 3 | Backend | Sprint 5 |
+| JP-075 | Auto-apply result tracker: log success/fail, screenshot on error, retry queue | 5 | Backend | Sprint 6 |
 
 ---
 
-**Total Ticket Count: 60 tickets | Total Story Points: ~400 SP**
+**Total Ticket Count: 75 tickets | Total Story Points: ~530 SP**
 
 ---
 
@@ -532,9 +550,10 @@ External APIs           → Anthropic, OpenAI, Hunter.io, Resend, Adzuna
 | S1 | Foundation, Auth, Identity Vault | 2 weeks | Week 2 |
 | S2 | JD Parser + Resume Tailor Agent | 2 weeks | Week 4 |
 | S3 | Email/DM Writers + Tracker | 2 weeks | Week 6 |
-| S4 | Email Send + HR Finder + Research Agent + Platform Ingestion | 2 weeks | Week 8 |
-| S5 | Analytics + Browser Extension + Polish + Deploy | 2 weeks | Week 10 |
-| Buffer | Bug fixes, integration issues, scope creep | 1–2 weeks | Week 11–12 |
+| S4 | Email Send + HR Finder + All 5 Remote Platform Ingestion | 2 weeks | Week 8 |
+| S5 | Analytics + Browser Extension + Auto-Apply Base (Himalayas + Wellfound) + Deploy | 2 weeks | Week 10 |
+| S6 | ATS Adapters (Greenhouse + Lever) + Auto-Apply hardening | 2 weeks | Week 12 |
+| Buffer | Bug fixes, integration issues, scope creep | 1–2 weeks | Week 13–14 |
 
 ---
 
@@ -549,10 +568,12 @@ External APIs           → Anthropic, OpenAI, Hunter.io, Resend, Adzuna
 | Week 5 | Cover Letter + Email Writer + DM Writer agents | Cold Email composer, template system UI |
 | Week 6 | Tracker CRUD APIs, reminder system | Kanban board, table view, application detail page |
 | Week 7 | Gmail OAuth, Resend API, open tracking, email alert parser | Email send UI, follow-up queue UI |
-| Week 8 | Hunter.io/Apollo HR finder, Research Agent, Adzuna/Remotive APIs | HR contact panel, job discovery feed UI |
+| Week 8 | RemoteOK + Himalayas + Remote4Me + WeWorkRemotely + Wellfound ingestion; deduplication | HR contact panel, job discovery feed UI with platform filters |
 | Week 9 | Analytics API, LangSmith, Sentry setup | Dashboard, analytics charts, settings page |
-| Week 10 | Railway + Vercel deploy, env management, browser extension backend | Browser extension UI, mobile responsive, QA |
-| Week 11–12 | 🐛 Bug fixes, edge cases, documentation | UX polish, final UAT, v1 launch |
+| Week 10 | Railway + Vercel deploy, browser extension backend, Auto-Apply Agent base + session manager | Browser extension UI, apply preview UI (screenshot), mobile responsive |
+| Week 11 | Himalayas apply adapter + Wellfound apply adapter; rate limiter | Apply flow UI: review → approve → submit handoff |
+| Week 12 | Greenhouse ATS adapter + Lever ATS adapter; apply result tracker | ATS apply UI, error/retry display, auto-apply settings panel |
+| Week 13–14 | 🐛 Bug fixes, edge cases, documentation | UX polish, final UAT, v1 launch |
 
 ---
 
@@ -568,6 +589,10 @@ External APIs           → Anthropic, OpenAI, Hunter.io, Resend, Adzuna
 | LLM costs spike with many applications | Low | Cache JD analysis; use Claude Haiku for cheaper first-pass tasks |
 | Single developer burnout / pacing | Medium | Buffer weeks built in; target 4h/day not 8h — quality over speed |
 | Browser extension review/approval time | Medium | Build as unpacked extension first; submit to Chrome Web Store in parallel |
+| Playwright detection by Wellfound/Himalayas | Medium | Add random delays (1–3s), human-like mouse movement; cap at 8 applies/hour per platform |
+| Platform UI changes breaking Playwright selectors | High | Use data-testid/aria selectors where possible; write selector update as a 1-hour maintenance task |
+| Session cookie expiry mid-apply | Medium | Detect auth errors in Playwright; prompt user to re-login; store refresh tokens where available |
+| Remote4Me / Remote4 scraping ToS risk | Low | Personal use only; scrape politely (12h cadence, no bulk); not publishing data |
 
 ---
 
@@ -609,17 +634,25 @@ External APIs           → Anthropic, OpenAI, Hunter.io, Resend, Adzuna
 
 ## 1. Platform-by-Platform Assessment
 
-| Platform | Official API | Bot Detection | Recommended Approach |
-|---|---|---|---|
-| LinkedIn | Partner-only | Very Aggressive | Browser Extension (DOM read) + Email Alert Parser |
-| Naukri | None | Low-Medium | Playwright scrape after login + Email Alert Parser |
-| Indeed | Via Adzuna | Medium | Adzuna API (indexes Indeed) + Email Alerts |
-| Adzuna | Free Public API | None | Direct API integration — primary job source |
-| Remotive | Public API + RSS | None | Direct API — best for remote roles |
-| Wellfound | None | Medium | Browser extension + manual paste |
-| Glassdoor | Partner-only | High | Email alerts parser only |
-| Instahyre | None | Low | Playwright scrape + email alerts |
-| WeWorkRemotely | RSS Feed | None | RSS ingestion — direct integration |
+| Platform | Official API | Bot Detection | Job Ingestion | Auto-Apply Level |
+|---|---|---|---|---|
+| LinkedIn | Partner-only | Very Aggressive | Browser Extension + Email Parser | ❌ Too risky — Level 1 only |
+| Naukri | None | Low-Medium | Playwright + Email Parser | ⚠️ Level 2 (Playwright, use cautiously) |
+| Indeed | Via Adzuna | Medium | Adzuna API + Email Alerts | ❌ Redirects to company sites |
+| Adzuna | Free Public API | None | Direct API | ❌ Aggregator only |
+| Remotive | Public API + RSS | None | Direct API | ❌ Redirects to company sites |
+| **Wellfound** | None | Medium | Browser Extension + RSS | ✅ Level 2 — on-platform apply form |
+| **WeWorkRemotely** | RSS Feed | None | RSS direct | ⚠️ Level 1 — most jobs redirect out |
+| **RemoteOK** | Public JSON API | Low | Direct API (`remoteok.com/remote-jobs.json`) | ❌ Pure aggregator — all redirect out |
+| **Remote4Me** | None | Low | Playwright scrape | ❌ Pure aggregator — all redirect out |
+| **Himalayas** | Public API + RSS | Low | Direct API + RSS | ✅ Level 2 — best on-platform apply |
+| Glassdoor | Partner-only | High | Email alerts parser | ❌ Too risky |
+| Instahyre | None | Low | Playwright + email alerts | ⚠️ Level 2 (cautiously) |
+
+> **Auto-Apply Levels:**
+> - **Level 1** — Agent prepares everything, opens URL, you fill and submit manually. Safe.
+> - **Level 2** — Playwright fills every field, pauses before submit. You review the pre-filled form and click Submit yourself. Recommended for v1.
+> - **Level 3** — Full autonomous submit (no human). High ban risk. Not in v1 scope.
 
 ---
 
@@ -636,13 +669,18 @@ External APIs           → Anthropic, OpenAI, Hunter.io, Resend, Adzuna
 - Job added to tracker with status `"Discovered"` automatically
 - Works for: **LinkedIn, Naukri, Indeed, Glassdoor, Wellfound, Instahyre**
 
-### Channel 2 — Public Job APIs (For Active Discovery)
+### Channel 2 — Public Job APIs & Feeds (For Active Discovery)
 
-- **Adzuna API** (free, 250 req/day): search by role, location, salary, remote
+- **Adzuna API** (free, 250 req/day): broad job search by role, location, salary, remote flag
 - **Remotive API** (free, no auth): filtered remote-only jobs by category
-- **WeWorkRemotely RSS**: parse feed every 6 hours for new listings
-- Jobs matched against your profile preferences (role, skills, salary floor, stack)
+- **RemoteOK API** (free, no auth): `GET remoteok.com/remote-jobs.json` — clean JSON feed of remote jobs; no API key required
+- **Himalayas API** (free): structured remote job feed with company info, salary, tech stack — best data quality of the five
+- **WeWorkRemotely RSS**: `weworkremotely.com/remote-jobs.rss` — parse feed every 6 hours; two separate feeds (Programming, Design)
+- **Remote4Me**: no API; Playwright scrapes `remote4.me` search results every 6–12 hours and parses listings
+- **Wellfound RSS**: `wellfound.com/jobs/rss` — feed of startup jobs including remote; supplement with browser extension for full JD
+- Jobs matched against your profile preferences (role, skills, salary floor, tech stack)
 - Relevance score computed via embedding similarity before showing in UI
+- Deduplication: jobs from multiple sources matched by company + role + URL hash to prevent duplicates
 
 ### Channel 3 — Browser Extension (One-Click Capture)
 
@@ -680,7 +718,70 @@ External APIs           → Anthropic, OpenAI, Hunter.io, Resend, Adzuna
 
 ---
 
-## 5. Platform Integration Tickets
+## 5. Wellfound Specifics
+
+| Capability | Status & Approach |
+|---|---|
+| Job ingestion | RSS feed (`wellfound.com/jobs/rss`) + browser extension on search results |
+| Full JD fetch | Browser extension scrapes full job detail page on demand |
+| Auto-apply | ✅ Level 2 — Playwright fills Wellfound's on-platform apply form (name, email, resume upload, cover letter, why interested) |
+| Account needed | Yes — log in with your Wellfound account; Playwright uses stored session cookie |
+| Bot detection | Medium — add human-like delays (1–3s between actions); don't run more than 10 applies/hour |
+| Resume upload | Agent uploads the tailored PDF from Supabase Storage directly into Wellfound's file upload field |
+| Cover letter | Auto-inserts the generated cover letter into the text field |
+
+---
+
+## 6. WeWorkRemotely Specifics
+
+| Capability | Status & Approach |
+|---|---|
+| Job ingestion | Two RSS feeds: `weworkremotely.com/remote-jobs.rss` (all) and category-specific feeds |
+| Full JD fetch | Scrape job detail page via URL from RSS item |
+| Auto-apply | ⚠️ Level 1 only — "Apply" button on WWR redirects to company's own site or ATS. No on-platform form |
+| Best use | Job discovery and JD parsing; auto-apply handled via ATS adapter (Greenhouse/Lever) after redirect |
+| Refresh cadence | Every 4 hours — WWR posts jobs regularly throughout the day |
+
+---
+
+## 7. RemoteOK Specifics
+
+| Capability | Status & Approach |
+|---|---|
+| Job ingestion | `GET https://remoteok.com/remote-jobs.json` — free, no auth, clean JSON array |
+| Data quality | Includes: company, role, salary range, tags (tech stack), apply URL, logo URL |
+| Full JD fetch | Scrape individual job page from `url` field in JSON response |
+| Auto-apply | ❌ Pure aggregator — every job links to company's external site or ATS |
+| Best use | Excellent job discovery source — most complete salary data of any free remote job API |
+| Rate limit | No documented limit; be respectful — poll every 6 hours max |
+
+---
+
+## 8. Remote4Me Specifics
+
+| Capability | Status & Approach |
+|---|---|
+| Job ingestion | Playwright scrapes `remote4.me/jobs` with filters (category, experience level) |
+| Full JD fetch | Follow job detail URL from search results; scrape JD text |
+| Auto-apply | ❌ Pure aggregator — all jobs link to external company sites |
+| Bot detection | Very low — basic site, no sophisticated bot detection |
+| Best use | Supplementary discovery source; good for finding jobs missed by other feeds |
+| Refresh cadence | Every 12 hours — lower job volume than other platforms |
+
+---
+
+## 9. Himalayas Specifics
+
+| Capability | Status & Approach |
+|---|---|
+| Job ingestion | `GET himalayas.app/api/jobs` — structured JSON API, no auth required. Also has RSS feed |
+| Data quality | Best of all five — includes salary, timezone, company size, tech stack, benefits |
+| Full JD fetch | JD included in API response — no additional scrape needed |
+| Auto-apply | ✅ Level 2 — Himalayas has clean on-platform apply form: name, email, resume, cover letter, LinkedIn URL, portfolio |
+| Account needed | Yes — session cookie from your Himalayas account |
+| Bot detection | Low — Himalayas is developer-friendly; least aggressive of the five platforms |
+| Resume upload | Agent uploads tailored PDF from Supabase Storage |
+| **Recommended priority** | **Build Himalayas auto-apply first** — cleanest form, best data, lowest risk |
 
 | ID | Ticket | SP | Type | Sprint |
 |---|---|---|---|---|
@@ -976,7 +1077,7 @@ the input. Return only valid JSON matching the provided schema."
 
 ---
 
-*JobPilot AI — Full Documentation Suite v1.2 | June 2026 | Dual Renderer: LaTeX/Tectonic + HTML/WeasyPrint*
+*JobPilot AI — Full Documentation Suite v1.3 | June 2026 | Dual Renderer + Auto-Apply Agent + 5 Remote Platforms*
 
 ---
 
@@ -1599,4 +1700,476 @@ PHASE 3 — Validation & UI
 
 ---
 
-*JobPilot AI — Full Documentation Suite v1.2 | June 2026 | Dual Renderer: LaTeX/Tectonic + HTML/WeasyPrint*
+*JobPilot AI — Full Documentation Suite v1.3 | June 2026 | Dual Renderer + Auto-Apply Agent + 5 Remote Platforms*
+
+---
+
+# DOCUMENT 10 — AUTO-APPLY ENGINE — PLATFORM SPEC & IMPLEMENTATION
+
+---
+
+## 1. Auto-Apply Levels — Decision Framework
+
+```
+For every job, the agent asks:
+  Does this platform have an on-platform apply form?
+    ├── YES (Himalayas, Wellfound) → Level 2: Playwright fills form, human clicks Submit
+    └── NO (RemoteOK, Remote4Me, WeWorkRemotely) →
+          Does the job link to a known ATS?
+            ├── YES (Greenhouse, Lever) → ATS Adapter fills form, human clicks Submit
+            └── NO (company custom site) → Level 1: open URL, human fills manually
+
+Note: Workday is too complex for v1 — Level 1 only
+```
+
+> **Golden rule:** The agent **always** fills forms. The human **always** clicks final Submit. No exceptions in v1. You reviewing the pre-filled form before submitting catches agent errors and protects your professional reputation.
+
+---
+
+## 2. Platform Auto-Apply Capability Map
+
+| Platform | Job Ingestion Method | Auto-Apply Level | Adapter |
+|---|---|---|---|
+| **Himalayas** | Public API (best quality) | ✅ Level 2 — on-platform form | `HimalayasAdapter` |
+| **Wellfound** | RSS + Browser Extension | ✅ Level 2 — on-platform form | `WellfoundAdapter` |
+| **WeWorkRemotely** | RSS feed | ⚠️ Level 1 — redirects out; ATS adapter handles downstream | Via ATS adapter |
+| **RemoteOK** | Public JSON API | ⚠️ Level 1 — pure aggregator; ATS adapter handles downstream | Via ATS adapter |
+| **Remote4Me** | Playwright scrape | ❌ Level 1 only — pure aggregator; all redirect out | Manual |
+| **Greenhouse** (ATS) | Detected from apply URL | ✅ Level 2 — standardised form | `GreenhouseAdapter` |
+| **Lever** (ATS) | Detected from apply URL | ✅ Level 2 — standardised form | `LeverAdapter` |
+
+---
+
+## 3. Architecture — Auto-Apply Agent
+
+```
+ApplicationState (LangGraph)
+        │
+        ▼
+Auto-Apply Agent (LangGraph node)
+        │
+        ├── 1. Detect apply flow type
+        │         (on-platform | Greenhouse | Lever | other ATS | manual)
+        │
+        ├── 2. Load platform adapter
+        │         (HimalayasAdapter | WellfoundAdapter | GreenhouseAdapter | LeverAdapter)
+        │
+        ├── 3. Prepare payload from Identity Vault
+        │         (name, email, phone, location, resume PDF, cover letter, LinkedIn, GitHub)
+        │
+        ├── 4. Playwright fills every field
+        │         (human-like delays 1-3s, scroll behaviour, file upload)
+        │
+        ├── 5. Take full-page screenshot of pre-filled form
+        │
+        ├── 6. Stream screenshot to frontend via WebSocket
+        │         → "Form is filled and ready. Please review and click Submit."
+        │
+        └── 7. Human submits in browser → agent logs result → tracker updated to "Applied"
+```
+
+---
+
+## 4. Playwright Session Manager
+
+```python
+# auto_apply/session_manager.py
+import json
+from pathlib import Path
+from playwright.async_api import BrowserContext
+from cryptography.fernet import Fernet
+import os
+
+FERNET_KEY = os.environ["SESSION_ENCRYPTION_KEY"]  # Railway env var
+cipher = Fernet(FERNET_KEY)
+SESSIONS_DIR = Path("/tmp/jobpilot_sessions")
+SESSIONS_DIR.mkdir(exist_ok=True)
+
+async def get_context(platform: str, browser) -> BrowserContext:
+    """Load saved session cookies or return fresh context."""
+    session_file = SESSIONS_DIR / f"{platform}.enc"
+    context = await browser.new_context()
+    if session_file.exists():
+        encrypted = session_file.read_bytes()
+        cookies = json.loads(cipher.decrypt(encrypted).decode())
+        await context.add_cookies(cookies)
+    return context
+
+async def save_session(platform: str, context: BrowserContext) -> None:
+    """Encrypt and persist session cookies after login."""
+    cookies = await context.cookies()
+    encrypted = cipher.encrypt(json.dumps(cookies).encode())
+    (SESSIONS_DIR / f"{platform}.enc").write_bytes(encrypted)
+```
+
+---
+
+## 5. Base Adapter Interface
+
+```python
+# auto_apply/adapters/base.py
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from playwright.async_api import Page
+import asyncio, random
+
+@dataclass
+class ApplyPayload:
+    name:          str
+    email:         str
+    phone:         str
+    location:      str
+    resume_path:   str     # local path to tailored PDF
+    cover_letter:  str     # plain text, max 2000 chars
+    linkedin_url:  str
+    github_url:    str
+    portfolio_url: str = ""
+    salary_expectation: str = ""
+
+@dataclass
+class ApplyResult:
+    success:    bool
+    screenshot: bytes    # PNG bytes of pre-filled form
+    message:    str
+    form_url:   str
+
+class BasePlatformAdapter(ABC):
+    PLATFORM_NAME = ""
+
+    @abstractmethod
+    async def detect(self, url: str) -> bool:
+        pass
+
+    @abstractmethod
+    async def fill_form(self, page: Page, payload: ApplyPayload) -> ApplyResult:
+        """Fill all fields. Do NOT click Submit."""
+        pass
+
+    async def _delay(self):
+        await asyncio.sleep(random.uniform(1.0, 3.0))
+
+    async def _type_slow(self, page: Page, selector: str, text: str):
+        await page.click(selector)
+        for char in text:
+            await page.keyboard.type(char)
+            await asyncio.sleep(random.uniform(0.05, 0.15))
+```
+
+---
+
+## 6. Himalayas Adapter
+
+```python
+# auto_apply/adapters/himalayas.py
+from .base import BasePlatformAdapter, ApplyPayload, ApplyResult
+from playwright.async_api import Page
+
+class HimalayasAdapter(BasePlatformAdapter):
+    PLATFORM_NAME = "himalayas"
+
+    async def detect(self, url: str) -> bool:
+        return "himalayas.app" in url
+
+    async def fill_form(self, page: Page, payload: ApplyPayload) -> ApplyResult:
+        try:
+            await page.wait_for_selector('[data-testid="apply-form"]', timeout=10000)
+            await self._delay()
+
+            for selector, value in [
+                ('input[name="full_name"]',   payload.name),
+                ('input[name="email"]',        payload.email),
+                ('input[name="phone"]',        payload.phone),
+                ('input[name="linkedin_url"]', payload.linkedin_url),
+                ('input[name="github_url"]',   payload.github_url),
+            ]:
+                field = page.locator(selector)
+                if await field.count() > 0:
+                    await field.fill(value)
+                    await self._delay()
+
+            # Resume upload
+            await page.locator('input[type="file"][accept*="pdf"]').set_input_files(payload.resume_path)
+            await self._delay()
+
+            # Cover letter
+            cl = page.locator('textarea[name="cover_letter"]')
+            if await cl.count() > 0:
+                await cl.fill(payload.cover_letter)
+                await self._delay()
+
+            await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+            screenshot = await page.screenshot(full_page=True)
+
+            return ApplyResult(True, screenshot, "Himalayas form filled. Review and click Submit.", page.url)
+
+        except Exception as e:
+            return ApplyResult(False, await page.screenshot(), f"Error: {e}", page.url)
+```
+
+---
+
+## 7. Wellfound Adapter
+
+```python
+# auto_apply/adapters/wellfound.py
+from .base import BasePlatformAdapter, ApplyPayload, ApplyResult
+from playwright.async_api import Page
+
+class WellfoundAdapter(BasePlatformAdapter):
+    PLATFORM_NAME = "wellfound"
+
+    async def detect(self, url: str) -> bool:
+        return "wellfound.com" in url or "angel.co" in url
+
+    async def fill_form(self, page: Page, payload: ApplyPayload) -> ApplyResult:
+        try:
+            await page.wait_for_selector('.application-form', timeout=10000)
+            await self._delay()
+
+            # Wellfound pre-fills name/email from session — fill only what's needed
+            intro = page.locator('textarea[placeholder*="introduction"], textarea[placeholder*="why"]')
+            if await intro.count() > 0:
+                await intro.fill(payload.cover_letter[:500])
+                await self._delay()
+
+            resume_input = page.locator('input[type="file"]')
+            if await resume_input.count() > 0:
+                await resume_input.set_input_files(payload.resume_path)
+                await self._delay()
+
+            # Any custom questions — fill with cover letter excerpt
+            custom = page.locator('textarea[data-field-type="custom"]')
+            for i in range(await custom.count()):
+                await custom.nth(i).fill(payload.cover_letter[:300])
+                await self._delay()
+
+            await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+            screenshot = await page.screenshot(full_page=True)
+
+            return ApplyResult(True, screenshot, "Wellfound form filled. Review and click Apply.", page.url)
+
+        except Exception as e:
+            return ApplyResult(False, await page.screenshot(), f"Error: {e}", page.url)
+```
+
+---
+
+## 8. Greenhouse ATS Adapter
+
+```python
+# auto_apply/adapters/greenhouse.py
+from .base import BasePlatformAdapter, ApplyPayload, ApplyResult
+from playwright.async_api import Page
+
+class GreenhouseAdapter(BasePlatformAdapter):
+    PLATFORM_NAME = "greenhouse"
+
+    async def detect(self, url: str) -> bool:
+        return "greenhouse.io" in url or "boards.greenhouse.io" in url
+
+    async def fill_form(self, page: Page, payload: ApplyPayload) -> ApplyResult:
+        try:
+            await page.wait_for_selector('#application_form, form.application', timeout=10000)
+            await self._delay()
+
+            first, last = (payload.name.split(" ", 1) + [""])[:2]
+            for sel, val in [
+                ('#first_name', first), ('#last_name', last),
+                ('#email', payload.email), ('#phone', payload.phone),
+            ]:
+                f = page.locator(sel)
+                if await f.count() > 0:
+                    await f.fill(val)
+                    await self._delay()
+
+            # Resume upload
+            ri = page.locator('input[type="file"][id*="resume"]')
+            if await ri.count() > 0:
+                await ri.set_input_files(payload.resume_path)
+                await self._delay()
+
+            # Cover letter
+            cl = page.locator('textarea[id*="cover"]')
+            if await cl.count() > 0:
+                await cl.fill(payload.cover_letter)
+                await self._delay()
+
+            # LinkedIn, portfolio
+            for sel, val in [
+                ('input[id*="linkedin"]', payload.linkedin_url),
+                ('input[id*="website"], input[id*="portfolio"]', payload.portfolio_url or payload.github_url),
+            ]:
+                f = page.locator(sel)
+                if await f.count() > 0:
+                    await f.fill(val)
+                    await self._delay()
+
+            # EEOC dropdowns — select "Prefer not to say"
+            selects = page.locator('select')
+            for i in range(await selects.count()):
+                opts = await selects.nth(i).locator('option').all_text_contents()
+                pref = [o for o in opts if "prefer" in o.lower() or "decline" in o.lower()]
+                if pref:
+                    await selects.nth(i).select_option(label=pref[0])
+                    await self._delay()
+
+            await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+            screenshot = await page.screenshot(full_page=True)
+
+            return ApplyResult(True, screenshot, "Greenhouse form filled. Review and click Submit Application.", page.url)
+
+        except Exception as e:
+            return ApplyResult(False, await page.screenshot(), f"Error: {e}", page.url)
+```
+
+---
+
+## 9. Auto-Apply Agent — LangGraph Node
+
+```python
+# agents/auto_apply_agent.py
+from playwright.async_api import async_playwright
+from auto_apply.session_manager import get_context, save_session
+from auto_apply.adapters.himalayas import HimalayasAdapter
+from auto_apply.adapters.wellfound import WellfoundAdapter
+from auto_apply.adapters.greenhouse import GreenhouseAdapter
+from auto_apply.adapters.lever import LeverAdapter
+from auto_apply.adapters.base import ApplyPayload
+from auto_apply.rate_limiter import check_rate_limit
+
+ADAPTERS = [HimalayasAdapter(), WellfoundAdapter(), GreenhouseAdapter(), LeverAdapter()]
+
+async def auto_apply_node(state: dict) -> dict:
+    apply_url    = state["apply_url"]
+    identity     = state["identity_vault"]
+    resume_pdf   = state["tailored_resume_path"]
+    cover_letter = state["cover_letter_text"]
+
+    payload = ApplyPayload(
+        name=identity["name"], email=identity["email"],
+        phone=identity["phone"], location=identity["location"],
+        resume_path=resume_pdf, cover_letter=cover_letter,
+        linkedin_url=identity.get("linkedin_url", ""),
+        github_url=identity.get("github_url", ""),
+        portfolio_url=identity.get("portfolio_url", ""),
+    )
+
+    adapter = next((a for a in ADAPTERS if await a.detect(apply_url)), None)
+    if not adapter:
+        return {**state, "apply_result": "manual",
+                "apply_message": f"No adapter found. Open manually: {apply_url}"}
+
+    check_rate_limit(adapter.PLATFORM_NAME)  # raises 429 if limit hit
+
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        context = await get_context(adapter.PLATFORM_NAME, browser)
+        page = await context.new_page()
+        await page.goto(apply_url, wait_until="networkidle")
+
+        result = await adapter.fill_form(page, payload)
+        await save_session(adapter.PLATFORM_NAME, context)
+        await browser.close()
+
+    return {
+        **state,
+        "apply_result":     "filled" if result.success else "error",
+        "apply_screenshot": result.screenshot,
+        "apply_message":    result.message,
+        "apply_form_url":   result.form_url,
+        "apply_platform":   adapter.PLATFORM_NAME,
+    }
+```
+
+---
+
+## 10. Rate Limiter
+
+```python
+# auto_apply/rate_limiter.py
+import time
+from collections import defaultdict
+from fastapi import HTTPException
+
+DEFAULT_LIMITS = {
+    "himalayas": 10, "wellfound": 8,
+    "greenhouse": 15, "lever": 15, "default": 5,
+}
+_timestamps: dict[str, list[float]] = defaultdict(list)
+
+def check_rate_limit(platform: str, limit_override: int | None = None) -> None:
+    limit = limit_override or DEFAULT_LIMITS.get(platform, DEFAULT_LIMITS["default"])
+    now = time.time()
+    _timestamps[platform] = [t for t in _timestamps[platform] if now - t < 3600]
+    if len(_timestamps[platform]) >= limit:
+        wait = int(3600 - (now - _timestamps[platform][0]))
+        raise HTTPException(429, f"Rate limit: {limit} applies/hour for {platform}. Wait {wait}s.")
+    _timestamps[platform].append(now)
+```
+
+---
+
+## 11. Apply Preview UI Spec
+
+```
+Application Detail Page → "Auto-Apply" Tab
+
+┌──────────────────────────────────────────────────────────────────┐
+│  🤖 Auto-Apply — Himalayas                                       │
+│  Status: Form Filled ✅  |  Platform: Himalayas                  │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│  [ Full-page screenshot of Playwright-filled form ]              │
+│                                                                   │
+│  Fields filled:                                                   │
+│   ✅ Full Name      ✅ Email        ✅ Phone                     │
+│   ✅ Resume PDF     ✅ Cover Letter  ✅ LinkedIn URL              │
+│   ⚠️  Portfolio URL — not set (add in Profile → Settings)        │
+│                                                                   │
+├──────────────────────────────────────────────────────────────────┤
+│  Cover Letter sent (editable):                                    │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │ Dear Hiring Team, I am excited to apply for...          │    │
+│  │ [inline editable — click Refill to apply changes]       │    │
+│  └─────────────────────────────────────────────────────────┘    │
+├──────────────────────────────────────────────────────────────────┤
+│  ⚠️  Agent has filled all fields. YOU must click Submit.         │
+│                                                                   │
+│   [Open Apply Page ↗]        [Refill Form 🔄]                    │
+│                                                                   │
+│  After you submit:  [Mark as Applied ✓]                          │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 12. Auto-Apply Implementation Checklist (for Coding Agent)
+
+```
+PHASE 1 — Infrastructure (Sprint 5)
+  [ ] JP-067  Install playwright in Docker; test headless Chromium launch
+  [ ] JP-073  SessionManager: Fernet encryption, cookie save/load per platform
+  [ ] JP-074  RateLimiter: per-platform hourly cap with 429 response
+
+PHASE 2 — Adapters (Sprint 5 — build in this order)
+  [ ] JP-068  HimalayasAdapter — cleanest form, lowest bot detection, build first
+  [ ] JP-069  WellfoundAdapter — medium complexity, medium bot detection
+  [ ] JP-070  GreenhouseAdapter — most common ATS (~30% of remote job postings)
+  [ ] JP-071  LeverAdapter — second most common ATS (~15% of remote job postings)
+
+PHASE 3 — Agent + UI (Sprint 5)
+  [ ] JP-067  auto_apply_node LangGraph node with adapter router
+  [ ] JP-072  Apply preview UI: screenshot display + fields-filled status grid
+  [ ] JP-075  Result tracker: log success/fail, store error screenshots
+
+PHASE 4 — Hardening (Sprint 6)
+  [ ] Manually test each adapter with 3 real applications
+  [ ] Verify rate limiter triggers at correct threshold
+  [ ] Verify session persists across FastAPI restarts
+  [ ] Add retry logic for Playwright timeout errors
+  [ ] Write selector update SOP (when platforms change their UI)
+```
+
+---
+
+*JobPilot AI — Full Documentation Suite v1.3 | June 2026 | Dual Renderer + Auto-Apply (Himalayas, Wellfound, Greenhouse, Lever) + 5 Remote Platforms*
