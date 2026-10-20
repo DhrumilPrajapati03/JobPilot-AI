@@ -1,14 +1,33 @@
 """Application management endpoints.
 
 Handles the core job application workflow: parsing JDs,
-running the agent pipeline, listing applications, and
-updating application status.
+running the agent pipeline, listing applications, editing
+generated materials, and updating application status.
 """
 
-from fastapi import APIRouter
-from pydantic import BaseModel
+import uuid
+from datetime import datetime, timedelta, timezone
+
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from pydantic import BaseModel, Field
+
+from app.agents.jd_parser import JDParserAgent
+from app.agents.orchestrator import run_agent_pipeline
+from app.models.application import ApplicationStatus
+from app.services.auth import CurrentUser, get_current_user
+from app.services.materials import (
+    is_missing_column_error,
+    normalize_application,
+    update_application,
+)
+from app.services.referrals import contact_counts
+from app.services.supabase import get_supabase_client
+from app.services.websocket import manager
 
 router = APIRouter()
+
+# Days after applying before the tracker flags an application for follow-up.
+FOLLOW_UP_AFTER_DAYS = 5
 
 
 class JDParseRequest(BaseModel):
@@ -26,11 +45,61 @@ class ApplicationGenerateRequest(BaseModel):
 
 class StatusUpdateRequest(BaseModel):
     """Request body for status update."""
-    status: str
+    status: ApplicationStatus
+
+
+class LinkedInDM(BaseModel):
+    connection_request: str = Field(default="", max_length=300)
+    follow_up: str = ""
+
+
+class ApplicationUpdateRequest(BaseModel):
+    """Editable fields of an application (all optional)."""
+    company: str | None = None
+    role: str | None = None
+    jd_url: str | None = None
+    notes: str | None = None
+    cover_letter: str | None = None
+    linkedin_dm: LinkedInDM | None = None
+    follow_up_at: datetime | None = None
+
+
+class ColdEmailUpdateRequest(BaseModel):
+    """Editable fields of a cold email draft (all optional)."""
+    to_email: str | None = None
+    to_name: str | None = None
+    subject: str | None = None
+    body: str | None = None
+    sent: bool | None = None
+    replied: bool | None = None
+
+
+def _now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _get_owned_application(supabase, application_id: str, user_id: str) -> dict:
+    try:
+        uuid.UUID(str(application_id))
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Job application not found")
+    res = (
+        supabase.table("job_applications")
+        .select("*")
+        .eq("id", application_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Job application not found")
+    return res.data[0]
 
 
 @router.post("/parse-jd")
-async def parse_jd(request: JDParseRequest):
+async def parse_jd(
+    request: JDParseRequest,
+    current_user: CurrentUser = Depends(get_current_user)
+):
     """Parse a job description URL or raw text.
 
     Extracts structured analysis: role, company, required skills,
@@ -39,37 +108,54 @@ async def parse_jd(request: JDParseRequest):
     Args:
         request: JD URL or raw text to parse.
     """
-    # TODO: Invoke JD Parser Agent
+    agent = JDParserAgent()
+    analysis = await agent.parse(jd_url=request.jd_url, jd_text=request.jd_text)
     return {
         "status": "parsed",
-        "analysis": {
-            "role": "placeholder",
-            "company": "placeholder",
-            "skills": [],
-            "keywords": [],
-            "seniority": "mid",
-            "tone": "professional",
-            "tech_stack": [],
-        },
+        "analysis": analysis,
     }
 
 
 @router.post("/generate")
-async def generate_application(request: ApplicationGenerateRequest):
+async def generate_application(
+    request: ApplicationGenerateRequest,
+    background_tasks: BackgroundTasks,
+    current_user: CurrentUser = Depends(get_current_user)
+):
     """Run the full agent pipeline for a single application.
 
-    Orchestrates: JD parsing → research → resume tailoring →
-    cover letter → cold email → LinkedIn DM → tracker update.
+    Orchestrates: JD parsing → resume tailoring → PDF check →
+    cover letter / cold email / LinkedIn DM → tracker update.
 
     Returns a run_id for WebSocket progress streaming.
 
     Args:
         request: JD input and pipeline configuration.
+        background_tasks: FastAPI background tasks queue.
+        current_user: Authenticated user.
     """
-    # TODO: Launch LangGraph orchestrator agent pipeline
+    jd_url = (request.jd_url or "").strip() or None
+    jd_text = (request.jd_text or "").strip() or None
+    if not jd_url and not jd_text:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Provide a job URL or the job description text.",
+        )
+
+    run_id = str(uuid.uuid4())
+    manager.register(run_id)
+    background_tasks.add_task(
+        run_agent_pipeline,
+        run_id,
+        current_user.id,
+        current_user.token,
+        jd_url,
+        jd_text,
+        current_user.email,
+    )
     return {
         "status": "queued",
-        "run_id": "placeholder-run-id",
+        "run_id": run_id,
         "message": "Agent pipeline started. Connect to WebSocket for progress.",
     }
 
@@ -79,38 +165,217 @@ async def list_applications(
     status: str | None = None,
     source: str | None = None,
     skip: int = 0,
-    limit: int = 20,
+    limit: int = 200,
+    current_user: CurrentUser = Depends(get_current_user)
 ):
     """List all job applications with optional filters.
+
+    Each application includes its latest ``keyword_match_score``.
 
     Args:
         status: Filter by application status (e.g., 'applied', 'interviewing').
         source: Filter by job source (e.g., 'linkedin', 'adzuna').
         skip: Number of records to skip for pagination.
-        limit: Maximum number of records to return.
+        limit: Maximum number of records to return (max 500).
+        current_user: Authenticated user.
     """
-    # TODO: Query Supabase for applications with filters
+    limit = max(1, min(limit, 500))
+    supabase = get_supabase_client(user_jwt=current_user.token)
+    query = supabase.table("job_applications").select("*", count="exact").eq("user_id", current_user.id)
+
+    if status:
+        query = query.eq("status", status)
+    if source:
+        query = query.eq("source", source)
+
+    res = query.order("created_at", desc=True).range(skip, skip + limit - 1).execute()
+    total = res.count if res.count is not None else len(res.data)
+
+    scores: dict[str, float] = {}
+    ids = [row["id"] for row in res.data]
+    if ids:
+        score_res = (
+            supabase.table("tailored_resumes")
+            .select("application_id, keyword_match_score, version")
+            .in_("application_id", ids)
+            .order("version", desc=False)
+            .execute()
+        )
+        # Ascending by version, so the latest version wins.
+        scores = {row["application_id"]: row["keyword_match_score"] for row in score_res.data}
+
+    contacts = contact_counts(supabase, current_user.id, [row["company"] for row in res.data])
+    applications = []
+    for row in res.data:
+        app = normalize_application(row)
+        app.pop("jd_text", None)
+        app["keyword_match_score"] = scores.get(row["id"])
+        app["referral_count"] = contacts.get(row["company"], 0)
+        prepared = app.pop("prepared_form", None) or {}
+        app["prepared_summary"] = prepared.get("summary")
+        app["apply_url"] = prepared.get("apply_url") or row.get("jd_url") or ""
+        applications.append(app)
+
     return {
-        "applications": [],
-        "total": 0,
+        "applications": applications,
+        "total": total,
         "skip": skip,
         "limit": limit,
     }
 
 
+@router.get("/{application_id}")
+async def get_application_details(
+    application_id: str,
+    current_user: CurrentUser = Depends(get_current_user)
+):
+    """Retrieve details for a single job application.
+
+    Pulls information from job_applications, tailored_resumes,
+    and cold_emails tables.
+    """
+    supabase = get_supabase_client(user_jwt=current_user.token)
+    application = _get_owned_application(supabase, application_id, current_user.id)
+
+    resume_res = (
+        supabase.table("tailored_resumes")
+        .select("*")
+        .eq("application_id", application_id)
+        .eq("user_id", current_user.id)
+        .order("version", desc=True)
+        .limit(1)
+        .execute()
+    )
+    tailored_resume = resume_res.data[0] if resume_res.data else None
+
+    email_res = (
+        supabase.table("cold_emails")
+        .select("*")
+        .eq("application_id", application_id)
+        .order("sequence_number")
+        .execute()
+    )
+
+    return {
+        "application": normalize_application(application),
+        "tailored_resume": tailored_resume,
+        "cold_emails": email_res.data,
+    }
+
+
+@router.patch("/{application_id}")
+async def update_application_details(
+    application_id: str,
+    request: ApplicationUpdateRequest,
+    current_user: CurrentUser = Depends(get_current_user)
+):
+    """Edit an application's details or its generated cover letter / DMs."""
+    payload = request.model_dump(exclude_unset=True, mode="json")
+    if not payload:
+        raise HTTPException(status_code=400, detail="No fields to update")
+
+    supabase = get_supabase_client(user_jwt=current_user.token)
+    current = _get_owned_application(supabase, application_id, current_user.id)
+    try:
+        return update_application(supabase, application_id, current_user.id, payload, current)
+    except LookupError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
 @router.put("/{application_id}/status")
-async def update_application_status(application_id: str, request: StatusUpdateRequest):
+async def update_application_status(
+    application_id: str,
+    request: StatusUpdateRequest,
+    current_user: CurrentUser = Depends(get_current_user)
+):
     """Update the status of a specific application.
 
     Valid statuses: saved, applied, interviewing, offer, rejected, archived.
+    Moving to ``applied`` stamps ``applied_at`` and schedules a follow-up
+    reminder; closed statuses clear any pending follow-up.
 
     Args:
         application_id: Unique application identifier.
         request: New status value.
+        current_user: Authenticated user.
     """
-    # TODO: Update application status in Supabase
+    supabase = get_supabase_client(user_jwt=current_user.token)
+    current = _get_owned_application(supabase, application_id, current_user.id)
+
+    new_status = request.status.value
+    payload: dict = {"status": new_status}
+    if new_status == ApplicationStatus.APPLIED.value:
+        if not current.get("applied_at"):
+            payload["applied_at"] = _now().isoformat()
+        if not current.get("follow_up_at"):
+            payload["follow_up_at"] = (_now() + timedelta(days=FOLLOW_UP_AFTER_DAYS)).isoformat()
+    elif new_status in {"interviewing", "offer", "rejected", "archived"}:
+        payload["follow_up_at"] = None
+
+    def _write(data: dict):
+        return (
+            supabase.table("job_applications")
+            .update(data)
+            .eq("id", application_id)
+            .eq("user_id", current_user.id)
+            .execute()
+        )
+
+    try:
+        res = _write(payload)
+    except Exception as e:
+        if not is_missing_column_error(e):
+            raise
+        res = _write({"status": new_status})
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Job application not found or unauthorized")
+
     return {
         "application_id": application_id,
-        "status": request.status,
+        "status": new_status,
         "updated": True,
+        "application": normalize_application(res.data[0]),
     }
+
+
+@router.put("/{application_id}/emails/{email_id}")
+async def update_cold_email(
+    application_id: str,
+    email_id: str,
+    request: ColdEmailUpdateRequest,
+    current_user: CurrentUser = Depends(get_current_user)
+):
+    """Edit a cold email draft or mark it as sent / replied."""
+    supabase = get_supabase_client(user_jwt=current_user.token)
+    _get_owned_application(supabase, application_id, current_user.id)
+
+    payload = request.model_dump(exclude_unset=True, exclude={"sent"})
+    if request.sent is not None:
+        payload["sent_at"] = _now().isoformat() if request.sent else None
+    if not payload:
+        raise HTTPException(status_code=400, detail="No fields to update")
+
+    res = (
+        supabase.table("cold_emails")
+        .update(payload)
+        .eq("id", email_id)
+        .eq("application_id", application_id)
+        .execute()
+    )
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Email draft not found")
+    return res.data[0]
+
+
+@router.delete("/{application_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_application(
+    application_id: str,
+    current_user: CurrentUser = Depends(get_current_user)
+):
+    """Delete an application together with its tailored resumes and emails."""
+    supabase = get_supabase_client(user_jwt=current_user.token)
+    _get_owned_application(supabase, application_id, current_user.id)
+
+    supabase.table("cold_emails").delete().eq("application_id", application_id).execute()
+    supabase.table("tailored_resumes").delete().eq("application_id", application_id).eq("user_id", current_user.id).execute()
+    supabase.table("job_applications").delete().eq("id", application_id).eq("user_id", current_user.id).execute()

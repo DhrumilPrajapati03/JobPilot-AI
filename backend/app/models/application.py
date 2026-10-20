@@ -31,6 +31,10 @@ class JDAnalysis(BaseModel):
     tech_stack: list[str] = Field(default_factory=list)
     salary_range: str | None = None
     remote: bool | None = None
+    company_type: str = Field(
+        default="",
+        description="'mnc' (large multinational/enterprise), 'startup' (early/growth-stage), or 'sme' (small/local business).",
+    )
 
 
 class JobApplication(BaseModel):

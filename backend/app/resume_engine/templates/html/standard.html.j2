@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', Arial, sans-serif;
+      font-size: 10.5pt;
+      color: #1a1a2e;
+      line-height: 1.45;
+      padding: 0.6in 0.65in;
+    }
+
+    /* Header */
+    .header-name  { font-size: 22pt; font-weight: 700; color: #1A3C5E; }
+    .header-sub   { font-size: 10pt; color: #555; margin-top: 2px; }
+    .header-links { font-size: 9.5pt; color: #0F7B6C; margin-top: 3px; }
+    .header-links a { color: #0F7B6C; text-decoration: none; }
+
+    /* Section headings */
+    h2 {
+      font-size: 11.5pt;
+      font-weight: 700;
+      color: #1A3C5E;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      border-bottom: 1.5px solid #1A3C5E;
+      padding-bottom: 2px;
+      margin: 14px 0 6px;
+    }
+
+    /* Experience */
+    .job-header { display: flex; justify-content: space-between; }
+    .job-title  { font-weight: 600; }
+    .job-date   { font-style: italic; color: #555; }
+    .job-company{ font-style: italic; color: #444; font-size: 10pt; }
+    ul { padding-left: 1.1em; margin-top: 3px; }
+    li { margin-bottom: 2px; }
+
+    /* Skills */
+    .skills-row { margin-bottom: 2px; }
+    .skills-label { font-weight: 600; }
+
+    /* Page break control */
+    @media print {
+      body { padding: 0.5in 0.6in; }
+      h2 { page-break-after: avoid; }
+      .job-block { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header-name">{{ name }}</div>
+  <div class="header-sub">{{ headline }}</div>
+  <div class="header-links">
+    {% for item in [email, phone, location] if item %}{% if not loop.first %} &nbsp;|&nbsp; {% endif %}{{ item }}{% endfor %}
+    {% if linkedin_url %} &nbsp;|&nbsp; <a href="{{ linkedin_url }}">LinkedIn</a>{% endif %}
+    {% if github_url %} &nbsp;|&nbsp; <a href="{{ github_url }}">GitHub</a>{% endif %}
+  </div>
+
+  <!-- Summary -->
+  <h2>Summary</h2>
+  <p>{{ summary }}</p>
+
+  <!-- Experience -->
+  <h2>Experience</h2>
+  {% for job in experience %}
+  <div class="job-block">
+    <div class="job-header">
+      <span class="job-title">{{ job.role }}</span>
+      <span class="job-date">{{ job.duration }}</span>
+    </div>
+    <div class="job-company">{{ job.company }}{% if job.location %} — {{ job.location }}{% endif %}</div>
+    <ul>
+      {% for bullet in job.bullets %}<li>{{ bullet }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endfor %}
+
+  <!-- Skills -->
+  <h2>Skills</h2>
+  <div class="skills-row"><span class="skills-label">Primary: </span>{{ skills.primary | join(', ') }}</div>
+  <div class="skills-row"><span class="skills-label">Additional: </span>{{ skills.secondary | join(', ') }}</div>
+
+  <!-- Projects -->
+  <h2>Projects</h2>
+  {% for project in projects %}
+  <div class="job-block">
+    <div class="job-header">
+      <span class="job-title">{{ project.name }}</span>
+      <span class="job-date" style="font-style:italic;font-size:9.5pt;">{{ project.tech | join(', ') }}</span>
+    </div>
+    <p>{{ project.description }}</p>
+  </div>
+  {% endfor %}
+
+  <!-- Education -->
+  <h2>Education</h2>
+  {% for edu in education %}
+  <div class="job-block">
+    <div class="job-header">
+      <span class="job-title">{{ edu.degree }}</span>
+      <span class="job-date">{{ edu.duration }}</span>
+    </div>
+    <div class="job-company">{{ edu.institution }}{% if edu.gpa %} — GPA: {{ edu.gpa }}{% endif %}</div>
+  </div>
+  {% endfor %}
+
+  <!-- Certifications -->
+  {% if certifications %}
+  <h2>Certifications</h2>
+  <ul>{% for cert in certifications %}<li>{{ cert }}</li>{% endfor %}</ul>
+  {% endif %}
+
+</body>
+</html>

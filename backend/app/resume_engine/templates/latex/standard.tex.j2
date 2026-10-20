@@ -1,0 +1,85 @@
+\documentclass[11pt, a4paper]{article}
+
+% ── Packages ─────────────────────────────────────────
+\usepackage[top=0.6in, bottom=0.6in, left=0.65in, right=0.65in]{geometry}
+\usepackage{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{parskip}
+
+\definecolor{primary}{HTML}{1A3C5E}
+\definecolor{accent}{HTML}{0F7B6C}
+
+\hypersetup{colorlinks=true, urlcolor=accent}
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+
+% ── Section formatting ────────────────────────────────
+\titleformat{\section}{\large\bfseries\color{primary}}{}{0em}{}
+  [\vspace{-6pt}\rule{\linewidth}{0.5pt}\vspace{-4pt}]
+\titlespacing{\section}{0pt}{10pt}{4pt}
+
+% ── Bullet customisation ─────────────────────────────
+\setlist[itemize]{leftmargin=1.2em, itemsep=1pt, parsep=0pt, topsep=2pt}
+
+% ─────────────────────────────────────────────────────
+\begin{document}
+
+% ── Header ───────────────────────────────────────────
+{\LARGE\bfseries\color{primary} \VAR{name}}\\[2pt]
+{\small \VAR{headline}}\\[2pt]
+{\small \VAR{email} \quad|\quad \VAR{phone} \quad|\quad \VAR{location}
+\BLOCK{ if linkedin_url } \quad|\quad \href{\VAR{linkedin_url}}{LinkedIn}\BLOCK{ endif }
+\BLOCK{ if github_url } \quad|\quad \href{\VAR{github_url}}{GitHub}\BLOCK{ endif }}
+
+% ── Summary ──────────────────────────────────────────
+\section{Summary}
+\VAR{summary}
+
+% ── Experience ───────────────────────────────────────
+\section{Experience}
+\BLOCK{ for job in experience }
+\textbf{\VAR{job.role}} \hfill \textit{\VAR{job.duration}}\\
+\textit{\VAR{job.company}}\BLOCK{ if job.location } — \VAR{job.location}\BLOCK{ endif }
+\begin{itemize}
+  \BLOCK{ for bullet in job.bullets }
+  \item \VAR{bullet}
+  \BLOCK{ endfor }
+\end{itemize}
+\BLOCK{ endfor }
+
+% ── Skills ───────────────────────────────────────────
+\section{Skills}
+\textbf{Primary:} \VAR{skills.primary | join(', ')}\\
+\textbf{Additional:} \VAR{skills.secondary | join(', ')}
+
+% ── Projects ─────────────────────────────────────────
+\section{Projects}
+\BLOCK{ for project in projects }
+\textbf{\VAR{project.name}} \quad {\small\textit{\VAR{project.tech | join(', ')}}}\\
+\VAR{project.description}
+\BLOCK{ if not loop.last }\vspace{4pt}\BLOCK{ endif }
+\BLOCK{ endfor }
+
+% ── Education ────────────────────────────────────────
+\section{Education}
+\BLOCK{ for edu in education }
+\textbf{\VAR{edu.degree}} \hfill \textit{\VAR{edu.duration}}\\
+\textit{\VAR{edu.institution}}\BLOCK{ if edu.gpa } — GPA: \VAR{edu.gpa}\BLOCK{ endif }
+\BLOCK{ endfor }
+
+% ── Certifications ───────────────────────────────────
+\BLOCK{ if certifications }
+\section{Certifications}
+\begin{itemize}
+  \BLOCK{ for cert in certifications }
+  \item \VAR{cert}
+  \BLOCK{ endfor }
+\end{itemize}
+\BLOCK{ endif }
+
+\end{document}

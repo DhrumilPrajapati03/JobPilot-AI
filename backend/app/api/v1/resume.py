@@ -3,33 +3,42 @@
 Handles base resume uploads, structured updates, and storage.
 """
 
+import re
 import uuid
-from app.services.vector_store import embed_resume
-from fastapi import APIRouter, Depends, File, UploadFile, HTTPException, status
+from fastapi import APIRouter, Depends, File, UploadFile, HTTPException, Response, status
 from app.services.auth import get_current_user, CurrentUser
 from app.services.supabase import get_supabase_client
 from app.services.parser import extract_text_from_pdf, extract_text_from_docx, parse_resume_text
 from app.models.resume import Resume
+from app.resume_engine.builder import build_render_content
+from app.resume_engine.renderer import render_resume_pdf
+from app.resume_engine.validator import calculate_ats_score
 from app.services.vector_store import embed_resume
 
 router = APIRouter()
 
 
+def _latest_tailored_resume(supabase, application_id: str, user_id: str) -> dict:
+    response = (
+        supabase.table("tailored_resumes")
+        .select("*")
+        .eq("application_id", application_id)
+        .eq("user_id", user_id)
+        .order("version", desc=True)
+        .limit(1)
+        .execute()
+    )
+    if not response.data:
+        raise HTTPException(status_code=404, detail="Tailored resume not found")
+    return response.data[0]
+
+
 @router.get("/tailored/{application_id}")
 async def get_tailored_resume(application_id: str, current_user: CurrentUser = Depends(get_current_user)):
-    """Download the tailored resume PDF for a specific application."""
+    """Return the latest tailored resume record for a specific application."""
     try:
         supabase = get_supabase_client(user_jwt=current_user.token)
-        response = (
-            supabase.table("tailored_resumes")
-            .select("*")
-            .eq("application_id", application_id)
-            .eq("user_id", current_user.id)
-            .execute()
-        )
-        if not response.data:
-            raise HTTPException(status_code=404, detail="Tailored resume not found")
-        return response.data[0]
+        return _latest_tailored_resume(supabase, application_id, current_user.id)
     except HTTPException:
         raise
     except Exception as e:
@@ -37,6 +46,67 @@ async def get_tailored_resume(application_id: str, current_user: CurrentUser = D
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch tailored resume: {str(e)}"
         )
+
+
+@router.put("/tailored/{application_id}")
+async def update_tailored_resume(
+    application_id: str,
+    content: Resume,
+    current_user: CurrentUser = Depends(get_current_user)
+):
+    """Save edits to a tailored resume and recompute its ATS keyword score."""
+    supabase = get_supabase_client(user_jwt=current_user.token)
+    tailored = _latest_tailored_resume(supabase, application_id, current_user.id)
+
+    app_res = (
+        supabase.table("job_applications")
+        .select("jd_analysis")
+        .eq("id", application_id)
+        .eq("user_id", current_user.id)
+        .execute()
+    )
+    jd_analysis = (app_res.data[0].get("jd_analysis") if app_res.data else None) or {}
+
+    content_dict = content.model_dump(mode="json", exclude_none=True)
+    score, missing = calculate_ats_score(content_dict, jd_analysis)
+    response = (
+        supabase.table("tailored_resumes")
+        .update({"content": content_dict, "keyword_match_score": score, "missing_keywords": missing})
+        .eq("id", tailored["id"])
+        .eq("user_id", current_user.id)
+        .execute()
+    )
+    if not response.data:
+        raise HTTPException(status_code=500, detail="Failed to save tailored resume.")
+    return response.data[0]
+
+
+@router.get("/tailored/{application_id}/pdf")
+async def download_tailored_resume_pdf(
+    application_id: str,
+    current_user: CurrentUser = Depends(get_current_user)
+):
+    """Render the latest tailored resume content to PDF on demand."""
+    supabase = get_supabase_client(user_jwt=current_user.token)
+    tailored = _latest_tailored_resume(supabase, application_id, current_user.id)
+    profile_res = supabase.table("user_profiles").select("*").eq("id", current_user.id).execute()
+    profile = profile_res.data[0] if profile_res.data else {}
+
+    try:
+        content = build_render_content(tailored.get("content") or {}, profile, email=current_user.email)
+        pdf_bytes, _ = await render_resume_pdf(content)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"PDF renderer unavailable: {str(e).splitlines()[0]}",
+        )
+
+    slug = re.sub(r"[^A-Za-z0-9]+", "_", content.name or "resume").strip("_") or "resume"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{slug}_resume.pdf"'},
+    )
 
 
 @router.get("/base", response_model=Resume)
