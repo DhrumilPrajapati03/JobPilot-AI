@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>JobPilot</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header><span class="logo">JP</span> JobPilot Autofill</header>
+    <main>
+      <p id="status" class="muted">Checking connection…</p>
+      <button id="fill" class="primary" disabled>Fill this page</button>
+      <button id="queue" disabled>Open my apply queue</button>
+      <p class="muted small">Fills the form with your tailored resume and saved answers. You check it and click Submit yourself.</p>
+
+      <details id="settings">
+        <summary>Connection settings</summary>
+        <label for="apiBase">JobPilot API URL</label>
+        <input id="apiBase" placeholder="https://your-api.onrender.com" />
+        <label for="token">Extension token</label>
+        <input id="token" type="password" placeholder="jpx_…" />
+        <button id="save">Save</button>
+        <p class="muted small">Easiest: open JobPilot → Settings → Connect extension, which fills these in for you.</p>
+      </details>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>

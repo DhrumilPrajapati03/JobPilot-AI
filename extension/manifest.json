@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "JobPilot Autofill",
+  "version": "1.0.0",
+  "description": "Fills job application forms with your JobPilot resume and saved answers. You review and click Submit yourself.",
+  "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": [
+    "http://localhost:8000/*",
+    "http://127.0.0.1:8000/*",
+    "https://*.onrender.com/*"
+  ],
+  "background": { "service_worker": "background.js" },
+  "action": { "default_title": "JobPilot", "default_popup": "popup.html" },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://boards.greenhouse.io/*",
+        "https://job-boards.greenhouse.io/*",
+        "https://job-boards.eu.greenhouse.io/*",
+        "https://jobs.lever.co/*",
+        "https://jobs.eu.lever.co/*",
+        "https://jobs.ashbyhq.com/*",
+        "https://jobs.smartrecruiters.com/*"
+      ],
+      "js": ["content/fill.js"],
+      "all_frames": true,
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["http://localhost:5173/*", "http://127.0.0.1:5173/*", "https://*.onrender.com/*"],
+      "js": ["content/connect.js"],
+      "run_at": "document_start"
+    }
+  ]
+}
