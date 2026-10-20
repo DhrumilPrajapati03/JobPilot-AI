@@ -2,13 +2,35 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
 
 // Define TS Interfaces corresponding to FastAPI Pydantic Models
+export interface WorkPreferences {
+  remote_only: boolean;
+  preferred_roles: string[];
+  preferred_locations: string[];
+  min_company_size?: number | null;
+  industries: string[];
+  min_match_score: number;
+  blocked_companies: string[];
+  skip_keywords: string[];
+  requires_sponsorship: boolean;
+  salary_min: number | null;
+  salary_currency: string;
+  auto_draft_enabled: boolean;
+  auto_draft_min_score: number;
+  auto_draft_daily_cap: number;
+  digest_enabled?: boolean;
+  digest_hour?: number;
+  digest_email?: string;
+  timezone?: string;
+}
+
 export interface UserProfile {
   id?: string;
   name: string;
   headline: string;
   location: string;
   salary_range: string;
-  work_preferences: Record<string, any>;
+  linkedin_url?: string;
+  work_preferences: WorkPreferences;
 }
 
 export interface ResumeExperience {
@@ -61,7 +83,7 @@ export interface Resume {
 export function useProfile() {
   return useQuery<UserProfile>({
     queryKey: ['profile'],
-    queryFn: () => api.get<UserProfile>('/api/v1/profile/'),
+    queryFn: () => api.get<UserProfile>('/profile/'),
   });
 }
 
@@ -70,7 +92,7 @@ export function useUpdateProfile() {
   
   return useMutation({
     mutationFn: (data: Partial<UserProfile>) => 
-      api.post<UserProfile>('/api/v1/profile/update', data),
+      api.post<UserProfile>('/profile/update', data),
     onSuccess: () => {
       // Invalidate the 'profile' query cache so the browser refetches fresh data
       queryClient.invalidateQueries({ queryKey: ['profile'] });
@@ -85,7 +107,7 @@ export function useUpdateProfile() {
 export function useResume() {
   return useQuery<Resume>({
     queryKey: ['resume'],
-    queryFn: () => api.get<Resume>('/api/v1/resume/base'),
+    queryFn: () => api.get<Resume>('/resume/base'),
   });
 }
 
@@ -94,7 +116,7 @@ export function useUpdateResume() {
   
   return useMutation({
     mutationFn: (data: Resume) => 
-      api.post<Resume>('/api/v1/resume/base', data),
+      api.post<Resume>('/resume/base', data),
     onSuccess: () => {
       // Invalidate 'resume' so any list previews are updated
       queryClient.invalidateQueries({ queryKey: ['resume'] });

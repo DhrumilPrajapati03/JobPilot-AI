@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useProfile, useUpdateProfile, useResume, useUpdateResume } from '../hooks/use-profile';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -6,13 +7,17 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Separator } from '../components/ui/separator';
-import { User, Briefcase, Code2, GraduationCap, FolderKanban, Plus, Trash2, Save, Loader2 } from 'lucide-react';
+import { User, Briefcase, Code2, FolderKanban, Plus, Trash2, Save, Loader2 } from 'lucide-react';
+import { PreferencesPanel } from '../components/profile/PreferencesPanel';
+import { AnswerBankPanel } from '../components/profile/AnswerBankPanel';
 
 export default function Profile() {
   // 1. Fetch data from backend using our custom React Query hooks
   const { data: profile, isLoading: isProfileLoading } = useProfile();
   const { data: resume, isLoading: isResumeLoading } = useResume();
 
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') || 'personal';
   const updateProfileMutation = useUpdateProfile();
   const updateResumeMutation = useUpdateResume();
 
@@ -162,18 +167,37 @@ export default function Profile() {
     <div className="page-profile space-y-6">
       <div className="profile-header flex justify-between items-center">
         <div>
-          <h2>Identity Vault</h2>
-          <p className="text-muted">Your central career data store. Powering custom resumes and emails.</p>
+          <h2>Profile & resume</h2>
+          <p className="text-muted">Your base resume, job preferences and saved answers — everything the assistant works from.</p>
         </div>
       </div>
 
-      <Tabs defaultValue="personal" className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-4 bg-muted">
-          <TabsTrigger value="personal">Personal</TabsTrigger>
-          <TabsTrigger value="experience">Experience</TabsTrigger>
-          <TabsTrigger value="projects">Projects</TabsTrigger>
-          <TabsTrigger value="skills">Skills</TabsTrigger>
+      <Tabs defaultValue={initialTab} className="w-full">
+        <TabsList className="flex w-full max-w-2xl overflow-x-auto rounded-lg bg-secondary p-1">
+          {[
+            ['personal', 'Personal'],
+            ['experience', 'Experience'],
+            ['projects', 'Projects'],
+            ['skills', 'Skills'],
+            ['preferences', 'Preferences'],
+            ['answers', 'Answers'],
+          ].map(([value, label]) => (
+            <TabsTrigger
+              key={value}
+              value={value}
+              className="flex-1 whitespace-nowrap rounded-md px-3 py-1.5 text-sm text-muted-foreground data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+            >
+              {label}
+            </TabsTrigger>
+          ))}
         </TabsList>
+
+        <TabsContent value="preferences" className="mt-4">
+          <PreferencesPanel profile={profile} />
+        </TabsContent>
+        <TabsContent value="answers" className="mt-4">
+          <AnswerBankPanel skills={skills.primary} />
+        </TabsContent>
 
         {/* ------------------- PERSONAL INFO TAB ------------------- */}
         <TabsContent value="personal">
@@ -426,9 +450,9 @@ export default function Profile() {
                 </div>
                 <div className="flex flex-wrap gap-1.5 pt-2">
                   {skills.secondary.map(s => (
-                    <span key={s} className="inline-flex items-center gap-1 bg-accent/10 text-accent-foreground px-2.5 py-1 rounded-full text-xs font-medium">
+                    <span key={s} className="inline-flex items-center gap-1 bg-accent/10 text-accent px-2.5 py-1 rounded-full text-xs font-medium">
                       {s}
-                      <button onClick={() => removeSkill('secondary', s)} className="text-accent-foreground/70 hover:text-accent-foreground hover:bg-accent/20 rounded-full p-0.5">×</button>
+                      <button onClick={() => removeSkill('secondary', s)} className="text-accent/70 hover:text-accent hover:bg-accent/20 rounded-full p-0.5">×</button>
                     </span>
                   ))}
                 </div>
