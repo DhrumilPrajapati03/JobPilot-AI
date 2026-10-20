@@ -3,11 +3,17 @@
 from fastapi import APIRouter
 
 from app.api.v1 import (
+    agent,
     analytics,
+    answers,
     applications,
     auth,
+    autopilot,
     contacts,
+    discovery,
+    network,
     email,
+    extension,
     profile,
     resume,
 )
@@ -30,6 +36,11 @@ api_v1_router.include_router(
     tags=["Applications"],
 )
 api_v1_router.include_router(
+    answers.router,
+    prefix="/answers",
+    tags=["Answer Bank"],
+)
+api_v1_router.include_router(
     resume.router,
     prefix="/resume",
     tags=["Resume"],
@@ -43,6 +54,31 @@ api_v1_router.include_router(
     contacts.router,
     prefix="/contacts",
     tags=["HR Contacts"],
+)
+api_v1_router.include_router(
+    agent.router,
+    prefix="/agent",
+    tags=["Assistant"],
+)
+api_v1_router.include_router(
+    discovery.router,
+    prefix="/discovery",
+    tags=["Job Discovery"],
+)
+api_v1_router.include_router(
+    network.router,
+    prefix="/network",
+    tags=["Network & Referrals"],
+)
+api_v1_router.include_router(
+    autopilot.router,
+    prefix="/autopilot",
+    tags=["Autopilot"],
+)
+api_v1_router.include_router(
+    extension.router,
+    prefix="/extension",
+    tags=["Chrome extension"],
 )
 api_v1_router.include_router(
     analytics.router,

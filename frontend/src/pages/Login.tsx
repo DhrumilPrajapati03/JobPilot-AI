@@ -1,51 +1,26 @@
 // ============================================================
-// JobPilot AI — Login Page
+// JobPilot — Login
 // ============================================================
 
+import { Navigate } from 'react-router-dom';
 import { LoginForm } from '../components/auth/LoginForm';
-import { Rocket } from 'lucide-react';
+import { useAuth } from '../hooks/use-auth';
+import { ROUTES } from '../lib/constants';
 
 export default function Login() {
+  const { isAuthenticated } = useAuth();
+  if (isAuthenticated) return <Navigate to={ROUTES.CHAT} replace />;
+
   return (
     <div className="login-page">
-      {/* Left Panel — Brand */}
-      <div className="login-brand-panel">
-        <div className="login-brand-content">
-          <div className="login-logo">
-            <div className="login-logo-icon">
-              <Rocket size={32} />
-            </div>
-            <h1>JobPilot AI</h1>
-          </div>
-          <p className="login-tagline">
-            Your autonomous career intelligence system.
-            <br />
-            Tailored resumes, personalised outreach, zero friction.
-          </p>
-          <div className="login-features">
-            <div className="login-feature-item">
-              <div className="login-feature-dot" />
-              <span>AI-tailored resumes in seconds</span>
-            </div>
-            <div className="login-feature-item">
-              <div className="login-feature-dot" />
-              <span>Personalised cold emails & LinkedIn DMs</span>
-            </div>
-            <div className="login-feature-item">
-              <div className="login-feature-dot" />
-              <span>Full application pipeline tracking</span>
-            </div>
-          </div>
+      <div className="w-full max-w-sm">
+        <div className="mb-8 flex items-center justify-center gap-2">
+          <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-xs font-bold text-primary-foreground">JP</span>
+          <span className="text-lg font-semibold tracking-tight">JobPilot</span>
         </div>
-      </div>
-
-      {/* Right Panel — Form */}
-      <div className="login-form-panel">
-        <div className="login-form-container">
-          <h2>Welcome back</h2>
-          <p className="login-form-subtitle">
-            Enter your email to receive a magic login link.
-          </p>
+        <div className="rounded-2xl border bg-card p-6 shadow-sm">
+          <h1 className="text-xl font-semibold tracking-tight">Sign in</h1>
+          <p className="mb-6 mt-1 text-sm text-muted-foreground">We'll email you a magic link — no password needed.</p>
           <LoginForm />
         </div>
       </div>

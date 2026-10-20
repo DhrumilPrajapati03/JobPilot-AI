@@ -3,13 +3,15 @@
 // ============================================================
 
 import {
-  LayoutDashboard,
-  FileText,
-  PlusCircle,
-  User,
-  BookTemplate,
   BarChart3,
+  FileText,
+  FolderKanban,
+  PlusCircle,
+  Send,
+  Radar,
   Settings,
+  User,
+  Users,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -28,17 +30,20 @@ export const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 // --- Routes ---
 export const ROUTES = {
   LOGIN: '/login',
-  DASHBOARD: '/dashboard',
+  CHAT: '/chat',
   APPLICATIONS: '/applications',
+  JOBS: '/jobs',
+  APPLY_QUEUE: '/apply',
+  NETWORK: '/network',
   NEW_APPLICATION: '/applications/new',
   APPLICATION_DETAIL: '/applications/:id',
+  ANALYTICS: '/analytics',
   PROFILE: '/profile',
   TEMPLATES: '/templates',
-  ANALYTICS: '/analytics',
   SETTINGS: '/settings',
 } as const;
 
-// --- Navigation ---
+// --- Navigation (workspace links under the chat list) ---
 export interface NavItem {
   label: string;
   path: string;
@@ -46,26 +51,37 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: NavItem[] = [
-  { label: 'Dashboard', path: ROUTES.DASHBOARD, icon: LayoutDashboard },
-  { label: 'Applications', path: ROUTES.APPLICATIONS, icon: FileText },
-  { label: 'New Application', path: ROUTES.NEW_APPLICATION, icon: PlusCircle },
-  { label: 'Profile', path: ROUTES.PROFILE, icon: User },
-  { label: 'Templates', path: ROUTES.TEMPLATES, icon: BookTemplate },
+  { label: 'Job feed', path: ROUTES.JOBS, icon: Radar },
+  { label: 'Apply queue', path: ROUTES.APPLY_QUEUE, icon: Send },
+  { label: 'Applications', path: ROUTES.APPLICATIONS, icon: FolderKanban },
+  { label: 'Network', path: ROUTES.NETWORK, icon: Users },
+  { label: 'New application', path: ROUTES.NEW_APPLICATION, icon: PlusCircle },
   { label: 'Analytics', path: ROUTES.ANALYTICS, icon: BarChart3 },
+  { label: 'Profile & resume', path: ROUTES.PROFILE, icon: User },
+  { label: 'Templates', path: ROUTES.TEMPLATES, icon: FileText },
   { label: 'Settings', path: ROUTES.SETTINGS, icon: Settings },
 ];
 
 // --- Application Status Config ---
+// Colors are CSS variables so they follow light/dark mode (see index.css).
+// `mark` is the chart/dot color; `color` is pill text; `bgColor` is the pill fill.
+const status = (key: string, label: string) => ({
+  label,
+  mark: `var(--status-${key})`,
+  color: `var(--status-${key}-fg)`,
+  bgColor: `color-mix(in srgb, var(--status-${key}) 14%, transparent)`,
+});
+
 export const APPLICATION_STATUS_CONFIG = {
-  saved: { label: 'Saved', color: '#6B7280', bgColor: '#F3F4F6' },
-  applied: { label: 'Applied', color: '#1A3C5E', bgColor: '#E8EEF5' },
-  interviewing: { label: 'Interviewing', color: '#0F7B6C', bgColor: '#E6F5F2' },
-  offer: { label: 'Offer', color: '#059669', bgColor: '#D1FAE5' },
-  rejected: { label: 'Rejected', color: '#E85D26', bgColor: '#FEE2D5' },
-  archived: { label: 'Archived', color: '#9CA3AF', bgColor: '#F9FAFB' },
+  saved: status('saved', 'Saved'),
+  applied: status('applied', 'Applied'),
+  interviewing: status('interviewing', 'Interviewing'),
+  offer: status('offer', 'Offer'),
+  rejected: status('rejected', 'Rejected'),
+  archived: status('archived', 'Archived'),
 } as const;
 
-// --- Kanban Columns ---
+// --- Pipeline columns ---
 export const KANBAN_COLUMNS = [
   'saved',
   'applied',
@@ -76,6 +92,6 @@ export const KANBAN_COLUMNS = [
 ] as const;
 
 // --- App Info ---
-export const APP_NAME = 'JobPilot AI';
-export const APP_DESCRIPTION = 'Autonomous Job Application Intelligence System';
-export const APP_VERSION = '1.0.0';
+export const APP_NAME = 'JobPilot';
+export const APP_DESCRIPTION = 'AI job application assistant';
+export const APP_VERSION = '2.0.0';

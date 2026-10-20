@@ -2,7 +2,7 @@
 // JobPilot AI — Templates Library Page
 // ============================================================
 
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Mail, MessageSquare, FileText, Plus } from 'lucide-react';
@@ -12,7 +12,7 @@ export default function Templates() {
     <div className="page-templates">
       <div className="templates-header">
         <div>
-          <h2>Templates Library</h2>
+          <h2>Templates</h2>
           <p className="text-muted">
             Manage your email, DM, and cover letter templates. These are used by the AI agents as base templates.
           </p>

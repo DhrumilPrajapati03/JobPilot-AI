@@ -3,6 +3,10 @@ import ReactDOM from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import App from './App.tsx'
 import './index.css'
+import { applyTheme, getThemePreference } from './lib/theme'
+
+// Apply the saved theme before first paint.
+applyTheme(getThemePreference())
 
 const queryClient = new QueryClient({
   defaultOptions: {

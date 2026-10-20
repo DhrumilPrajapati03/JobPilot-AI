@@ -48,10 +48,7 @@ class ApiClient {
     const response = await fetch(`${this.baseUrl}${endpoint}`, config);
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({
-        message: `Request failed with status ${response.status}`,
-      }));
-      throw new Error(error.message || error.detail || 'An API error occurred');
+      throw await this.toError(response);
     }
 
     // Handle 204 No Content
@@ -59,6 +56,43 @@ class ApiClient {
       return undefined as T;
     }
 
+    return response.json();
+  }
+
+  private async toError(response: Response): Promise<Error> {
+    const error = await response.json().catch(() => ({}));
+    // FastAPI returns { detail: string } or, for validation errors, { detail: [{ msg }] }
+    const detail = Array.isArray(error.detail)
+      ? error.detail.map((d: { msg?: string }) => d.msg).join('; ')
+      : error.detail;
+    return new Error(detail || error.message || `Request failed with status ${response.status}`);
+  }
+
+  /** Fetch a binary response (e.g. a generated PDF) with auth. */
+  async getBlob(endpoint: string): Promise<Blob> {
+    const token = await this.getAuthToken();
+    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!response.ok) {
+      throw await this.toError(response);
+    }
+    return response.blob();
+  }
+
+  /** POST a file as multipart form data (the browser sets the boundary header). */
+  async upload<T>(endpoint: string, file: File, field = 'file'): Promise<T> {
+    const token = await this.getAuthToken();
+    const form = new FormData();
+    form.append(field, file);
+    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: form,
+    });
+    if (!response.ok) {
+      throw await this.toError(response);
+    }
     return response.json();
   }
 

@@ -37,9 +37,13 @@ interface UIState {
   setTrackerViewMode: (mode: 'kanban' | 'table') => void;
 }
 
+// Below this width the sidebar is an overlay drawer (see index.css).
+export const isDesktopViewport = () =>
+  typeof window === 'undefined' || window.matchMedia('(min-width: 1024px)').matches;
+
 export const useUIStore = create<UIState>((set) => ({
   // Sidebar
-  sidebarOpen: true,
+  sidebarOpen: isDesktopViewport(),
   sidebarCollapsed: false,
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
@@ -66,7 +70,7 @@ export const useUIStore = create<UIState>((set) => ({
   setActiveTab: (tab) => set({ activeTab: tab }),
 
   // Tracker view mode
-  trackerViewMode: 'kanban',
+  trackerViewMode: 'table',
   setTrackerViewMode: (mode) => set({ trackerViewMode: mode }),
 }));
 

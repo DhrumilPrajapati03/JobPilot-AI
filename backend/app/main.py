@@ -4,13 +4,15 @@ Main application module that configures the FastAPI app,
 registers middleware, and includes API routers.
 """
 
-from contextlib import asynccontextmanager
+import asyncio
+from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import api_v1_router
 from app.config import settings
+from app.services import autopilot
 
 
 @asynccontextmanager
@@ -18,7 +20,15 @@ async def lifespan(app: FastAPI):
     """Application lifespan handler for startup/shutdown events."""
     # Startup
     print("🚀 JobPilot AI API starting up...")
+    scheduler = None
+    if settings.DISCOVERY_AUTO_SCAN and autopilot.server_ready():
+        scheduler = asyncio.create_task(autopilot.scheduler_loop())
+        print("🌙 Autopilot: nightly scans and morning digests are on")
     yield
+    if scheduler:
+        scheduler.cancel()
+        with suppress(asyncio.CancelledError):
+            await scheduler
     # Shutdown
     print("👋 JobPilot AI API shutting down...")
 
@@ -39,7 +49,7 @@ app = FastAPI(
 # CORS Middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL],
+    allow_origins=[o.strip().rstrip("/") for o in settings.FRONTEND_URL.split(",") if o.strip()],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -59,6 +69,9 @@ async def health_check():
     }
 
 
+from app.services.websocket import manager
+
+
 @app.websocket("/ws/agent-stream/{run_id}")
 async def agent_stream(websocket: WebSocket, run_id: str):
     """WebSocket endpoint for streaming agent progress in real-time.
@@ -70,21 +83,13 @@ async def agent_stream(websocket: WebSocket, run_id: str):
         websocket: The WebSocket connection.
         run_id: Unique identifier for the agent run to stream.
     """
-    await websocket.accept()
+    # Replays any events already emitted for this run before streaming new ones
+    if not await manager.connect(run_id, websocket):
+        return
     try:
-        await websocket.send_json({
-            "type": "connected",
-            "run_id": run_id,
-            "message": "Connected to agent stream. Waiting for updates...",
-        })
-        # TODO: Integrate with LangGraph agent execution stream
-        # This will subscribe to the agent run's event bus and
-        # forward step completions, progress updates, and results
         while True:
-            data = await websocket.receive_text()
-            await websocket.send_json({
-                "type": "ack",
-                "message": f"Received: {data}",
-            })
+            # Wait for any incoming messages to keep connection open
+            await websocket.receive_text()
     except WebSocketDisconnect:
+        manager.disconnect(run_id, websocket)
         print(f"Client disconnected from agent stream: {run_id}")
