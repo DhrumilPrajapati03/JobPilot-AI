@@ -62,10 +62,8 @@ async def _get_jwk_for_kid(kid: str) -> dict:
     return key
 
 
-async def get_current_user_id(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-) -> str:
-    """FastAPI dependency to authenticate incoming requests.
+async def _verify_token(token: str) -> dict:
+    """Verify a Supabase access token and return its payload.
 
     Algorithm-aware JWT verification:
     1. Peeks at the JWT header to read the 'alg' and 'kid' fields.
@@ -73,12 +71,11 @@ async def get_current_user_id(
     3. For ES256 / RS256: fetches the matching public key from Supabase
        JWKS and verifies the asymmetric signature.
     4. Verifies that the audience claim is 'authenticated'.
-    5. Extracts and returns the user's Supabase UUID ('sub' claim).
+    5. Ensures the user's Supabase UUID ('sub' claim) is present.
 
     Raises:
         HTTPException 401: If the token is missing, invalid, or expired.
     """
-    token = credentials.credentials
     try:
         # --- Step 1: Peek at the header (no signature verification yet) ---
         header = jwt.get_unverified_header(token)
@@ -105,14 +102,13 @@ async def get_current_user_id(
             audience="authenticated",
         )
 
-        # --- Step 4: Extract the user ID ---
-        user_id = payload.get("sub")
-        if not user_id:
+        # --- Step 4: Ensure the user ID is present ---
+        if not payload.get("sub"):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Token payload is missing 'sub' claim.",
             )
-        return user_id
+        return payload
 
     except HTTPException:
         # Re-raise our own HTTPExceptions without wrapping them
@@ -129,11 +125,20 @@ async def get_current_user_id(
         )
 
 
+async def get_current_user_id(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+) -> str:
+    """FastAPI dependency that returns the verified user's Supabase UUID."""
+    payload = await _verify_token(credentials.credentials)
+    return payload["sub"]
+
+
 @dataclass
 class CurrentUser:
     """Holds the verified user identity for use in endpoint handlers."""
     id: str
     token: str
+    email: str = ""
 
 
 async def get_current_user(
@@ -145,5 +150,9 @@ async def get_current_user(
     Supabase database calls, so the user's JWT can be passed to the
     Supabase client and RLS policies work correctly.
     """
-    user_id = await get_current_user_id(credentials)
-    return CurrentUser(id=user_id, token=credentials.credentials)
+    payload = await _verify_token(credentials.credentials)
+    return CurrentUser(
+        id=payload["sub"],
+        token=credentials.credentials,
+        email=payload.get("email") or "",
+    )

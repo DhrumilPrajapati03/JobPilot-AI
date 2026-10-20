@@ -1,7 +1,7 @@
 import os
 import chromadb
 from app.models.resume import Resume
-from app.services.llm import get_embeddings_client
+from app.services.llm import EMBEDDING_COLLECTIONS, get_embeddings
 
 # 1. Initialize the persistent local Chroma DB client
 # This creates a folder "data/chroma" inside your backend directory to persist data
@@ -10,7 +10,7 @@ chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
 
 # Get or create our vector collection
 # We pass the LangChain embedding client's embedding functions so Chroma uses it automatically
-embeddings_client = get_embeddings_client()
+EMBEDDINGS_ID, embeddings_client = get_embeddings()
 
 # Chroma requires an embedding function dictionary format
 class ChromaEmbeddingFunction:
@@ -25,7 +25,7 @@ class ChromaEmbeddingFunction:
         return self.__call__(input)
 
 collection = chroma_client.get_or_create_collection(
-    name="resume_sections",
+    name=EMBEDDING_COLLECTIONS[EMBEDDINGS_ID],
     embedding_function=ChromaEmbeddingFunction()
 )
 

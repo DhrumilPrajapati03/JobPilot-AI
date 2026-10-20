@@ -7,7 +7,7 @@ import docx
 import pypdf
 from io import BytesIO
 from app.models.resume import Resume
-from app.services.llm import get_llm_client
+from app.services.llm import get_default_llm, with_structured
 
 
 def extract_text_from_pdf(file_bytes: bytes) -> str:
@@ -35,11 +35,10 @@ def parse_resume_text(text: str) -> Resume:
 
     Uses LangChain structured output to enforce schema validation.
     """
-    # Using Groq (Llama 3.1 70B) for fast and structured parsing
-    llm = get_llm_client("groq")
+    llm = get_default_llm(task="light")
     
     # Force the LLM to output structural JSON matching the Resume Pydantic model
-    structured_llm = llm.with_structured_output(Resume)
+    structured_llm = with_structured(llm, Resume)
     
     prompt = (
         "You are an expert resume parsing assistant. Analyze the raw resume text provided "

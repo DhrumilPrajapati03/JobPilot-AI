@@ -42,3 +42,21 @@ def get_supabase_admin_client() -> Client:
     if not settings.SUPABASE_URL or not settings.SUPABASE_SERVICE_KEY:
         raise ValueError("SUPABASE_URL and SUPABASE_SERVICE_KEY must be set in your environment.")
     return create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_KEY)
+
+
+PAGE_SIZE = 1000  # PostgREST's default max rows per response
+
+
+def select_all(build_query, page_size: int = PAGE_SIZE) -> list[dict]:
+    """Read every row of a query, page by page.
+
+    ``build_query`` returns a fresh filtered query each call, e.g.
+    ``lambda: client.table("t").select("*").eq("user_id", uid).order("id")``.
+    Supabase caps responses at 1000 rows, so large tables need paging.
+    """
+    rows: list[dict] = []
+    while True:
+        batch = build_query().range(len(rows), len(rows) + page_size - 1).execute().data or []
+        rows.extend(batch)
+        if len(batch) < page_size:
+            return rows
