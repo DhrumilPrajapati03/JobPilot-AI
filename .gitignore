@@ -1,0 +1,12 @@
+# Local credentials and environment overrides
+.env
+.env.*
+!.env.example
+
+# Generated application data and local tooling caches
+backend/data/
+.mypy_cache/
+
+# Local diagnostic output and empty lockfile from the repository root
+/backend/20
+/package-lock.json
