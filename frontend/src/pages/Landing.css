@@ -1,0 +1,554 @@
+/* Every selector is scoped to the public landing page. App theme tokens are untouched. */
+.jobpilot-landing {
+  --lp-bg: #0f0f0f;
+  --lp-surface: #181818;
+  --lp-blue: #51a2ff;
+  --lp-lime: #d4ff4a;
+  --lp-line: rgba(255, 255, 255, .12);
+  --lp-text: #f6f6f6;
+  --lp-muted: #a2a2a2;
+  --lp-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  background: var(--lp-bg);
+  color: var(--lp-text);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  overflow: clip;
+  color-scheme: dark;
+}
+.jobpilot-landing *, .jobpilot-landing *::before, .jobpilot-landing *::after { box-sizing: border-box; }
+.jobpilot-landing :is(h1,h2,h3,h4,p,ol,ul) { margin: 0; }
+.jobpilot-landing :is(a,button) { -webkit-tap-highlight-color: transparent; }
+.jobpilot-landing a { color: inherit; text-decoration: none; }
+.jobpilot-landing button { font: inherit; cursor: pointer; }
+.jobpilot-landing :is(button,a,summary,[tabindex]):focus-visible { outline: 2px solid var(--lp-blue); outline-offset: 5px; }
+.jobpilot-landing :is(section,main) { scroll-margin-top: 95px; }
+.jobpilot-landing svg { flex-shrink: 0; }
+.jobpilot-landing .lp-container { width: min(1200px, calc(100% - 96px)); margin-inline: auto; }
+.jobpilot-landing .lp-eyebrow { display: inline-block; font: 10px/1.5 var(--lp-mono); letter-spacing: .09em; text-transform: uppercase; color: var(--lp-muted); }
+.jobpilot-landing .lp-section { padding-block: 108px; }
+.jobpilot-landing h2 { font-size: clamp(32px, 3.5vw, 48px); line-height: 1.12; letter-spacing: -.05em; font-weight: 500; margin-top: 22px; }
+.jobpilot-landing h3 { font-weight: 500; letter-spacing: -.025em; }
+.jobpilot-landing .lp-blue-text { color: var(--lp-blue); }
+.jobpilot-landing .lp-soft-text { color: #777; }
+.jobpilot-landing .lp-muted { font-size: 10px; color: var(--lp-muted); }
+.jobpilot-landing .lp-row { display: flex; align-items: center; gap: 12px; }
+.jobpilot-landing .lp-row > :last-child { margin-left: auto; }
+.jobpilot-landing .lp-light { --lp-line: rgba(15,15,15,.12); --lp-text: #171717; --lp-muted: #626262; color: var(--lp-text); background: #f6f6f6; color-scheme: light; }
+.jobpilot-landing .lp-light .lp-blue-text { color: #1865b5; }
+.jobpilot-landing .lp-section-copy { color: var(--lp-muted); margin-top: 24px; max-width: 390px; font-size: 15px; line-height: 1.85; }
+.jobpilot-landing .lp-button { display: inline-flex; align-items: center; justify-content: center; gap: 22px; min-height: 48px; padding: 12px 23px; border: 1px solid transparent; border-radius: 5px; background: var(--lp-blue); color: #0a1726; font: 11px/1.5 var(--lp-mono); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; transition: background .2s, transform .2s; }
+.jobpilot-landing .lp-button:hover { background: #83bcff; transform: translateY(-2px); }
+.jobpilot-landing .lp-button-outline { color: #ddd; background: transparent; border-color: #3b3b3b; }
+.jobpilot-landing .lp-button-outline:hover { background: #222; }
+.jobpilot-landing .lp-button-small { min-height: 38px; padding: 8px 14px; font-size: 10px; gap: 17px; }
+.jobpilot-landing .lp-cta-row { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+.jobpilot-landing .lp-brand { display: inline-flex; gap: 10px; align-items: center; font-size: 19px; font-weight: 600; letter-spacing: -.7px; white-space: nowrap; }
+.jobpilot-landing .lp-brand-ai { color: #858585; font-weight: 400; }
+.jobpilot-landing .lp-mark { width: 31px; height: 31px; display: grid; place-items: center; color: var(--lp-blue); border: 1px solid #3b4d62; border-radius: 7px; background: #142030; }
+.jobpilot-landing .lp-nav { position: sticky; top: 0; z-index: 40; background: rgba(15,15,15,.94); backdrop-filter: blur(16px); border-bottom: 1px solid var(--lp-line); }
+.jobpilot-landing .lp-nav-inner { min-height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 26px; }
+.jobpilot-landing .lp-desktop-links { display: flex; gap: 27px; }
+.jobpilot-landing :is(.lp-desktop-links a,.lp-login) { font: 10px var(--lp-mono); text-transform: uppercase; color: #b1b1b1; letter-spacing: .03em; transition: color .2s; }
+.jobpilot-landing .lp-desktop-links a:hover, .jobpilot-landing .lp-login:hover { color: white; }
+.jobpilot-landing .lp-nav-actions { display: flex; gap: 24px; align-items: center; }
+.jobpilot-landing .lp-login { display: flex; gap: 6px; align-items: center; }
+.jobpilot-landing .lp-menu-button { display: none; background: transparent; color: #fff; border: 1px solid var(--lp-line); border-radius: 5px; padding: 9px; }
+.jobpilot-landing .lp-mobile-menu { padding: 10px 24px 24px; border-top: 1px solid var(--lp-line); }
+.jobpilot-landing .lp-mobile-menu a { display: flex; justify-content: space-between; padding: 13px 0; border-bottom: 1px solid var(--lp-line); }
+.jobpilot-landing .lp-skip { position: fixed; top: -80px; left: 20px; z-index: 60; padding: 12px 20px; background: var(--lp-blue); color: #111; }
+.jobpilot-landing .lp-skip:focus { top: 10px; }
+.lp-loading { min-height: 100vh; display: grid; place-items: center; background: #0f0f0f; color: #51a2ff; }
+
+/* The hero uses a quiet technical grid and a real, selectable product preview. */
+.jobpilot-landing .lp-hero { position: relative; background-image: linear-gradient(90deg, transparent calc(50% - 1px), #ffffff04 50%, transparent calc(50% + 1px)); }
+.jobpilot-landing .lp-hero-content { padding-top: 65px; position: relative; border-inline: 1px solid #ffffff08; }
+.jobpilot-landing .lp-hero-badge { display: flex; width: fit-content; margin: 0 auto; align-items: center; gap: 10px; padding: 6px 10px; color: #b9b9b9; border: 1px solid #292929; border-radius: 4px; font-size: 9px; }
+.jobpilot-landing .lp-live-dot { display: inline-block; width: 6px; height: 6px; background: var(--lp-lime); border-radius: 50%; flex-shrink: 0; }
+.jobpilot-landing .lp-hero-badge .lp-live-dot { animation: lp-dot-pulse 3s ease-in-out 3; }
+.jobpilot-landing h1 { font-size: clamp(45px, 5.8vw, 80px); line-height: 1.085; font-weight: 500; letter-spacing: -.066em; text-align: center; margin: 27px auto 0; }
+.jobpilot-landing .lp-headline-highlight { color: var(--lp-blue); position: relative; display: inline-block; background: #51a2ff10; padding: 0 10px 4px; border: 1px solid #51a2ff30; }
+.jobpilot-landing .lp-headline-highlight::before, .jobpilot-landing .lp-headline-highlight::after { content: ''; position: absolute; width: 5px; height: 5px; background: var(--lp-blue); top: -3px; }
+.jobpilot-landing .lp-headline-highlight::before { left: -3px; }
+.jobpilot-landing .lp-headline-highlight::after { right: -3px; }
+.jobpilot-landing .lp-corner::before, .jobpilot-landing .lp-corner::after { content: ''; position: absolute; bottom: -3px; width: 5px; height: 5px; background: var(--lp-blue); }
+.jobpilot-landing .lp-corner::before { left: -3px; }
+.jobpilot-landing .lp-corner::after { right: -3px; }
+.jobpilot-landing .lp-period { color: var(--lp-blue); }
+.jobpilot-landing .lp-hero-copy { text-align: center; color: #999; font-size: 15px; line-height: 1.85; margin: 24px auto 27px; padding: 0 16px; }
+.jobpilot-landing .lp-hero-note { display: flex; justify-content: center; gap: 21px; margin: 16px 0 52px; color: #8f8f8f; font-size: 10px; }
+.jobpilot-landing .lp-hero-note span { display: flex; align-items: center; gap: 5px; }
+.jobpilot-landing .lp-hero-note svg { color: #b4b4b4; }
+.jobpilot-landing .lp-hero-coordinate { position: absolute; left: 16px; top: 240px; writing-mode: vertical-rl; font: 9px var(--lp-mono); color: #646464; letter-spacing: .12em; }
+.jobpilot-landing .lp-product-preview { text-align: left; background: #151515; border: 1px solid #343434; border-radius: 11px; box-shadow: 0 30px 100px #0005, 0 0 70px #51a2ff08; overflow: hidden; }
+.jobpilot-landing .lp-preview-topbar { display: flex; align-items: center; gap: 20px; padding: 12px 18px; border-bottom: 1px solid #2a2a2a; background: #1b1b1b; font: 9px var(--lp-mono); letter-spacing: .05em; color: #969696; }
+.jobpilot-landing .lp-window-dots { display: flex; gap: 5px; }
+.jobpilot-landing .lp-window-dots i { width: 6px; height: 6px; border-radius: 50%; background: #4c4c4c; }
+.jobpilot-landing .lp-preview-topbar .lp-demo-label { margin-left: auto; }
+.jobpilot-landing .lp-demo-label { display: inline-flex; align-items: center; gap: 6px; font: 9px/1.5 var(--lp-mono); color: var(--lp-muted); white-space: nowrap; }
+.jobpilot-landing .lp-demo-label > span { width: 5px; height: 5px; border-radius: 50%; background: #b0b0b0; }
+.jobpilot-landing .lp-preview-body { display: grid; grid-template-columns: 185px minmax(0,1fr); }
+.jobpilot-landing .lp-preview-sidebar { border-right: 1px solid #292929; padding: 24px 13px 17px; display: flex; flex-direction: column; }
+.jobpilot-landing .lp-preview-brand { font-weight: 600; margin-left: 10px; font-size: 17px; }
+.jobpilot-landing .lp-preview-brand > span { font: 10px var(--lp-mono); color: #737373; }
+.jobpilot-landing .lp-preview-sidebar-label { margin: 37px 10px 12px; color: #777; font: 8px var(--lp-mono); letter-spacing: .08em; }
+.jobpilot-landing .lp-preview-sidebar button { display: flex; gap: 9px; align-items: center; text-align: left; font-size: 11px; padding: 10px; border-radius: 4px; color: #929292; margin-bottom: 4px; background: transparent; border: 1px solid transparent; }
+.jobpilot-landing .lp-preview-sidebar button.is-active { background: #51a2ff12; color: #88bdff; border-color: #51a2ff1a; }
+.jobpilot-landing .lp-preview-sidebar button > span { margin-left: auto; font: 9px var(--lp-mono); }
+.jobpilot-landing .lp-preview-identity { margin-top: auto; padding-top: 60px; display: flex; gap: 8px; align-items: center; font-size: 10px; }
+.jobpilot-landing .lp-preview-identity > span { width: 28px; height: 28px; border-radius: 50%; background: #343a33; display: grid; place-items: center; color: #bdcab9; font-size: 9px; }
+.jobpilot-landing .lp-preview-identity small { display: block; color: #777; font-size: 9px; }
+.jobpilot-landing .lp-preview-main { padding: 26px; min-width: 0; }
+.jobpilot-landing .lp-preview-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 22px; }
+.jobpilot-landing .lp-preview-heading .lp-eyebrow { font-size: 8px; }
+.jobpilot-landing .lp-preview-heading h3 { font-size: 21px; margin-top: 4px; letter-spacing: -.045em; }
+.jobpilot-landing .lp-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border: 1px solid var(--lp-line); border-radius: 20px; font: 9px/1.5 var(--lp-mono); color: var(--lp-muted); }
+.jobpilot-landing .lp-preview-columns { display: grid; grid-template-columns: 1.15fr 1fr; gap: 16px; }
+.jobpilot-landing .lp-featured-job { padding: 20px; border: 1px solid #363636; border-radius: 7px; background: #1c1c1c; }
+.jobpilot-landing .lp-company-avatar { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; width: 37px; height: 37px; border-radius: 7px; background: #e9e5f5; color: #3f355c; font-size: 21px; font-weight: 500; position: relative; }
+.jobpilot-landing .lp-company-avatar > span { font-size: 12px; margin-left: 1px; }
+.jobpilot-landing .lp-fit-badge { font-size: 21px; color: var(--lp-lime); text-align: right; line-height: 1.2; }
+.jobpilot-landing .lp-fit-badge small { display: block; font: 7px var(--lp-mono); color: #929292; margin-top: 4px; }
+.jobpilot-landing .lp-job-company { font-size: 10px; display: flex; align-items: center; gap: 5px; color: #aaa; margin-top: 20px; }
+.jobpilot-landing .lp-featured-job h4 { font-weight: 500; font-size: 26px; line-height: 1.2; letter-spacing: -.04em; margin-top: 8px; }
+.jobpilot-landing .lp-featured-job > p { font-size: 9px; color: #929292; margin: 12px 0 16px; }
+.jobpilot-landing .lp-featured-job > p span { padding-inline: 5px; }
+.jobpilot-landing .lp-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+.jobpilot-landing .lp-tags > span { font: 9px/1.5 var(--lp-mono); padding: 3px 6px; border: 1px solid var(--lp-line); border-radius: 3px; color: var(--lp-muted); }
+.jobpilot-landing .lp-eligibility { display: flex; align-items: center; gap: 5px; padding-top: 17px; margin-top: 17px; border-top: 1px solid #ffffff0a; color: #adbd9e; font-size: 9px; }
+.jobpilot-landing .lp-eligibility > span { font: 7px var(--lp-mono); margin-left: auto; color: #777; }
+.jobpilot-landing .lp-demo-action { border: 1px solid #51a2ff35; background: #51a2ff14; color: #a0caff; display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 10px; padding: 11px 12px; font-size: 10px; border-radius: 4px; margin-top: 18px; }
+.jobpilot-landing .lp-demo-action:hover { background: #51a2ff25; }
+.jobpilot-landing .lp-package-inline { margin-top: 16px; display: grid; gap: 4px; font-size: 10px; color: #bad986; }
+.jobpilot-landing .lp-package-inline span { display: flex; align-items: center; gap: 7px; }
+.jobpilot-landing .lp-agent-mini { padding: 17px; border: 1px solid #2c2c2c; border-radius: 7px; align-self: stretch; display: flex; flex-direction: column; background: #171717; }
+.jobpilot-landing .lp-agent-title { display: flex; align-items: center; gap: 8px; font-size: 11px; }
+.jobpilot-landing .lp-agent-title > svg:first-child { color: var(--lp-blue); }
+.jobpilot-landing .lp-agent-title > svg:last-child { margin-left: auto; color: #777; }
+.jobpilot-landing .lp-agent-mini > p { font-size: 11px; line-height: 1.85; color: #aaa; margin-top: 23px; }
+.jobpilot-landing .lp-agent-log { display: grid; gap: 13px; margin: 24px 0; }
+.jobpilot-landing .lp-agent-log span { display: flex; gap: 8px; align-items: center; font: 9px var(--lp-mono); color: #a3a3a3; }
+.jobpilot-landing .lp-agent-log svg { color: #a9c38c; }
+.jobpilot-landing .lp-review-notice { display: flex; gap: 9px; padding: 12px 10px; background: #d4ff4a08; border: 1px solid #d4ff4a15; border-radius: 4px; font-size: 10px; color: #d2dfb6; }
+.jobpilot-landing .lp-review-notice small { display: block; color: #909582; font-size: 9px; margin-top: 3px; }
+.jobpilot-landing .lp-agent-input { display: flex; justify-content: space-between; align-items: center; gap: 5px; margin-top: auto; padding-top: 24px; font-size: 9px; color: #858585; }
+.jobpilot-landing .lp-preview-caption { display: flex; justify-content: space-between; gap: 12px; color: #797979; padding: 20px 0 32px; font: 8px/1.5 var(--lp-mono); }
+.jobpilot-landing .lp-preview-caption > span:first-child { display: flex; align-items: center; gap: 8px; }
+.jobpilot-landing .lp-tiny-square { width: 4px; height: 4px; background: var(--lp-blue); }
+
+/* Source wordmarks are neutral representations, not third-party logo assets. */
+.jobpilot-landing .lp-sources { padding: 38px 0 32px; border-block: 1px solid var(--lp-line); background: #121212; }
+.jobpilot-landing .lp-source-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; }
+.jobpilot-landing .lp-source-heading h2 { font-size: 20px; letter-spacing: -.035em; margin-top: 7px; }
+.jobpilot-landing .lp-source-heading p { font-size: 11px; line-height: 1.8; color: #969696; }
+.jobpilot-landing .lp-source-strip { display: grid; grid-template-columns: repeat(6,1fr); margin: 28px 0 16px; border: 1px solid #2b2b2b; border-radius: 6px; overflow: hidden; }
+.jobpilot-landing .lp-source { padding: 22px 12px; display: flex; align-items: center; justify-content: center; gap: 9px; border-right: 1px solid #2b2b2b; font-size: 14px; color: #c2c2c2; white-space: nowrap; }
+.jobpilot-landing .lp-source:last-child { border: 0; }
+.jobpilot-landing .lp-source-symbol { font: 600 20px Georgia,serif; color: #96a594; }
+.jobpilot-landing .lp-source-symbol-1 { color: #9ab1c9; }
+.jobpilot-landing .lp-source-symbol-2 { color: #c3b5d6; }
+.jobpilot-landing .lp-source-symbol-3 { font-size: 13px; color: #b3c6a4; }
+.jobpilot-landing .lp-source-symbol-4 { color: #cad6e1; }
+.jobpilot-landing .lp-source-symbol-5 { color: #d2ae8f; }
+.jobpilot-landing .lp-source-disclaimer { text-align: center; font-size: 9px; color: #828282; }
+
+/* The light workflow section introduces the actual product, step by step. */
+.jobpilot-landing .lp-section-heading { display: flex; justify-content: space-between; align-items: end; gap: 24px; margin-bottom: 36px; }
+.jobpilot-landing .lp-section-heading > p { font-size: 13px; color: var(--lp-muted); line-height: 1.8; padding-bottom: 5px; }
+.jobpilot-landing .lp-workflow { background: #fff; border: 1px solid #dcdcdc; border-radius: 9px; overflow: hidden; box-shadow: 0 8px 30px #00000003; }
+.jobpilot-landing .lp-workflow-tabs { display: grid; grid-template-columns: repeat(5, 1fr); border-bottom: 1px solid #dedede; background: #efefed; }
+.jobpilot-landing .lp-workflow-tabs button { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 22px 12px; font: 10px var(--lp-mono); text-transform: uppercase; border: 0; border-right: 1px solid #dedede; border-bottom: 2px solid transparent; background: transparent; color: #626262; transition: background .2s; }
+.jobpilot-landing .lp-workflow-tabs button:last-child { border-right: 0; }
+.jobpilot-landing .lp-workflow-tabs button > span { color: #737373; font-size: 9px; }
+.jobpilot-landing .lp-workflow-tabs button[aria-selected=true] { color: #155895; border-bottom-color: #2485e7; background: white; }
+.jobpilot-landing .lp-workflow-tabs button:hover { background: #fff; }
+.jobpilot-landing .lp-workflow-panel { padding: 26px 36px 35px; min-height: 365px; }
+.jobpilot-landing .lp-workflow-context { display: flex; justify-content: space-between; margin-bottom: 24px; }
+.jobpilot-landing .lp-workflow-context .lp-demo-label > span { background: #277bc7; }
+.jobpilot-landing .lp-demo-feed-row { display: flex; align-items: center; gap: 16px; padding: 16px 5px; border-top: 1px solid #ebebeb; }
+.jobpilot-landing .lp-demo-feed-row strong { font-size: 14px; font-weight: 500; }
+.jobpilot-landing .lp-demo-feed-row p { font-size: 11px; color: #606060; margin-top: 3px; }
+.jobpilot-landing .lp-demo-feed-row small { font: 9px var(--lp-mono); color: #727272; }
+.jobpilot-landing .lp-demo-feed-row .lp-company-avatar { width: 38px; height: 38px; }
+.jobpilot-landing .lp-demo-feed-row:nth-child(2) .lp-company-avatar { background: #e3ece4; color: #49604c; }
+.jobpilot-landing .lp-demo-feed-row:nth-child(3) .lp-company-avatar { background: #f0e8da; color: #776443; }
+.jobpilot-landing .lp-demo-feed-score { margin-left: auto; font-size: 24px; color: #1c633b; }
+.jobpilot-landing .lp-demo-feed-score small { display: block; font-size: 9px; text-align: right; }
+.jobpilot-landing .lp-workflow-footer { padding: 15px 26px; display: flex; align-items: center; justify-content: space-between; gap: 15px; background: #f8f8f7; border-top: 1px solid #e7e7e7; color: #656565; font-size: 10px; }
+.jobpilot-landing .lp-workflow-footer > span:first-child { display: flex; align-items: center; gap: 7px; }
+.jobpilot-landing .lp-workflow-footer > span:last-child { font: 8px var(--lp-mono); }
+.jobpilot-landing .lp-match-panel { display: grid; grid-template-columns: .75fr 1.4fr; align-items: center; gap: 40px; padding: 20px 0; }
+.jobpilot-landing .lp-large-score { text-align: center; border-right: 1px solid #e8e8e8; padding-right: 30px; }
+.jobpilot-landing .lp-large-score > span { font-size: 84px; line-height: 1.2; font-weight: 500; color: #246d48; letter-spacing: -.07em; }
+.jobpilot-landing .lp-large-score > span small { font-size: 32px; }
+.jobpilot-landing .lp-large-score p { font-size: 11px; }
+.jobpilot-landing .lp-large-score > small { font-size: 9px; color: #727272; }
+.jobpilot-landing .lp-match-panel h3 { font-size: 24px; margin: 10px 0 15px; }
+.jobpilot-landing .lp-match-panel p { display: flex; align-items: center; gap: 7px; font-size: 11px; margin-top: 15px; }
+.jobpilot-landing .lp-match-panel .lp-gap { color: #8b5313; }
+.jobpilot-landing .lp-gap > span { display: grid; place-items: center; border: 1px solid #ad854e; border-radius: 50%; width: 15px; height: 15px; flex-shrink: 0; font-size: 9px; }
+.jobpilot-landing .lp-tailor-panel { display: grid; grid-template-columns: 1fr 25px 1fr; gap: 25px; align-items: center; }
+.jobpilot-landing .lp-tailor-panel > div { background: #f6f6f4; padding: 28px; min-height: 190px; border: 1px solid #e3e3df; border-radius: 5px; }
+.jobpilot-landing .lp-tailor-panel > div:nth-of-type(2) { background: #edf4fa; border-color: #c9ddec; }
+.jobpilot-landing .lp-tailor-panel p { font-size: 15px; line-height: 1.9; margin-top: 15px; }
+.jobpilot-landing mark { background: #d6e8fa; color: #174d7f; padding: 0 2px; }
+.jobpilot-landing .lp-tailor-panel > small { grid-column: 1/-1; color: #696969; font-size: 10px; text-align: center; }
+.jobpilot-landing .lp-prepare-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 50px; align-items: center; }
+.jobpilot-landing .lp-prepare-panel h3 { font-size: 29px; line-height: 1.3; }
+.jobpilot-landing .lp-prepare-panel p { font-size: 12px; color: #666; margin: 15px 0; }
+.jobpilot-landing .lp-prepare-panel ul { list-style: none; padding: 0; }
+.jobpilot-landing .lp-prepare-panel li { display: flex; align-items: center; gap: 10px; font-size: 12px; padding: 14px 0; border-bottom: 1px solid #e6e6e6; }
+.jobpilot-landing .lp-prepare-panel li small { margin-left: auto; font: 9px var(--lp-mono); color: #647d62; }
+
+/* Asymmetrical feature grid with independently useful, bounded interactions. */
+.jobpilot-landing .lp-features-section { padding-top: 15px; }
+.jobpilot-landing .lp-bento { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); gap: 16px; margin-top: 40px; }
+.jobpilot-landing .lp-feature { grid-column: span 2; border: 1px solid #dedede; border-radius: 10px; padding: 28px 26px 0; background: #fff; overflow: hidden; min-width: 0; transition: border-color .25s, transform .25s; }
+.jobpilot-landing .lp-feature:hover { border-color: #b5c9da; transform: translateY(-3px); }
+.jobpilot-landing .lp-feature-match, .jobpilot-landing .lp-feature-resume { grid-column: span 3; }
+.jobpilot-landing .lp-feature-match { background: #eaf0eb; }
+.jobpilot-landing .lp-feature-resume { background: #eae7f0; }
+.jobpilot-landing .lp-feature-outreach { grid-column: span 2; background: #f0e8da; }
+.jobpilot-landing .lp-feature-digest { grid-column: span 6; display: grid; grid-template-columns: .4fr 1fr 1.2fr; column-gap: 30px; align-items: center; padding: 28px 35px; background: #ededeb; }
+.jobpilot-landing .lp-feature-digest > .lp-feature-icon { grid-row: 1/3; margin-bottom: 0; justify-self: center; }
+.jobpilot-landing .lp-feature-digest > h3 { grid-column: 2; }
+.jobpilot-landing .lp-feature-digest > p { grid-column: 2; }
+.jobpilot-landing .lp-feature-digest .lp-digest-mini { grid-column: 3; grid-row: 1/3; margin: 0; }
+.jobpilot-landing .lp-feature-icon { color: #505750; width: 36px; height: 36px; margin-bottom: 21px; display: grid; place-items: center; border: 1px solid #00000014; border-radius: 7px; }
+.jobpilot-landing .lp-feature h3 { font-size: 24px; line-height: 1.25; letter-spacing: -.04em; }
+.jobpilot-landing .lp-feature > p { font-size: 12px; line-height: 1.85; color: #656565; margin-top: 12px; max-width: 340px; }
+.jobpilot-landing .lp-match-mini { background: #fff; border: 1px solid #d2ddd2; border-radius: 8px 8px 0 0; padding: 21px; margin: 28px 0 0 24px; box-shadow: 0 5px 20px #00000003; }
+.jobpilot-landing .lp-match-mini strong { display: block; font-size: 13px; font-weight: 500; }
+.jobpilot-landing .lp-match-mini small { display: block; font-size: 9px; color: #6d6d6d; }
+.jobpilot-landing .lp-score-small { font-size: 33px; color: #2c6640; letter-spacing: -.06em; }
+.jobpilot-landing .lp-score-small > span { font-size: 14px; }
+.jobpilot-landing .lp-mini-bars { display: grid; grid-template-columns: 120px 1fr; gap: 12px 18px; margin: 25px 0 18px; align-items: center; }
+.jobpilot-landing .lp-mini-bars > span { font-size: 9px; color: #666; }
+.jobpilot-landing .lp-mini-bars > i { height: 4px; background: #e5e9e4; border-radius: 3px; overflow: hidden; }
+.jobpilot-landing .lp-mini-bars > i::after { content: ''; display: block; height: 100%; width: var(--fill); background: #769679; }
+.jobpilot-landing .lp-match-mini > small { margin-top: 15px; }
+.jobpilot-landing .lp-resume-demo { margin-top: 28px; }
+.jobpilot-landing .lp-segmented { display: flex; gap: 3px; background: #00000007; border-radius: 4px; padding: 3px; width: fit-content; margin-bottom: 16px; }
+.jobpilot-landing .lp-segmented button { display: flex; align-items: center; gap: 6px; padding: 7px 12px; border: 0; border-radius: 3px; background: transparent; color: #666; text-transform: uppercase; font: 8px var(--lp-mono); min-height: 34px; }
+.jobpilot-landing .lp-segmented button[aria-pressed=true] { color: #333; background: white; box-shadow: 0 1px 3px #0001; }
+.jobpilot-landing .lp-resume-paper { margin: 0 0 -6px 24px; background: #fff; border: 1px solid #d5d2dd; border-radius: 5px 5px 0 0; padding: 25px; min-height: 190px; transform: rotate(-1deg); }
+.jobpilot-landing .lp-resume-paper > strong { display: block; font-size: 15px; margin-top: 12px; font-weight: 500; }
+.jobpilot-landing .lp-paper-rule { height: 1px; background: #ddd; display: block; margin: 9px 0; }
+.jobpilot-landing .lp-resume-paper p { font-size: 11px; line-height: 1.9; min-height: 65px; }
+.jobpilot-landing .lp-resume-paper small { display: block; font: 8px var(--lp-mono); color: #797979; margin-top: 12px; }
+.jobpilot-landing .lp-mini-timeline { list-style: none; padding: 0; margin-top: 28px; margin-bottom: 24px; }
+.jobpilot-landing .lp-mini-timeline li { position: relative; display: flex; align-items: center; gap: 8px; padding: 11px 0; font-size: 10px; }
+.jobpilot-landing .lp-mini-timeline li:not(:last-child)::after { content: ''; position: absolute; top: 32px; height: 22px; left: 9px; width: 1px; background: #d5ddcf; }
+.jobpilot-landing .lp-mini-timeline li > span { display: grid; place-items: center; width: 20px; height: 20px; border: 1px solid #d0ddc7; border-radius: 50%; background: #edf4e9; color: #44713b; }
+.jobpilot-landing .lp-mini-timeline small { margin-left: auto; font: 7px var(--lp-mono); color: #728266; }
+.jobpilot-landing .lp-email-mini { margin-top: 27px; padding: 17px; border: 1px solid #d8cdbb; border-radius: 5px 5px 0 0; background: #fffcf8; min-height: 240px; }
+.jobpilot-landing .lp-email-mini .lp-eyebrow { font-size: 8px; }
+.jobpilot-landing .lp-email-mini .lp-pill { font-size: 7px; }
+.jobpilot-landing .lp-email-mini strong { display: block; font-size: 10px; font-weight: 500; line-height: 1.6; margin: 17px 0 14px; }
+.jobpilot-landing .lp-email-mini p { font-size: 10px; line-height: 1.8; color: #6a645b; }
+.jobpilot-landing .lp-tracker-demo { padding-top: 20px; }
+.jobpilot-landing .lp-mini-kanban { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; min-height: 180px; }
+.jobpilot-landing .lp-mini-kanban > div { padding: 12px; background: #f4f4f1; border: 1px solid #e6e6e2; border-radius: 5px; }
+.jobpilot-landing .lp-kanban-label { display: flex; align-items: center; gap: 6px; font-size: 10px; }
+.jobpilot-landing .lp-kanban-label small { margin-left: auto; color: #777; }
+.jobpilot-landing .lp-stage-dot { width: 5px; height: 5px; border-radius: 50%; background: #689fd5; flex-shrink: 0; }
+.jobpilot-landing .lp-stage-1 { background: #599e7c; }
+.jobpilot-landing .lp-stage-2 { background: #9c82bf; }
+.jobpilot-landing .lp-stage-3 { background: #bd963c; }
+.jobpilot-landing .lp-kanban-card { padding: 13px; background: white; border: 1px solid #dadad7; border-radius: 4px; margin-top: 16px; box-shadow: 0 2px 4px #00000003; }
+.jobpilot-landing .lp-kanban-card > span { font: 8px var(--lp-mono); color: #7b7b7b; }
+.jobpilot-landing .lp-kanban-card strong { font-size: 12px; display: block; margin-top: 8px; font-weight: 500; }
+.jobpilot-landing .lp-kanban-card small { display: block; margin-top: 5px; font-size: 9px; color: #777; }
+.jobpilot-landing .lp-demo-text-button { border: 0; background: transparent; color: inherit; display: inline-flex; align-items: center; gap: 9px; font: 10px var(--lp-mono); padding: 13px 0; min-height: 42px; text-decoration: underline; text-underline-offset: 4px; }
+.jobpilot-landing .lp-tracker-compact { margin: 26px -12px 12px; }
+.jobpilot-landing .lp-tracker-compact .lp-mini-kanban { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; min-height: 210px; }
+.jobpilot-landing .lp-tracker-compact .lp-mini-kanban > div { padding: 9px; min-height: 70px; }
+.jobpilot-landing .lp-tracker-compact .lp-kanban-card { padding: 7px; margin-top: 7px; }
+.jobpilot-landing .lp-tracker-compact .lp-kanban-card > span, .jobpilot-landing .lp-tracker-compact .lp-kanban-card small { display: none; }
+.jobpilot-landing .lp-tracker-compact .lp-kanban-card strong { font-size: 10px; margin: 0; }
+.jobpilot-landing .lp-digest-mini { background: white; border: 1px solid #d9d9d6; border-radius: 6px; padding: 20px; }
+.jobpilot-landing .lp-digest-mini > strong { font-size: 12px; font-weight: 500; display: block; margin: 13px 0; }
+.jobpilot-landing .lp-digest-mini > div:not(:first-child) { display: flex; align-items: center; gap: 12px; padding-block: 7px; border-top: 1px solid #ececec; font-size: 10px; color: #666; }
+.jobpilot-landing .lp-digest-mini > div > span:first-child:not(.lp-eyebrow) { font: 15px var(--lp-mono); color: #4e6d7c; }
+.jobpilot-landing .lp-digest-mini > div > svg { margin-left: auto; }
+
+/* Approval and conversation examples remain separate from authenticated state. */
+.jobpilot-landing .lp-split { display: grid; grid-template-columns: 1fr 1.1fr; align-items: center; gap: 70px; }
+.jobpilot-landing .lp-control { border-block: 1px solid #2b2b2b; background: #141414; }
+.jobpilot-landing .lp-control h2 { font-size: clamp(30px,3.1vw,43px); }
+.jobpilot-landing .lp-control-list { list-style: none; padding: 0; margin-top: 30px; display: grid; gap: 17px; }
+.jobpilot-landing .lp-control-list li { display: flex; align-items: start; gap: 9px; font-size: 11px; color: #b7b7b7; }
+.jobpilot-landing .lp-control-list svg { color: #c6dd9d; margin-top: 2px; }
+.jobpilot-landing .lp-approval-demo, .jobpilot-landing .lp-assistant-demo { border: 1px solid #343434; border-radius: 9px; background: #1a1a1a; overflow: hidden; min-width: 0; }
+.jobpilot-landing .lp-panel-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 16px 20px; border-bottom: 1px solid #333; }
+.jobpilot-landing .lp-panel-header > span:first-child { display: flex; align-items: center; gap: 8px; font-size: 11px; }
+.jobpilot-landing .lp-panel-header > span:first-child svg { color: #83b5eb; }
+.jobpilot-landing .lp-approval-body { padding: 22px; }
+.jobpilot-landing .lp-approval-body > .lp-row { flex-wrap: wrap; }
+.jobpilot-landing .lp-approval-body .lp-eyebrow { font-size: 8px; }
+.jobpilot-landing .lp-approval-status { font: 8px var(--lp-mono); color: #dfc18b; background: #dfc18b09; padding: 4px 7px; border: 1px solid #dfc18b30; border-radius: 4px; }
+.jobpilot-landing .lp-decision-approved { color: #d4ff4a; border-color: #d4ff4a50; }
+.jobpilot-landing .lp-decision-rejected { color: #a3c3e1; border-color: #a3c3e150; }
+.jobpilot-landing .lp-proposal-original, .jobpilot-landing .lp-proposal-new { border: 1px solid #383838; padding: 15px; border-radius: 5px; margin-top: 18px; }
+.jobpilot-landing .lp-proposal-original p, .jobpilot-landing .lp-proposal-new p { font-size: 12px; line-height: 1.85; margin-top: 7px; color: #a6a6a6; }
+.jobpilot-landing .lp-proposal-new { background: #51a2ff08; border-color: #51a2ff35; margin-top: 10px; }
+.jobpilot-landing .lp-proposal-new p { color: #c3d8ed; }
+.jobpilot-landing .lp-choice-selected { border-color: #d4ff4a; box-shadow: inset 0 0 0 1px #d4ff4a25; }
+.jobpilot-landing .lp-approval-reason { display: flex; gap: 8px; align-items: start; margin-top: 19px; font-size: 10px; line-height: 1.8; color: #aaa; }
+.jobpilot-landing .lp-approval-reason svg { margin-top: 2px; color: #83b5eb; }
+.jobpilot-landing .lp-approval-warning { display: flex; align-items: center; gap: 7px; color: #d3b97c; font-size: 10px; padding-top: 14px; }
+.jobpilot-landing .lp-approval-warning > span { display: grid; place-items: center; width: 13px; height: 13px; border: 1px solid #806c41; border-radius: 50%; font-size: 8px; }
+.jobpilot-landing .lp-approval-actions { display: flex; align-items: center; gap: 9px; min-height: 78px; }
+.jobpilot-landing .lp-approval-actions .lp-button { min-height: 38px; font-size: 9px; padding: 9px 12px; gap: 7px; }
+.jobpilot-landing .lp-approval-actions > span { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #cae3a4; }
+.jobpilot-landing .lp-steps-layout { display: grid; grid-template-columns: 1fr 1.4fr; gap: 100px; }
+.jobpilot-landing .lp-text-link { display: inline-flex; align-items: center; gap: 18px; margin-top: 26px; font: 11px var(--lp-mono); border-bottom: 1px solid #b7b7b7; padding-bottom: 8px; }
+.jobpilot-landing .lp-steps { list-style: none; padding: 0; }
+.jobpilot-landing .lp-steps li { display: flex; gap: 25px; border-top: 1px solid #d9d9d9; padding: 24px 0; position: relative; }
+.jobpilot-landing .lp-steps li:last-child { border-bottom: 1px solid #d9d9d9; }
+.jobpilot-landing .lp-step-number { font: 11px/2 var(--lp-mono); color: #7b7b7b; }
+.jobpilot-landing .lp-steps h3 { font-size: 18px; }
+.jobpilot-landing .lp-steps p { font-size: 12px; line-height: 1.85; color: #686868; margin-top: 8px; max-width: 390px; }
+.jobpilot-landing .lp-steps li > svg { margin-left: auto; color: #9b9b9b; }
+.jobpilot-landing .lp-assistant-section { background: #111; border-bottom: 1px solid #333; }
+.jobpilot-landing .lp-assistant-annotation { display: flex; align-items: center; gap: 8px; color: #ababab; font: 9px/1.6 var(--lp-mono); margin-top: 35px; }
+.jobpilot-landing .lp-assistant-prompts { display: flex; flex-wrap: wrap; gap: 7px; padding: 18px; border-bottom: 1px solid #303030; }
+.jobpilot-landing .lp-assistant-prompts button { display: flex; align-items: center; gap: 6px; border: 1px solid #3b3b3b; border-radius: 4px; padding: 8px 9px; background: transparent; color: #aaa; font-size: 10px; min-height: 36px; }
+.jobpilot-landing .lp-assistant-prompts button[aria-pressed=true] { background: #51a2ff12; color: #8cbffc; border-color: #51a2ff60; }
+.jobpilot-landing .lp-simulated-conversation { padding: 24px 20px; min-height: 330px; }
+.jobpilot-landing .lp-demo-user { background: #2a2a2a; border: 1px solid #363636; padding: 11px 14px; border-radius: 8px 8px 0 8px; font-size: 12px; width: fit-content; max-width: 90%; margin-left: auto; }
+.jobpilot-landing .lp-assistant-response { display: flex; align-items: start; gap: 10px; margin-top: 24px; }
+.jobpilot-landing .lp-assistant-response > div { min-width: 0; flex: 1; }
+.jobpilot-landing .lp-assistant-avatar { display: grid; place-items: center; width: 26px; height: 26px; border: 1px solid #3b506a; border-radius: 5px; background: #152232; color: #88baf4; flex-shrink: 0; }
+.jobpilot-landing .lp-tool-note { display: flex; align-items: center; gap: 7px; font: 8px/1.8 var(--lp-mono); color: #a8bc8f; }
+.jobpilot-landing .lp-assistant-response p { font-size: 11px; line-height: 1.9; color: #b6b6b6; margin-top: 10px; }
+.jobpilot-landing .lp-chat-result { display: flex; align-items: center; justify-content: space-between; gap: 13px; padding: 13px; margin-top: 16px; border: 1px solid #384636; background: #c9e8a305; border-radius: 5px; }
+.jobpilot-landing .lp-chat-result strong { font-size: 11px; font-weight: 500; display: block; }
+.jobpilot-landing .lp-chat-result small { display: block; color: #a4a4a4; font-size: 8px; margin-top: 5px; }
+.jobpilot-landing .lp-chat-result > span { color: #d4ff4a; font-size: 18px; flex-shrink: 0; }
+.jobpilot-landing .lp-chat-result-text { align-items: start; border-color: #51a2ff30; background: #51a2ff05; }
+.jobpilot-landing .lp-chat-result-text p { margin-top: 0; font-size: 10px; }
+.jobpilot-landing .lp-chat-result-text > svg { color: #8cbffc; margin-top: 3px; }
+.jobpilot-landing .lp-chat-result-text strong + p { margin-top: 9px; }
+.jobpilot-landing .lp-assistant-footer { display: flex; align-items: center; justify-content: space-between; padding: 13px 20px; border-top: 1px solid #333; color: #999; font: 8px var(--lp-mono); }
+.jobpilot-landing .lp-trust { padding: 50px 0; border-bottom: 1px solid #ddd; }
+.jobpilot-landing .lp-trust-inner { display: grid; grid-template-columns: 1fr 1.1fr; gap: 50px; align-items: center; }
+.jobpilot-landing .lp-trust-inner > div:first-child { display: flex; align-items: center; gap: 19px; }
+.jobpilot-landing .lp-trust h2 { font-size: 21px; letter-spacing: -.035em; margin: 0; }
+.jobpilot-landing .lp-trust-items { display: grid; grid-template-columns: 1fr 1fr; gap: 22px 18px; }
+.jobpilot-landing .lp-trust-items > span { display: flex; align-items: center; gap: 9px; font-size: 11px; color: #5d5d5d; }
+.jobpilot-landing .lp-trust-items svg { color: #638568; }
+.jobpilot-landing .lp-faq-layout { display: grid; grid-template-columns: 1fr 1.3fr; gap: 80px; }
+.jobpilot-landing .lp-faq-list { border-top: 1px solid #d9d9d9; }
+.jobpilot-landing .lp-faq-list details { border-bottom: 1px solid #d9d9d9; }
+.jobpilot-landing .lp-faq-list summary { display: flex; align-items: center; gap: 18px; cursor: pointer; padding: 23px 0; list-style: none; }
+.jobpilot-landing .lp-faq-list summary::-webkit-details-marker { display: none; }
+.jobpilot-landing .lp-faq-list summary h3 { font-size: 13px; line-height: 1.6; font-weight: 500; letter-spacing: -.01em; }
+.jobpilot-landing .lp-faq-number { font: 9px var(--lp-mono); color: #7a7a7a; }
+.jobpilot-landing .lp-faq-list summary svg { margin-left: auto; color: #6c6c6c; transition: transform .2s; }
+.jobpilot-landing .lp-faq-list details[open] summary svg { transform: rotate(180deg); }
+.jobpilot-landing .lp-faq-answer { padding: 0 25px 23px 32px; font-size: 12px; line-height: 1.9; color: #626262; }
+.jobpilot-landing .lp-faq-list details[open] .lp-faq-answer { animation: lp-demo-enter .25s ease-out; }
+.jobpilot-landing .lp-final-cta { text-align: center; padding: 100px 0 80px; background-image: radial-gradient(ellipse at 50% 100%,#51a2ff0c,transparent 65%),linear-gradient(90deg,transparent calc(50% - 1px),#ffffff05 50%,transparent calc(50% + 1px)); }
+.jobpilot-landing .lp-final-cta h2 { font-size: clamp(35px,4.5vw,60px); }
+.jobpilot-landing .lp-final-cta p { font-size: 14px; color: #9a9a9a; line-height: 1.9; margin: 24px 0 30px; }
+.jobpilot-landing .lp-final-label { font: 8px/1.8 var(--lp-mono); color: #7c7c7c; letter-spacing: .08em; display: block; margin-top: 24px; }
+.jobpilot-landing .lp-footer { border-top: 1px solid #272727; background: #111; }
+.jobpilot-landing .lp-footer-top { display: grid; grid-template-columns: 2fr .7fr .7fr; gap: 50px; padding: 50px 0; }
+.jobpilot-landing .lp-footer-top p { color: #8d8d8d; font-size: 11px; margin-top: 14px; }
+.jobpilot-landing .lp-footer nav { display: grid; gap: 10px; align-content: start; font-size: 11px; color: #b4b4b4; }
+.jobpilot-landing .lp-footer nav .lp-eyebrow { margin-bottom: 5px; font-size: 9px; }
+.jobpilot-landing .lp-footer nav a { display: inline-flex; align-items: center; gap: 6px; width: fit-content; }
+.jobpilot-landing .lp-footer a:hover { color: var(--lp-blue); }
+.jobpilot-landing .lp-footer-bottom { padding: 22px 0; display: flex; align-items: center; justify-content: space-between; gap: 15px; border-top: 1px solid #292929; font-size: 9px; color: #8a8a8a; }
+.jobpilot-landing .lp-footer-bottom .lp-eyebrow { font-size: 8px; }
+.jobpilot-landing .lp-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.jobpilot-landing .lp-demo-enter { animation: lp-demo-enter .25s ease-out both; }
+.jobpilot-landing [data-reveal].lp-in-view { animation: lp-section-enter .5s ease-out both; }
+@keyframes lp-demo-enter { from { opacity: .5; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes lp-section-enter { from { opacity: .5; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes lp-dot-pulse { 50% { box-shadow: 0 0 0 4px #d4ff4a10; opacity: .6; } }
+
+@media (min-width: 1600px) {
+  .jobpilot-landing .lp-hero-content { padding-top: 90px; }
+  .jobpilot-landing h1 { font-size: 84px; }
+}
+@media (max-width: 1100px) {
+  .jobpilot-landing .lp-container { width: calc(100% - 64px); }
+  .jobpilot-landing .lp-desktop-links { gap: 17px; }
+  .jobpilot-landing .lp-nav-actions { gap: 15px; }
+  .jobpilot-landing .lp-preview-body { grid-template-columns: 150px minmax(0,1fr); }
+  .jobpilot-landing .lp-preview-main { padding: 20px; }
+  .jobpilot-landing .lp-preview-columns { grid-template-columns: 1.1fr 1fr; gap: 12px; }
+  .jobpilot-landing .lp-featured-job, .jobpilot-landing .lp-agent-mini { padding: 15px; }
+  .jobpilot-landing .lp-preview-heading .lp-pill { display: none; }
+  .jobpilot-landing .lp-source { font-size: 12px; gap: 6px; padding-inline: 7px; }
+  .jobpilot-landing .lp-split { gap: 35px; }
+  .jobpilot-landing .lp-feature { padding-inline: 20px; }
+  .jobpilot-landing .lp-feature h3 { font-size: 21px; }
+  .jobpilot-landing .lp-steps-layout { gap: 50px; }
+  .jobpilot-landing .lp-faq-layout { gap: 40px; }
+  .jobpilot-landing .lp-feature-digest { grid-template-columns: .25fr 1fr 1.2fr; }
+}
+@media (max-width: 850px) {
+  .jobpilot-landing .lp-desktop-links { display: none; }
+  .jobpilot-landing .lp-menu-button { display: grid; place-items: center; }
+  .jobpilot-landing .lp-nav-actions { margin-left: auto; }
+  .jobpilot-landing .lp-login { display: none; }
+  .jobpilot-landing .lp-section { padding-block: 75px; }
+  .jobpilot-landing .lp-features-section { padding-top: 10px; }
+  .jobpilot-landing .lp-preview-body { grid-template-columns: 1fr; }
+  .jobpilot-landing .lp-preview-sidebar { flex-direction: row; align-items: center; gap: 8px; padding: 10px 20px; border-right: 0; border-bottom: 1px solid #292929; }
+  .jobpilot-landing .lp-preview-brand { margin-right: auto; margin-left: 0; }
+  .jobpilot-landing .lp-preview-sidebar-label, .jobpilot-landing .lp-preview-identity { display: none; }
+  .jobpilot-landing .lp-preview-sidebar button { margin: 0; padding: 8px; }
+  .jobpilot-landing .lp-source-strip { display: flex; overflow-x: auto; scrollbar-width: thin; }
+  .jobpilot-landing .lp-source { flex: 0 0 160px; }
+  .jobpilot-landing .lp-source-heading { align-items: start; flex-direction: column; gap: 12px; }
+  .jobpilot-landing .lp-source-heading br { display: none; }
+  .jobpilot-landing .lp-section-heading { flex-direction: column; align-items: start; gap: 15px; }
+  .jobpilot-landing .lp-section-heading > p br { display: none; }
+  .jobpilot-landing .lp-feature { grid-column: span 3; }
+  .jobpilot-landing .lp-feature-digest { grid-column: span 3; display: block; padding: 28px 20px; }
+  .jobpilot-landing .lp-feature-digest .lp-feature-icon { margin-bottom: 21px; }
+  .jobpilot-landing .lp-feature-digest .lp-digest-mini { margin-top: 25px; padding: 14px; }
+  .jobpilot-landing .lp-split { grid-template-columns: 1fr; gap: 35px; }
+  .jobpilot-landing .lp-section-copy { max-width: 500px; }
+  .jobpilot-landing .lp-control-list { grid-template-columns: 1fr 1fr; gap: 16px 25px; }
+  .jobpilot-landing .lp-approval-demo, .jobpilot-landing .lp-assistant-demo { width: 100%; max-width: 620px; }
+  .jobpilot-landing .lp-steps-layout { grid-template-columns: .8fr 1.2fr; gap: 30px; }
+  .jobpilot-landing .lp-steps li { gap: 16px; }
+  .jobpilot-landing .lp-trust-inner { grid-template-columns: 1fr; gap: 30px; }
+  .jobpilot-landing .lp-faq-layout { grid-template-columns: 1fr; gap: 35px; }
+  .jobpilot-landing .lp-faq-layout h2 br { display: none; }
+  .jobpilot-landing .lp-workflow-tabs button { gap: 6px; padding: 20px 7px; }
+  .jobpilot-landing .lp-workflow-tabs button svg { display: none; }
+  .jobpilot-landing .lp-workflow-panel { padding: 24px; }
+  .jobpilot-landing .lp-workflow-footer > span:last-child { display: none; }
+  .jobpilot-landing .lp-match-panel { gap: 20px; }
+  .jobpilot-landing .lp-match-panel h3 { font-size: 21px; }
+  .jobpilot-landing .lp-large-score { padding-right: 15px; }
+  .jobpilot-landing .lp-tailor-panel { gap: 12px; }
+  .jobpilot-landing .lp-tailor-panel > div { padding: 20px; }
+  .jobpilot-landing .lp-prepare-panel { gap: 20px; }
+  .jobpilot-landing .lp-prepare-panel h3 { font-size: 23px; }
+}
+@media (max-width: 560px) {
+  .jobpilot-landing .lp-container { width: calc(100% - 40px); }
+  .jobpilot-landing .lp-nav-inner { min-height: 66px; gap: 12px; }
+  .jobpilot-landing .lp-brand { font-size: 17px; gap: 8px; }
+  .jobpilot-landing .lp-nav-actions .lp-button { padding-inline: 10px; font-size: 8px; gap: 9px; }
+  .jobpilot-landing .lp-menu-button { padding: 7px; min-width: 40px; min-height: 40px; }
+  .jobpilot-landing .lp-hero-content { padding-top: 46px; border: 0; }
+  .jobpilot-landing h1 { font-size: clamp(37px, 9.3vw, 52px); letter-spacing: -.06em; margin-top: 25px; line-height: 1.15; }
+  .jobpilot-landing .lp-headline-highlight { padding-inline: 5px; }
+  .jobpilot-landing .lp-hero-badge { font-size: 7px; padding: 5px 7px; gap: 6px; letter-spacing: .04em; }
+  .jobpilot-landing .lp-hero-copy { font-size: 12px; margin-top: 22px; padding: 0; }
+  .jobpilot-landing .lp-desktop-break { display: none; }
+  .jobpilot-landing .lp-button { font-size: 9px; min-height: 46px; gap: 12px; padding: 11px 15px; }
+  .jobpilot-landing .lp-cta-row { gap: 9px; }
+  .jobpilot-landing .lp-hero-note { gap: 13px; margin-bottom: 35px; font-size: 8px; }
+  .jobpilot-landing .lp-hero-coordinate { display: none; }
+  .jobpilot-landing .lp-preview-topbar { gap: 10px; padding: 12px; font-size: 7px; }
+  .jobpilot-landing .lp-preview-topbar > .lp-demo-label { font-size: 7px; }
+  .jobpilot-landing .lp-window-dots { gap: 3px; }
+  .jobpilot-landing .lp-window-dots i { width: 4px; height: 4px; }
+  .jobpilot-landing .lp-preview-brand > span { display: none; }
+  .jobpilot-landing .lp-preview-sidebar { padding: 10px 12px; gap: 5px; }
+  .jobpilot-landing .lp-preview-sidebar button { font-size: 10px; min-height: 40px; gap: 6px; }
+  .jobpilot-landing .lp-preview-main { padding: 16px 12px; }
+  .jobpilot-landing .lp-preview-heading h3 { font-size: 20px; }
+  .jobpilot-landing .lp-preview-columns { grid-template-columns: 1fr; gap: 12px; }
+  .jobpilot-landing .lp-featured-job { padding: 18px; }
+  .jobpilot-landing .lp-featured-job h4 br { display: none; }
+  .jobpilot-landing .lp-featured-job h4 { font-size: 25px; }
+  .jobpilot-landing .lp-agent-mini { padding: 15px; }
+  .jobpilot-landing .lp-agent-mini > p { margin-top: 12px; }
+  .jobpilot-landing .lp-agent-log { gap: 10px; margin: 15px 0; }
+  .jobpilot-landing .lp-agent-input { display: none; }
+  .jobpilot-landing .lp-preview-caption { font-size: 7px; flex-direction: column; gap: 9px; padding-bottom: 25px; }
+  .jobpilot-landing .lp-section { padding-block: 60px; }
+  .jobpilot-landing .lp-features-section { padding-top: 0; }
+  .jobpilot-landing h2 { font-size: 32px; margin-top: 17px; }
+  .jobpilot-landing .lp-source-heading h2 { font-size: 19px; }
+  .jobpilot-landing .lp-source-heading p { font-size: 11px; }
+  .jobpilot-landing .lp-section-heading { margin-bottom: 25px; }
+  .jobpilot-landing .lp-section-heading > p { font-size: 12px; }
+  .jobpilot-landing .lp-workflow-tabs { display: flex; overflow-x: auto; scrollbar-width: thin; }
+  .jobpilot-landing .lp-workflow-tabs button { padding: 17px 13px; flex-shrink: 0; min-width: 95px; font-size: 9px; }
+  .jobpilot-landing .lp-workflow-panel { padding: 18px 14px 22px; min-height: 425px; }
+  .jobpilot-landing .lp-workflow-context { margin-bottom: 17px; }
+  .jobpilot-landing .lp-workflow-context .lp-eyebrow { font-size: 8px; }
+  .jobpilot-landing .lp-demo-feed-row { align-items: start; padding: 19px 0; gap: 10px; }
+  .jobpilot-landing .lp-demo-feed-row strong { font-size: 11px; }
+  .jobpilot-landing .lp-demo-feed-row p { font-size: 9px; }
+  .jobpilot-landing .lp-demo-feed-row small { font-size: 7px; }
+  .jobpilot-landing .lp-demo-feed-row .lp-company-avatar { width: 28px; height: 28px; font-size: 16px; }
+  .jobpilot-landing .lp-demo-feed-score { font-size: 18px; flex-shrink: 0; }
+  .jobpilot-landing .lp-workflow-footer { padding: 14px; font-size: 9px; }
+  .jobpilot-landing .lp-match-panel { grid-template-columns: 1fr; gap: 22px; padding: 0; }
+  .jobpilot-landing .lp-large-score { border: 0; border-bottom: 1px solid #eee; padding: 0 0 16px; }
+  .jobpilot-landing .lp-large-score > span { font-size: 52px; }
+  .jobpilot-landing .lp-match-panel h3 { font-size: 19px; }
+  .jobpilot-landing .lp-match-panel p { font-size: 10px; margin-top: 12px; }
+  .jobpilot-landing .lp-tailor-panel { grid-template-columns: 1fr; gap: 15px; }
+  .jobpilot-landing .lp-tailor-panel > div { min-height: 0; padding: 18px; }
+  .jobpilot-landing .lp-tailor-panel p { font-size: 12px; }
+  .jobpilot-landing .lp-tailor-panel .lp-diff-arrow { display: none; }
+  .jobpilot-landing .lp-prepare-panel { grid-template-columns: 1fr; gap: 18px; }
+  .jobpilot-landing .lp-prepare-panel h3 { font-size: 21px; }
+  .jobpilot-landing .lp-prepare-panel li { font-size: 10px; }
+  .jobpilot-landing .lp-prepare-panel li small { font-size: 8px; }
+  .jobpilot-landing .lp-bento { grid-template-columns: 1fr; gap: 14px; margin-top: 28px; }
+  .jobpilot-landing .lp-feature { grid-column: auto; padding: 25px 22px 0; }
+  .jobpilot-landing .lp-feature-digest { padding-bottom: 25px; }
+  .jobpilot-landing .lp-feature h3 { font-size: 25px; }
+  .jobpilot-landing .lp-feature > p { font-size: 12px; }
+  .jobpilot-landing .lp-match-mini { margin-left: 0; }
+  .jobpilot-landing .lp-resume-paper { margin-left: 0; }
+  .jobpilot-landing .lp-mini-bars { grid-template-columns: 110px 1fr; gap: 12px; }
+  .jobpilot-landing .lp-tracker-compact { margin-inline: 0; }
+  .jobpilot-landing .lp-tracker-compact .lp-mini-kanban { min-height: 195px; }
+  .jobpilot-landing .lp-mini-kanban { grid-template-columns: 1fr 1fr; gap: 8px; min-height: 250px; }
+  .jobpilot-landing .lp-kanban-label { font-size: 9px; }
+  .jobpilot-landing .lp-mini-kanban > div { padding: 10px; }
+  .jobpilot-landing .lp-control-list { grid-template-columns: 1fr; }
+  .jobpilot-landing .lp-section-copy { font-size: 13px; }
+  .jobpilot-landing .lp-panel-header { padding: 14px; gap: 7px; }
+  .jobpilot-landing .lp-panel-header > span:first-child { font-size: 10px; }
+  .jobpilot-landing .lp-panel-header .lp-demo-label { font-size: 7px; }
+  .jobpilot-landing .lp-approval-body { padding: 17px 14px; }
+  .jobpilot-landing .lp-approval-actions > span { font-size: 10px; }
+  .jobpilot-landing .lp-approval-body > small { font-size: 8px; }
+  .jobpilot-landing .lp-steps-layout { grid-template-columns: 1fr; gap: 35px; }
+  .jobpilot-landing .lp-steps-layout h2 br { display: none; }
+  .jobpilot-landing .lp-steps h3 { font-size: 17px; }
+  .jobpilot-landing .lp-assistant-annotation { font-size: 8px; gap: 5px; }
+  .jobpilot-landing .lp-assistant-prompts { padding: 13px; gap: 6px; }
+  .jobpilot-landing .lp-assistant-prompts button { flex: 1 0 40%; justify-content: space-between; min-height: 40px; }
+  .jobpilot-landing .lp-simulated-conversation { min-height: 355px; padding: 20px 13px; }
+  .jobpilot-landing .lp-demo-user { font-size: 11px; }
+  .jobpilot-landing .lp-assistant-response { gap: 7px; }
+  .jobpilot-landing .lp-chat-result { padding: 10px; }
+  .jobpilot-landing .lp-chat-result strong { font-size: 10px; }
+  .jobpilot-landing .lp-chat-result > span { font-size: 15px; }
+  .jobpilot-landing .lp-trust-inner { gap: 25px; }
+  .jobpilot-landing .lp-trust h2 { font-size: 20px; }
+  .jobpilot-landing .lp-trust-items { grid-template-columns: 1fr; gap: 18px; }
+  .jobpilot-landing .lp-faq-layout h2 br { display: block; }
+  .jobpilot-landing .lp-faq-list summary { gap: 13px; padding: 20px 0; }
+  .jobpilot-landing .lp-faq-list summary h3 { font-size: 12px; }
+  .jobpilot-landing .lp-faq-answer { padding-left: 25px; font-size: 11px; }
+  .jobpilot-landing .lp-final-cta { padding: 70px 0 55px; }
+  .jobpilot-landing .lp-final-cta h2 { font-size: 35px; }
+  .jobpilot-landing .lp-final-cta p { font-size: 12px; }
+  .jobpilot-landing .lp-final-label { font-size: 7px; }
+  .jobpilot-landing .lp-footer-top { grid-template-columns: 1fr 1fr; gap: 30px; padding-block: 35px; }
+  .jobpilot-landing .lp-footer-top > div:first-child { grid-column: 1/-1; }
+  .jobpilot-landing .lp-footer-bottom { flex-wrap: wrap; gap: 12px; }
+  .jobpilot-landing .lp-footer-bottom > .lp-eyebrow { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .jobpilot-landing *, .jobpilot-landing *::before, .jobpilot-landing *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  .jobpilot-landing .lp-feature:hover, .jobpilot-landing .lp-button:hover { transform: none; }
+}
