@@ -10,3 +10,7 @@ backend/data/
 # Local diagnostic output and empty lockfile from the repository root
 /backend/20
 /package-lock.json
+
+# Local project analysis and portfolio assets
+/PROJECT_ANALYSIS.md
+/assets/portfolio/
