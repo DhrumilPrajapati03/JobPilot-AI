@@ -232,6 +232,7 @@ def test_extension_flow(ap, client):
 
     saved = client.post("/api/v1/extension/answers", headers=h, json={"answers": [{"question": "Why do you want to join Globex?", "answer": "Search."}]})
     assert saved.json()["saved"] == 1 and any(a["question"].startswith("Why do you want") for a in ap.tables["qa_answers"])
+    assert next(a for a in ap.tables["qa_answers"] if a["question"].startswith("Why do you want"))["sensitive"] is True
 
     assert client.post("/api/v1/extension/applied", headers=h, json={"application_id": APP_ID}).json()["status"] == "applied"
     app = ap.tables["job_applications"][0]

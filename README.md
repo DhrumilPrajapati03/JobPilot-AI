@@ -70,7 +70,7 @@ Use Python 3.12, Node.js 20 or newer, a Supabase project, and an API key for at 
 
 ### 1. Configure Supabase
 
-Use the project's existing Supabase database, or provision its base tables and row-level security policies first. The SQL files in [backend/supabase/migrations](backend/supabase/migrations) are incremental migrations, **not a complete initial database schema**: the first migration expects tables such as `job_applications` and `cold_emails` to exist already.
+For a fresh Supabase project, apply the SQL files in [backend/supabase/migrations](backend/supabase/migrations) in filename order, starting with `20261001_base_schema.sql`. The baseline creates the core tables, ownership policies, and private resume bucket before the incremental migrations. You can generate a single transactional SQL bundle with `python scripts/database_bundle.py --output supabase/bootstrap.generated.sql` from `backend`. See [Sprint 1 setup and acceptance checks](SPRINT_1_STATUS.md) before applying to an existing database; the baseline does not reconcile arbitrary schema drift or old permissive policies.
 
 Apply the migration files in filename order through the Supabase SQL editor. Configure Supabase Auth's Site URL and allowed redirect URLs for `http://localhost:5173`.
 
@@ -179,7 +179,7 @@ Frontend production build, from `frontend`:
 npm.cmd run build
 ```
 
-The latest local verification passed **156 backend tests** and the frontend production build. Tests use mocked services and do not establish that live AI, email, or hosting integrations are configured correctly.
+The latest local verification passed **192 backend tests**, four frontend account-isolation tests (`npm.cmd test`), four extension security tests (`node --test extension/tests/security.test.cjs` from the repository root), and the frontend production build. Tests use mocked services and do not establish that live AI, email, hosting, or database provisioning is configured correctly. See [Sprint 1 status](SPRINT_1_STATUS.md) for deployment changes and outstanding acceptance checks.
 
 ## Current limitations
 
@@ -188,7 +188,7 @@ The latest local verification passed **156 backend tests** and the frontend prod
 - India eligibility is inferred conservatively from published locations and descriptions. Missing or inaccurate employer data can hide suitable roles or require additional review. The feed rule also applies to existing listings and automatic drafts; manually pasted jobs are a separate preparation flow.
 - Server PDF export needs WeasyPrint's native libraries. Tectonic is optional; rendering falls back to HTML/WeasyPrint. If neither renderer is available, use the resume preview's browser export. The backend Docker image installs the native PDF dependencies.
 - Scheduled scans need a running backend. Hosts that sleep need an external cron calling the protected tick endpoint.
-- The repository does not include a complete database bootstrap script; a fresh Supabase project requires the base schema before applying the included migrations.
+- A fresh-project database baseline and SQL smoke test are included. Live provisioning and hosted RLS/storage acceptance checks still need to be run; see [Sprint 1 status](SPRINT_1_STATUS.md).
 
 ## Deployment
 

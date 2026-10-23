@@ -14,6 +14,7 @@ from app.resume_engine.builder import build_render_content
 from app.resume_engine.renderer import render_resume_pdf
 from app.resume_engine.validator import calculate_ats_score
 from app.services.vector_store import embed_resume
+from app.services.uploads import read_resume
 
 router = APIRouter()
 
@@ -177,18 +178,13 @@ async def upload_resume(
     current_user: CurrentUser = Depends(get_current_user)
 ):
     """Upload a base resume file (PDF/DOCX) for text extraction and LLM parsing."""
-    file_bytes = await file.read()
-    filename = file.filename or "resume.pdf"
+    file_bytes, filename = await read_resume(file)
 
-    if filename.endswith(".pdf"):
-        raw_text = extract_text_from_pdf(file_bytes)
-    elif filename.endswith(".docx"):
-        raw_text = extract_text_from_docx(file_bytes)
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Unsupported file format. Please upload a PDF or DOCX file."
-        )
+    try:
+        raw_text = (extract_text_from_pdf(file_bytes) if filename.lower().endswith(".pdf")
+                    else extract_text_from_docx(file_bytes))
+    except Exception as exc:
+        raise HTTPException(400, "The resume could not be read. Use a valid PDF (up to 50 pages) or DOCX.") from exc
 
     if not raw_text.strip():
         raise HTTPException(

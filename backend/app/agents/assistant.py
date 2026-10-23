@@ -330,7 +330,7 @@ async def _create_application(user: CurrentUser, args: dict) -> dict:
     if not jd_text and not jd_url:
         return {"error": "Ask the user for the job description text or URL first."}
     run_id = str(uuid.uuid4())
-    manager.register(run_id)
+    manager.register(run_id, user.id)
     task = asyncio.create_task(run_agent_pipeline(run_id, user.id, user.token, jd_url, jd_text, user.email))
     _background_tasks.add(task)
     task.add_done_callback(_background_tasks.discard)

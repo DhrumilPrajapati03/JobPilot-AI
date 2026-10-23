@@ -72,6 +72,7 @@ interface CustomRow {
   key: string;
   question: string;
   answer: string;
+  sensitive: boolean;
 }
 
 export function AnswerBankPanel({ skills }: { skills: string[] }) {
@@ -88,7 +89,7 @@ export function AnswerBankPanel({ skills }: { skills: string[] }) {
     custom ??
     (saved ?? [])
       .filter((a) => !STANDARD.has(a.question) && !skillQuestions.has(a.question) && !a.question.startsWith('Years of experience with '))
-      .map((a) => ({ id: a.id, key: a.id ?? a.question, question: a.question, answer: a.answer }));
+      .map((a) => ({ id: a.id, key: a.id ?? a.question, question: a.question, answer: a.answer, sensitive: !!a.sensitive }));
 
   const valueOf = (field: Field) => edits[field.question] ?? savedByQuestion.get(field.question)?.answer ?? (field.sensitive ? DECLINE : '');
   const setValue = (question: string, value: string) => setEdits((e) => ({ ...e, [question]: value }));
@@ -115,10 +116,10 @@ export function AnswerBankPanel({ skills }: { skills: string[] }) {
   const onSave = () => {
     const rows: SavedAnswer[] = allFields
       .filter((f) => edits[f.question] !== undefined || (f.sensitive && !savedByQuestion.has(f.question)))
-      .map((f) => ({ question: f.question, answer: valueOf(f), category: f.category, sensitive: !!f.sensitive }));
+      .map((f) => ({ question: f.question, answer: valueOf(f), category: f.category, sensitive: !!f.sensitive || !!savedByQuestion.get(f.question)?.sensitive }));
     customRows
       .filter((r) => r.question.trim())
-      .forEach((r) => rows.push({ question: r.question.trim(), answer: r.answer, category: 'custom', sensitive: false }));
+      .forEach((r) => rows.push({ question: r.question.trim(), answer: r.answer, category: 'custom', sensitive: r.sensitive }));
     save.mutate(rows, {
       onSuccess: () => {
         setEdits({});
@@ -134,7 +135,7 @@ export function AnswerBankPanel({ skills }: { skills: string[] }) {
       <div key={field.question} className="grid gap-1.5 sm:grid-cols-[1fr_minmax(0,1.1fr)] sm:items-center sm:gap-4">
         <label htmlFor={id} className="flex items-center gap-1.5 text-sm">
           {field.question}
-          {field.sensitive && <Lock size={12} className="text-muted-foreground" aria-label="Sensitive" />}
+          {(field.sensitive || savedByQuestion.get(field.question)?.sensitive) && <Lock size={12} className="text-muted-foreground" aria-label="Sensitive" />}
         </label>
         {field.options ? (
           <select
@@ -197,7 +198,7 @@ export function AnswerBankPanel({ skills }: { skills: string[] }) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setCustom([...customRows, { key: `new-${Date.now()}`, question: '', answer: '' }])}
+            onClick={() => setCustom([...customRows, { key: `new-${Date.now()}`, question: '', answer: '', sensitive: true }])}
           >
             <Plus size={14} className="mr-1" />
             Add question
@@ -233,6 +234,11 @@ export function AnswerBankPanel({ skills }: { skills: string[] }) {
                 aria-label="Answer"
                 onChange={(e) => setCustom(customRows.map((r, j) => (j === i ? { ...r, answer: e.target.value } : r)))}
               />
+              <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                <input type="checkbox" checked={row.sensitive}
+                  onChange={(e) => setCustom(customRows.map((r, j) => j === i ? { ...r, sensitive: e.target.checked } : r))} />
+                Keep private from AI prompts
+              </label>
             </div>
           ))}
         </CardContent>

@@ -2,6 +2,8 @@
 // Settings can hand this extension a personal token without copy-paste.
 
 (() => {
+  const policy = globalThis.JOBPILOT_POLICY;
+  if (window !== window.top || !policy?.appOrigins.includes(window.location.origin)) return;
   const announce = () => window.postMessage({ source: 'jobpilot-extension', type: 'present', version: chrome.runtime.getManifest().version }, window.location.origin);
 
   window.addEventListener('message', (event) => {

@@ -33,6 +33,10 @@ You can revoke tokens in Settings at any time.
 
 ## Hosting
 
-The extension can talk to `http://localhost:8000` and any `*.onrender.com` API. If you
-host the API elsewhere, add its origin to `host_permissions` in `manifest.json`, and the
-web app's origin to the `connect.js` content script matches.
+The extension uses exact origins: localhost development URLs and the documented
+example hosts `https://jobpilot-api.onrender.com` / `https://jobpilot-web.onrender.com`.
+For your actual deployment, update both `policy.js` and `manifest.json` with the exact
+API and web origins, then reload the extension. Broad Render wildcards are not accepted.
+
+Answers captured by the extension default to sensitive. Custom answers can be reviewed
+in Profile → Answers, where you can deliberately change “Keep private from AI prompts”.

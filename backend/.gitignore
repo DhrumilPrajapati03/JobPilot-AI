@@ -149,3 +149,6 @@ Thumbs.db
 
 ./backend/data
 data/
+
+# Reproducible output of scripts/database_bundle.py
+supabase/bootstrap.generated.sql

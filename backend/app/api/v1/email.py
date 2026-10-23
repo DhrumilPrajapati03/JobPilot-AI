@@ -4,7 +4,8 @@ Handles cold email sending, template management,
 and email tracking.
 """
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from app.services.auth import CurrentUser, get_current_user
 from pydantic import BaseModel
 
 router = APIRouter()
@@ -20,7 +21,7 @@ class EmailSendRequest(BaseModel):
 
 
 @router.post("/send")
-async def send_email(request: EmailSendRequest):
+async def send_email(request: EmailSendRequest, _current_user: CurrentUser = Depends(get_current_user)):
     """Send an approved cold email via Resend or Gmail API.
 
     The email must be reviewed and approved by the user before
@@ -37,7 +38,7 @@ async def send_email(request: EmailSendRequest):
 
 
 @router.get("/history")
-async def get_email_history(application_id: str | None = None):
+async def get_email_history(application_id: str | None = None, _current_user: CurrentUser = Depends(get_current_user)):
     """Retrieve email sending history, optionally filtered by application.
 
     Args:

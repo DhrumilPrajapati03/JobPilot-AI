@@ -7,12 +7,14 @@ registers middleware, and includes API routers.
 import asyncio
 from contextlib import asynccontextmanager, suppress
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import api_v1_router
 from app.config import settings
 from app.services import autopilot
+from app.services import auth
+from app.services.request_limits import UploadBodyLimitMiddleware
 
 
 @asynccontextmanager
@@ -47,6 +49,7 @@ app = FastAPI(
 )
 
 # CORS Middleware
+app.add_middleware(UploadBodyLimitMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[o.strip().rstrip("/") for o in settings.FRONTEND_URL.split(",") if o.strip()],
@@ -83,8 +86,22 @@ async def agent_stream(websocket: WebSocket, run_id: str):
         websocket: The WebSocket connection.
         run_id: Unique identifier for the agent run to stream.
     """
-    # Replays any events already emitted for this run before streaming new ones
-    if not await manager.connect(run_id, websocket):
+    # Credentials travel in the first frame, never in URL/query strings or logs.
+    await websocket.accept()
+    try:
+        credentials = await asyncio.wait_for(websocket.receive_json(), timeout=10)
+        token = credentials.get("token") if isinstance(credentials, dict) else None
+        if not isinstance(token, str) or not token or len(token) > 16384:
+            await websocket.close(code=4401)
+            return
+        identity = await auth._verify_token(token)
+    except (HTTPException, ValueError, asyncio.TimeoutError):
+        await websocket.close(code=4401)
+        return
+    except WebSocketDisconnect:
+        return
+    # Replays history only after verifying this session and the run owner.
+    if not await manager.connect(run_id, websocket, identity["sub"]):
         return
     try:
         while True:

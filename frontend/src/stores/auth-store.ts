@@ -5,6 +5,23 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
 import type { User, Session } from '@supabase/supabase-js';
+import { resetQueryAccount } from '../lib/query-client';
+import { selectChatAccount } from '../agent/store';
+import { stopChat } from '../agent/client';
+
+let accountId: string | null | undefined;
+let authSubscription: { unsubscribe: () => void } | undefined;
+
+function isolateAccount(session: Session | null) {
+    const nextId = session?.user.id ?? null;
+    if (accountId === nextId) return;
+    stopChat();
+    resetQueryAccount();
+    selectChatAccount(nextId);
+    // Never resume a previous account's standalone generation run.
+    try { sessionStorage.removeItem('jobpilot:active-run'); } catch { /* blocked storage */ }
+    accountId = nextId;
+}
 
 interface AuthState {
     user: User | null;
@@ -30,6 +47,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         try {
             // 1. Get current active session (from localStorage)
             const { data: { session } } = await supabase.auth.getSession();
+            isolateAccount(session);
 
             set({
                 session,
@@ -40,13 +58,16 @@ export const useAuthStore = create<AuthState>((set) => ({
             // 2. Set up event listener for session changes
             // This will trigger automatically when a user clicks the magic link,
             // token expires, or they log out.
-            supabase.auth.onAuthStateChange((_event, session) => {
+            authSubscription?.unsubscribe();
+            const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+                isolateAccount(session);
                 set({
                     session,
                     user: session?.user ?? null,
                     loading: false
                 });
             });
+            authSubscription = data.subscription;
         } catch (err: any) {
             set({
                 error: err.message || 'Failed to initialize session',
@@ -81,6 +102,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         try {
             const { error } = await supabase.auth.signOut();
             if (error) throw error;
+            isolateAccount(null);
             set({ user: null, session: null, loading: false });
         } catch (err: any) {
             set({
@@ -91,6 +113,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     },
 
     setSession: (session: Session | null) => {
+        isolateAccount(session);
         set({ session, user: session?.user ?? null });
     },
 }));

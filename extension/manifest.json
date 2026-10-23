@@ -7,7 +7,7 @@
   "host_permissions": [
     "http://localhost:8000/*",
     "http://127.0.0.1:8000/*",
-    "https://*.onrender.com/*"
+    "https://jobpilot-api.onrender.com/*"
   ],
   "background": { "service_worker": "background.js" },
   "action": { "default_title": "JobPilot", "default_popup": "popup.html" },
@@ -27,8 +27,8 @@
       "run_at": "document_idle"
     },
     {
-      "matches": ["http://localhost:5173/*", "http://127.0.0.1:5173/*", "https://*.onrender.com/*"],
-      "js": ["content/connect.js"],
+      "matches": ["http://localhost:5173/*", "http://127.0.0.1:5173/*", "https://jobpilot-web.onrender.com/*"],
+      "js": ["policy.js", "content/connect.js"],
       "run_at": "document_start"
     }
   ]

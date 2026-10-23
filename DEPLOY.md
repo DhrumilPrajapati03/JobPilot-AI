@@ -12,9 +12,10 @@ up), **Resend** (digest email), and **cron-job.org** (wakes the server at night)
 
 1. In the SQL editor, run every migration in `backend/supabase/migrations/` that you
    haven't yet, oldest first:
+   `20261001_base_schema` (fresh-project baseline; review before applying to existing databases),
    `20261006_application_materials`, `20261010_answer_bank`, `20261010_cold_emails_rls`,
    `20261011_job_discovery`, `20261012_more_job_boards`, `20261013_referrals`,
-   `20261014_autopilot`. They're all safe to re-run.
+   `20261014_autopilot`, `20261023_security_guards`. The new baseline is for fresh-project provisioning; review its compatibility before using it on an existing schema. See [Sprint 1 status](SPRINT_1_STATUS.md) for the migration bundle and SQL smoke check.
 2. **Project Settings → API**: copy the **service_role** key. The server needs it to run
    the schedule and serve the extension. Keep it secret: it bypasses row-level security.
    It only ever goes into Render's environment, never into the web app.
@@ -101,8 +102,8 @@ out at your digest hour, waiting up to an hour for drafts still running.
    **Open & fill** → check the amber fields → click the site's Submit → **I submitted it**
    in the JobPilot panel.
 
-The extension talks to `localhost:8000` and `*.onrender.com`. For another host, add it
-to `host_permissions` in `extension/manifest.json`.
+The extension uses exact localhost and example Render origins. Set your actual API/web
+origins in both `extension/policy.js` and `extension/manifest.json`, then reload it.
 
 ---
 

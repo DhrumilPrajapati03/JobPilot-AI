@@ -80,6 +80,8 @@ async def _verify_token(token: str) -> dict:
         # --- Step 1: Peek at the header (no signature verification yet) ---
         header = jwt.get_unverified_header(token)
         alg = header.get("alg", "HS256")
+        if alg not in {"HS256", "ES256", "RS256"}:
+            raise JWTError("Unsupported signing algorithm")
         kid = header.get("kid")
 
         # --- Step 2: Pick the correct verification key ---

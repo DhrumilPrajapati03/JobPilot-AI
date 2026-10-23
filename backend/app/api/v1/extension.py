@@ -177,7 +177,9 @@ async def mark_applied(request: AppliedRequest, user: ExtensionUser = Depends(ge
 async def save_answers(request: AnswersRequest, user: ExtensionUser = Depends(get_extension_user)):
     """Save answers the user typed into a form, so next time they're filled automatically."""
     rows = [
-        {"user_id": user.id, "question": a.question.strip()[:500], "answer": a.answer.strip(), "category": "custom", "sensitive": False}
+        # Unknown captured answers are private by default. The user can deliberately
+        # reclassify non-sensitive responses in the answer bank.
+        {"user_id": user.id, "question": a.question.strip()[:500], "answer": a.answer.strip(), "category": "custom", "sensitive": True}
         for a in request.answers if a.answer.strip()
     ]
     if rows:

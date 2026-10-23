@@ -103,6 +103,7 @@ async def run_agent_pipeline(
     ``supabase`` overrides the user-scoped client (scheduled discovery scans run
     without a user session). Returns the new application's id, or None on failure.
     """
+    manager.register(run_id, user_id)
     supabase = supabase or get_supabase_client(user_jwt=user_token)
 
     # 1. Parse Job Description

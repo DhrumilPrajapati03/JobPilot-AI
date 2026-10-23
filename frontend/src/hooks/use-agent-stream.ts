@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { WS_BASE_URL } from '../lib/constants';
+import { supabase } from '../lib/supabase';
+import { useAuthStore } from '../stores/auth-store';
 
 export const PIPELINE_STEPS = [
   { id: 'jd_parsing', label: 'Parse job description', description: 'Extracting role, skills, keywords and tone' },
@@ -39,7 +41,8 @@ const initialSteps = (): Record<string, StepProgress> =>
 
 function readActiveRun(): string | null {
   try {
-    return sessionStorage.getItem(ACTIVE_RUN_KEY);
+    const id = useAuthStore.getState().user?.id;
+    return id ? sessionStorage.getItem(`${ACTIVE_RUN_KEY}:${id}`) : null;
   } catch {
     return null;
   }
@@ -47,8 +50,11 @@ function readActiveRun(): string | null {
 
 function writeActiveRun(runId: string | null) {
   try {
-    if (runId) sessionStorage.setItem(ACTIVE_RUN_KEY, runId);
-    else sessionStorage.removeItem(ACTIVE_RUN_KEY);
+    const id = useAuthStore.getState().user?.id;
+    if (!id) return;
+    const key = `${ACTIVE_RUN_KEY}:${id}`;
+    if (runId) sessionStorage.setItem(key, runId);
+    else sessionStorage.removeItem(key);
   } catch {
     // Storage unavailable (private mode) — resuming after refresh just won't work.
   }
@@ -150,8 +156,10 @@ export function useAgentStream({ persist = true, runId }: { persist?: boolean; r
       const socket = new WebSocket(`${WS_BASE_URL}/ws/agent-stream/${runId}`);
       socketRef.current = socket;
 
-      socket.onopen = () => {
-        reconnectsRef.current = 0;
+      socket.onopen = async () => {
+        const { data } = await supabase.auth.getSession();
+        if (socketRef.current !== socket || socket.readyState !== WebSocket.OPEN) return;
+        socket.send(JSON.stringify({ token: data.session?.access_token ?? '' }));
       };
       socket.onmessage = (message) => {
         try {
@@ -160,8 +168,15 @@ export function useAgentStream({ persist = true, runId }: { persist?: boolean; r
           // Ignore malformed frames.
         }
       };
-      socket.onclose = () => {
+      socket.onclose = (event) => {
         if (socketRef.current !== socket || finishedRef.current) return;
+        if (event.code === 4401 || event.code === 4403) {
+          finishedRef.current = true;
+          setError('This session cannot access the run. Sign in again or open a run from your account.');
+          setPhase('error');
+          remember(null);
+          return;
+        }
         if (reconnectsRef.current >= MAX_RECONNECTS) {
           setError('Lost connection to the agent stream. The run may still finish — check your tracker shortly.');
           setPhase('error');

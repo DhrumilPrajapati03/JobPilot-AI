@@ -19,21 +19,28 @@ class ConnectionManager:
         self.active_connections: dict[str, set[WebSocket]] = {}
         self.history: dict[str, list[dict]] = {}
         self.finished_at: dict[str, float] = {}
+        self.owners: dict[str, str] = {}
 
-    def register(self, run_id: str):
+    def register(self, run_id: str, user_id: str):
         """Mark a run as known before its background task emits anything."""
+        if run_id in self.owners and self.owners[run_id] != user_id:
+            raise ValueError("Run already belongs to another user")
+        self.owners[run_id] = user_id
         self.history.setdefault(run_id, [])
 
-    async def connect(self, run_id: str, websocket: WebSocket) -> bool:
+    async def connect(self, run_id: str, websocket: WebSocket, user_id: str) -> bool:
         """Accept a subscriber and replay the run's history.
 
         Returns False (after telling the client) when the run is unknown or
         its history has expired.
         """
-        await websocket.accept()
+        self._prune()
         if run_id not in self.history:
             await websocket.send_json({"type": "unknown_run", "run_id": run_id})
             await websocket.close()
+            return False
+        if self.owners.get(run_id) != user_id:
+            await websocket.close(code=4403)
             return False
         self.active_connections.setdefault(run_id, set()).add(websocket)
         try:
@@ -77,6 +84,7 @@ class ConnectionManager:
             if finished < cutoff:
                 self.finished_at.pop(run_id, None)
                 self.history.pop(run_id, None)
+                self.owners.pop(run_id, None)
 
 
 manager = ConnectionManager()

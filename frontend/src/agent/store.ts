@@ -212,9 +212,40 @@ export const useChatStore = create<ChatState>()(
       setStreaming: (streaming) => set({ streaming }),
     }),
     {
-      name: 'jobpilot-chat',
+      name: 'jobpilot-chat:unassigned',
+      skipHydration: true,
       storage: createJSONStorage(() => safeStorage),
       partialize: (s) => ({ threads: s.threads, activeId: s.activeId }),
     },
   ),
 );
+
+let chatAccountId: string | null = null;
+export const getChatAccountId = () => chatAccountId;
+let chatSessionRevision = 0;
+export const getChatSessionRevision = () => chatSessionRevision;
+
+/** Legacy unscoped history cannot be safely attributed to an account; never hydrate it. */
+export function selectChatAccount(userId: string | null) {
+  chatAccountId = userId;
+  chatSessionRevision += 1;
+  const key = userId ? `jobpilot-chat:${userId}` : 'jobpilot-chat:unassigned';
+  let saved: { threads: Thread[]; activeId: string } | undefined;
+  if (userId) {
+    try {
+      const raw = safeStorage.getItem(key);
+      const parsed = typeof raw === 'string' ? JSON.parse(raw)?.state : null;
+      if (Array.isArray(parsed?.threads) && parsed.threads.length &&
+          parsed.threads.every((t: Thread) => typeof t.id === 'string' && Array.isArray(t.messages))) saved = parsed;
+    } catch { /* Corrupt local history starts with an empty thread. */ }
+  }
+  const empty = newThread();
+  const threads = saved?.threads ?? [empty];
+  useChatStore.persist.setOptions({ name: key });
+  useChatStore.setState({
+    threads,
+    activeId: threads.some((t) => t.id === saved?.activeId) ? saved!.activeId : threads[0].id,
+    stage: null,
+    streaming: false,
+  });
+}

@@ -345,7 +345,7 @@ def begin_draft(supabase, user_id: str, posting: dict, *, auto: bool) -> dict:
     if reason := india_eligibility_flag(posting):
         raise DiscoveryError(reason)
     run_id = str(uuid.uuid4())
-    manager.register(run_id)
+    manager.register(run_id, user_id)
     supabase.table("job_postings").update({
         "status": "drafting", "drafted_at": _now().isoformat(), "auto_drafted": auto,
     }).eq("id", posting["id"]).eq("user_id", user_id).execute()

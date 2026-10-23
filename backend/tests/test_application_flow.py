@@ -190,7 +190,14 @@ def db(request, monkeypatch):
 
 
 @pytest.fixture
-def client():
+def client(monkeypatch):
+    from app.services import auth
+    async def verify(token):
+        if token != "test-session":
+            from fastapi import HTTPException
+            raise HTTPException(401, "Invalid token")
+        return {"sub": USER_ID, "email": "ada@example.com"}
+    monkeypatch.setattr(auth, "_verify_token", verify)
     app.dependency_overrides[get_current_user] = lambda: CurrentUser(id=USER_ID, token="t", email="ada@example.com")
     yield TestClient(app)
     app.dependency_overrides.clear()
@@ -207,6 +214,7 @@ def test_full_application_flow(db, client):
 
     # Late WebSocket subscribers get the full replay.
     with client.websocket_connect(f"/ws/agent-stream/{run_id}") as ws:
+        ws.send_json({"token": "test-session"})
         replayed = [ws.receive_json() for _ in events]
     assert [e["step"] for e in replayed] == [e["step"] for e in events]
 
@@ -271,6 +279,7 @@ def test_pipeline_reports_missing_base_resume(db):
 
 def test_unknown_run_is_reported(client):
     with client.websocket_connect("/ws/agent-stream/does-not-exist") as ws:
+        ws.send_json({"token": "test-session"})
         assert ws.receive_json()["type"] == "unknown_run"
 
 

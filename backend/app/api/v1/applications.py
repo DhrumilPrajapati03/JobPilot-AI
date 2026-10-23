@@ -143,7 +143,7 @@ async def generate_application(
         )
 
     run_id = str(uuid.uuid4())
-    manager.register(run_id)
+    manager.register(run_id, current_user.id)
     background_tasks.add_task(
         run_agent_pipeline,
         run_id,

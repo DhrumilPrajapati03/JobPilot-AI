@@ -13,6 +13,8 @@ from app.services.llm import get_default_llm, with_structured
 def extract_text_from_pdf(file_bytes: bytes) -> str:
     """Extract all text page-by-page from PDF bytes."""
     reader = pypdf.PdfReader(BytesIO(file_bytes))
+    if len(reader.pages) > 50:
+        raise ValueError("Resume PDFs must have no more than 50 pages.")
     text = ""
     for page in reader.pages:
         page_text = page.extract_text()

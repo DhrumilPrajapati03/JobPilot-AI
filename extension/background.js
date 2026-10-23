@@ -3,6 +3,8 @@
 // content scripts never see the token and page CORS rules don't apply.
 
 const DEFAULT_API = 'http://localhost:8000';
+importScripts('policy.js');
+const policy = globalThis.JOBPILOT_POLICY;
 
 async function settings() {
   const { apiBase = DEFAULT_API, token = '', appUrl = '' } = await chrome.storage.local.get(['apiBase', 'token', 'appUrl']);
@@ -11,6 +13,9 @@ async function settings() {
 
 async function api(path, { method = 'GET', body } = {}) {
   const { apiBase, token } = await settings();
+  if (!policy.apiBase(apiBase)) return { ok: false, status: 400, data: { detail: 'API origin is not allowed. Check extension/policy.js.' } };
+  const allowed = { GET: ['/extension/me', '/extension/queue'], POST: ['/extension/match', '/extension/fill', '/extension/applied', '/extension/answers'] };
+  if (!(allowed[method] || []).includes(path)) return { ok: false, status: 403, data: { detail: 'Extension action is not allowed.' } };
   if (!token) return { ok: false, status: 401, data: { detail: 'Not connected. Open JobPilot → Settings → Connect extension.' } };
   try {
     const res = await fetch(`${apiBase}/api/v1${path}`, {
@@ -28,6 +33,7 @@ async function api(path, { method = 'GET', body } = {}) {
 
 async function resume(applicationId) {
   const { apiBase, token } = await settings();
+  if (!policy.apiBase(apiBase) || !/^[a-zA-Z0-9-]{1,64}$/.test(applicationId || '')) return { ok: false, detail: 'Invalid API origin or application.' };
   try {
     const res = await fetch(`${apiBase}/api/v1/extension/resume/${applicationId}`, { headers: { 'X-JobPilot-Token': token } });
     if (!res.ok) {
@@ -45,16 +51,24 @@ async function resume(applicationId) {
   }
 }
 
-chrome.runtime.onMessage.addListener((message, _sender, reply) => {
+chrome.runtime.onMessage.addListener((message, sender, reply) => {
   (async () => {
+    if (sender.id !== chrome.runtime.id) return reply({ ok: false });
+    const popup = sender.url === chrome.runtime.getURL('popup.html');
+    const origin = policy.origin(sender.url);
+    if (!popup && (!sender.tab || !origin || !/^https?:/.test(origin))) return reply({ ok: false });
     if (message.type === 'api') return reply(await api(message.path, message));
     if (message.type === 'resume') return reply(await resume(message.applicationId));
-    if (message.type === 'settings') return reply(await settings());
+    // Raw credentials are accessible to the extension popup only, never content scripts.
+    if (message.type === 'settings') return reply(popup ? await settings() : { ok: false });
     if (message.type === 'connect') {
-      await chrome.storage.local.set({ token: message.token, apiBase: message.apiBase || DEFAULT_API, appUrl: message.appUrl || '' });
+      const apiBase = policy.apiBase(message.apiBase || DEFAULT_API);
+      if (!apiBase || typeof message.token !== 'string' || !/^jpx_[A-Za-z0-9_-]{40,80}$/.test(message.token) ||
+          (!popup && (sender.frameId !== 0 || !policy.appOrigins.includes(origin) || message.appUrl !== origin))) return reply({ ok: false });
+      await chrome.storage.local.set({ token: message.token, apiBase, appUrl: popup ? '' : origin });
       return reply({ ok: true });
     }
     reply({ ok: false });
-  })();
+  })().catch(() => reply({ ok: false, data: { detail: 'Invalid extension request.' } }));
   return true; // async reply
 });

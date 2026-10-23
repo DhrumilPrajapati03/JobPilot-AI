@@ -7,11 +7,11 @@ level, and tech stack.
 
 import re
 
-import httpx
 from bs4 import BeautifulSoup
 from fastapi import HTTPException, status
 from app.models.application import JDAnalysis
 from app.services.llm import get_default_llm, with_structured
+from app.services.safe_fetch import fetch_public_html
 
 # Long scraped pages are mostly boilerplate; this keeps prompts within model limits.
 MAX_JD_CHARS = 12_000  # ~3k tokens: long enough for any real JD, kind to free-tier quotas
@@ -34,40 +34,25 @@ class JDParserAgent:
 
     async def _scrape_url(self, url: str) -> str:
         """Scrape the text content of a job listing URL."""
-        headers = {
-            "User-Agent": (
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-            ),
-            "Accept-Language": "en-US,en;q=0.9",
-        }
         try:
-            async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
-                response = await client.get(url, headers=headers)
-                
-                if response.status_code != 200:
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=f"Failed to fetch job URL. Status code: {response.status_code}"
-                    )
-                
-                soup = BeautifulSoup(response.text, "html.parser")
-                
-                # Strip script and style elements
-                for element in soup(["script", "style", "nav", "header", "footer", "form"]):
-                    element.decompose()
-                
-                # Get text
-                text = soup.get_text(separator=" ")
-                # Collapse whitespace
-                lines = (line.strip() for line in text.splitlines())
-                chunks = (phrase for line in lines for phrase in line.split("  "))
-                cleaned_text = " ".join(chunk for chunk in chunks if chunk)
-                
-                if not cleaned_text.strip():
-                    raise ValueError("No readable text found on the page.")
-                
-                return cleaned_text
+            html = await fetch_public_html(url)
+            soup = BeautifulSoup(html, "html.parser")
+
+            # Strip script and style elements
+            for element in soup(["script", "style", "nav", "header", "footer", "form"]):
+                element.decompose()
+
+            # Get text
+            text = soup.get_text(separator=" ")
+            # Collapse whitespace
+            lines = (line.strip() for line in text.splitlines())
+            chunks = (phrase for line in lines for phrase in line.split("  "))
+            cleaned_text = " ".join(chunk for chunk in chunks if chunk)
+
+            if not cleaned_text.strip():
+                raise ValueError("No readable text found on the page.")
+
+            return cleaned_text
 
         except HTTPException:
             raise

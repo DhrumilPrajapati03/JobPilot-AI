@@ -3,7 +3,7 @@
 // ============================================================
 
 import { API_URL } from '../lib/constants';
-import { useChatStore, type ChatMessage, type StreamEvent, type ToolPart } from './store';
+import { getChatAccountId, getChatSessionRevision, useChatStore, type ChatMessage, type StreamEvent, type ToolPart } from './store';
 
 const HISTORY_LIMIT = 30;
 
@@ -67,6 +67,9 @@ export function stopChat() {
 
 /** Send a user message and stream the assistant's reply into the active thread. */
 export async function sendChatMessage(text: string) {
+  const accountId = getChatAccountId();
+  const revision = getChatSessionRevision();
+  if (!accountId) return;
   const store = useChatStore.getState();
   if (store.streaming || !text.trim()) return;
 
@@ -74,16 +77,18 @@ export async function sendChatMessage(text: string) {
   const history = buildHistory(useChatStore.getState().activeThread().messages);
   const messageId = store.startAssistant();
   store.setStreaming(true);
-  controller = new AbortController();
+  const requestController = new AbortController();
+  controller = requestController;
 
   let error: string | undefined;
   try {
     const token = await authToken();
+    if (revision !== getChatSessionRevision() || requestController.signal.aborted) return;
     const response = await fetch(`${API_URL}/agent/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       body: JSON.stringify({ messages: history }),
-      signal: controller.signal,
+      signal: requestController.signal,
     });
     if (!response.ok || !response.body) {
       const body = await response.json().catch(() => ({}));
@@ -95,6 +100,7 @@ export async function sendChatMessage(text: string) {
     let buffer = '';
     for (;;) {
       const { value, done } = await reader.read();
+      if (revision !== getChatSessionRevision()) { await reader.cancel(); break; }
       if (done) break;
       buffer += decoder.decode(value, { stream: true });
       const frames = buffer.split('\n\n');
@@ -113,9 +119,11 @@ export async function sendChatMessage(text: string) {
   } catch (e) {
     if ((e as Error).name !== 'AbortError') error = e instanceof Error ? e.message : 'Something went wrong.';
   } finally {
-    controller = null;
-    const s = useChatStore.getState();
-    s.finishAssistant(messageId, error);
-    s.setStreaming(false);
+    if (controller === requestController) controller = null;
+    if (revision === getChatSessionRevision()) {
+      const s = useChatStore.getState();
+      s.finishAssistant(messageId, error);
+      s.setStreaming(false);
+    }
   }
 }
