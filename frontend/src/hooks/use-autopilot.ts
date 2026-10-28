@@ -2,9 +2,11 @@
 // JobPilot — Autopilot: apply queue, morning digest, extension
 // ============================================================
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
+import { resolveRun, type QueuedRun } from '../lib/run-poll';
+import { useAuthStore } from '../stores/auth-store';
 
 export interface PreparedField {
   key: string;
@@ -95,8 +97,17 @@ export function useDigestPreview(enabled: boolean) {
 }
 
 export function useSendDigest() {
+  const attempt = useRef<{ account: string | undefined; key: string } | null>(null);
   return useMutation<{ to: string; subject: string }, Error, void>({
-    mutationFn: () => api.post('/autopilot/digest/send', {}),
+    mutationFn: async () => {
+      const account = useAuthStore.getState().user?.id;
+      if (attempt.current?.account !== account || !attempt.current) attempt.current = { account, key: crypto.randomUUID() };
+      const response = await api.post<{ to: string; subject: string } | QueuedRun>('/autopilot/digest/send', {}, {
+        headers: { 'Idempotency-Key': attempt.current.key },
+      });
+      attempt.current = null;
+      return resolveRun(response);
+    },
   });
 }
 

@@ -1,4 +1,6 @@
+import { useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuthStore } from '../stores/auth-store';
 import api from '../lib/api';
 import type { Resume } from './use-profile';
 
@@ -120,8 +122,17 @@ export function useApplicationDetail(id: string) {
 }
 
 export function useGenerateApplication() {
+  const attempt = useRef<{ payload: string; key: string } | null>(null);
   return useMutation<GenerateApplicationResponse, Error, { jd_url?: string; jd_text?: string }>({
-    mutationFn: (data) => api.post<GenerateApplicationResponse>('/applications/generate', data),
+    mutationFn: async (data) => {
+      const payload = JSON.stringify([useAuthStore.getState().user?.id, data]);
+      if (attempt.current?.payload !== payload) attempt.current = { payload, key: crypto.randomUUID() };
+      const response = await api.post<GenerateApplicationResponse>('/applications/generate', data, {
+        headers: { 'Idempotency-Key': attempt.current.key },
+      });
+      attempt.current = null;
+      return response;
+    },
   });
 }
 

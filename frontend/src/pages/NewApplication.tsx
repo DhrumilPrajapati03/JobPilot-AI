@@ -157,6 +157,7 @@ export default function NewApplication() {
 
         <Card>
           <CardContent className="p-5">
+            {stream.phase === 'running' && stream.activity && <p className="mb-3 text-sm text-muted-foreground" role="status">{stream.activity}</p>}
             <PipelineProgress steps={stream.steps} />
           </CardContent>
         </Card>

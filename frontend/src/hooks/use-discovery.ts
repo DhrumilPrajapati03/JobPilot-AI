@@ -5,6 +5,7 @@
 import { useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
+import { resolveRun, type QueuedRun } from '../lib/run-poll';
 
 export type Ats = 'greenhouse' | 'lever' | 'ashby' | 'smartrecruiters' | 'himalayas' | 'remotive';
 export type PostingStatus = 'new' | 'dismissed' | 'skipped' | 'drafting' | 'drafted';
@@ -76,6 +77,18 @@ export interface JobPosting {
   discovered_at: string;
   /** How many people in your network work there. */
   referral_count?: number;
+  matching_details?: MatchDetails;
+}
+
+export interface MatchDetails {
+  version?: string;
+  components?: { title: number; skills: number; semantic: number | null };
+  semantic_model?: string;
+  identity?: { complete: boolean; confirmed_count: number; total: number };
+  reasons?: string[];
+  confirmed_matched_skills?: string[];
+  eligibility?: { status: 'eligible' | 'ineligible' | 'review'; seniority: string; minimum_experience_years: number | null;
+    checks: { dimension: string; status: string; reason: string; evidence: string }[] };
 }
 
 export interface ScanSummary {
@@ -159,7 +172,10 @@ export function useBriefing(enabled = true) {
 export function useAddSource() {
   const queryClient = useQueryClient();
   return useMutation<{ source: JobSource; scan: ScanSummary }, Error, { url: string; ats?: Ats }>({
-    mutationFn: (body) => api.post('/discovery/sources', body),
+    mutationFn: async (body) => {
+      const response = await api.post<{ source: JobSource; scan: ScanSummary | QueuedRun }>('/discovery/sources', body);
+      return { ...response, scan: await resolveRun(response.scan) };
+    },
     onSuccess: () => refreshDiscovery(queryClient),
   });
 }
@@ -197,7 +213,7 @@ export function useScanNow() {
   const queryClient = useQueryClient();
   return useMutation<ScanSummary, Error, void>({
     mutationKey: ['discovery', 'scan'],
-    mutationFn: () => api.post('/discovery/scan', {}),
+    mutationFn: async () => resolveRun(await api.post<ScanSummary | QueuedRun>('/discovery/scan', {})),
     onSuccess: (summary) => {
       refreshDiscovery(queryClient);
       if (summary.auto_drafting?.length) queryClient.invalidateQueries({ queryKey: ['applications'] });

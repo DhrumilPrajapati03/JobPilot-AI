@@ -178,7 +178,7 @@ def email_configured() -> bool:
     return bool(settings.RESEND_API_KEY)
 
 
-async def send_email(to: str, subject: str, body_html: str, body_text: str):
+async def send_email(to: str, subject: str, body_html: str, body_text: str, *, idempotency_key: str | None = None, sender: str | None = None):
     if not settings.RESEND_API_KEY:
         raise DigestError("Email isn't set up on the server: add RESEND_API_KEY (free at resend.com).")
     if not to:
@@ -187,8 +187,9 @@ async def send_email(to: str, subject: str, body_html: str, body_text: str):
         async with httpx.AsyncClient(timeout=20) as client:
             res = await client.post(
                 "https://api.resend.com/emails",
-                headers={"Authorization": f"Bearer {settings.RESEND_API_KEY}"},
-                json={"from": settings.DIGEST_FROM, "to": [to], "subject": subject, "html": body_html, "text": body_text},
+                headers={"Authorization": f"Bearer {settings.RESEND_API_KEY}",
+                         **({"Idempotency-Key": idempotency_key} if idempotency_key else {})},
+                json={"from": sender or settings.DIGEST_FROM, "to": [to], "subject": subject, "html": body_html, "text": body_text},
             )
     except httpx.HTTPError as e:
         raise DigestError(f"Couldn't reach Resend ({type(e).__name__}).") from e

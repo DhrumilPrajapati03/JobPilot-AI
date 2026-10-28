@@ -121,6 +121,13 @@ async def _greenhouse_form(apply: str) -> list[form_answers.FormField] | None:
 
 
 def save_prepared(supabase, application_id: str, user_id: str, prepared: dict) -> bool:
+    from app.services.runs import current_execution
+    ctx = current_execution.get()
+    if ctx:
+        ctx.check()
+        ctx.store.rpc("save_run_prepared", p_run_id=ctx.run["id"], p_token=ctx.token,
+                      p_application_id=application_id, p_prepared=prepared)
+        return True
     try:
         supabase.table("job_applications").update({"prepared_form": prepared}).eq("id", application_id).eq("user_id", user_id).execute()
         return True
@@ -237,6 +244,7 @@ async def tick(admin) -> dict:
 
 async def _tick(admin) -> dict:
     from app.services import digest, discovery
+    from app.services import runs
 
     report = {"status": "done", "scanned": [], "digests": [], "errors": []}
     try:
@@ -261,6 +269,18 @@ async def _tick(admin) -> dict:
         today = now.date().isoformat()
         state = states.get(user_id, {})
         try:
+            if runs.durable_enabled():
+                store = runs.RunStore(admin)
+                if user_id in followers and state.get("last_scan_on") != today and now.hour >= scan_hour(prefs):
+                    job = store.enqueue(user_id, "scan", {"auto_draft": True, "scheduled_on": today}, f"scheduled-scan:{today}")
+                    report["scanned"].append({"user_id": user_id, "run_id": job["id"], "status": job["status"]})
+                if prefs.digest_enabled and state.get("last_digest_on") != today and now.hour >= prefs.digest_hour:
+                    pending = admin.table("agent_runs").select("id").eq("user_id", user_id).in_("kind", ["scan", "application"]).in_("status", ["queued", "running", "retry_wait"]).limit(1).execute().data
+                    if pending and now.hour < prefs.digest_hour + 1:
+                        continue
+                    job = store.enqueue(user_id, "digest", {"scheduled_on": today}, f"scheduled-digest:{today}")
+                    report["digests"].append({"user_id": user_id, "run_id": job["id"], "status": job["status"]})
+                continue
             if user_id in followers and state.get("last_scan_on") != today and now.hour >= scan_hour(prefs):
                 email = account_email(admin, user_id)
                 summary = await discovery.scan_user(admin, user_id, auto_draft=True, user_email=email)

@@ -1,6 +1,7 @@
 """Main API v1 router that aggregates all sub-routers."""
 
 from fastapi import APIRouter
+from app.api.v1 import runs
 
 from app.api.v1 import (
     agent,
@@ -19,6 +20,7 @@ from app.api.v1 import (
 )
 
 api_v1_router = APIRouter()
+api_v1_router.include_router(runs.router, prefix="/runs", tags=["Background runs"])
 
 api_v1_router.include_router(
     auth.router,

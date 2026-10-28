@@ -189,6 +189,10 @@ async def scan_user(
     source_ids: list[str] | None = None,
 ) -> dict:
     """Scan the user's followed boards. Returns a summary of what changed."""
+    from app.services import runs
+    if runs.durable_enabled() and runs.current_execution.get() is None:
+        run = runs.enqueue_for_user(user_id, "scan", {"auto_draft": auto_draft, "source_ids": source_ids})
+        return {"status": "queued", "run_id": run["id"]}
     if user_id in _scanning:
         return {"status": "already_running"}
     _scanning.add(user_id)
@@ -247,6 +251,14 @@ async def _scan(supabase, user_id, user_token, user_email, auto_draft, source_id
 
         results = await asyncio.gather(*(fetch(s) for s in sources))
 
+    # A long board fetch must not start writing after another worker took over.
+    from app.services.runs import current_execution, LeaseLost
+    execution = current_execution.get()
+    if execution:
+        execution.check()
+        if not await asyncio.to_thread(execution.store.renew, execution.run["id"], execution.token):
+            raise LeaseLost("Worker lease was lost during discovery")
+
     now = _now().isoformat()
     new_rows, reopen, closing = [], [], []
 
@@ -300,7 +312,7 @@ async def _scan(supabase, user_id, user_token, user_email, auto_draft, source_id
     # Preferences or scoring may have changed since stored postings were scored.
     summary.update(_rescore_stored(supabase, user_id, prefs, profile, country, skip_ids=set()))
     for chunk in _chunks(new_rows):
-        supabase.table("job_postings").insert(chunk).execute()
+        supabase.table("job_postings").upsert(chunk, on_conflict="user_id,ats,external_id", ignore_duplicates=True).execute()
     for chunk in _chunks(reopen):
         supabase.table("job_postings").update({"closed_at": None}).in_("id", chunk).eq("user_id", user_id).execute()
     for chunk in _chunks(closing):
@@ -335,7 +347,8 @@ def start_auto_drafts(supabase, user_id: str, prefs: WorkPreferences, *, user_to
         reverse=True,
     )[:remaining]
     queued = [begin_draft(supabase, user_id, r, auto=True) for r in candidates]
-    if queued:
+    from app.services.runs import durable_enabled
+    if queued and not durable_enabled():
         _spawn(_run_drafts(supabase, user_id, queued, user_token, user_email))
     return [{k: q[k] for k in ("posting_id", "run_id", "title", "company")} for q in queued]
 
@@ -344,6 +357,15 @@ def begin_draft(supabase, user_id: str, posting: dict, *, auto: bool) -> dict:
     """Mark a posting as drafting and reserve a pipeline run id for it."""
     if reason := india_eligibility_flag(posting):
         raise DiscoveryError(reason)
+    from app.services import runs
+    if runs.durable_enabled():
+        where = (posting.get("location") or "Not stated") + (" (remote)" if posting.get("remote") else "")
+        text = f"{posting['title']} at {posting['company']}\nLocation: {where}\n\n{posting.get('description') or ''}"
+        run = runs.enqueue_for_user(user_id, "application", {"posting_id": posting["id"], "jd_url": posting.get("url"),
+            "jd_text": text, "source": posting.get("ats") or "discovery", "auto": auto}, f"posting:{posting['id']}")
+        if run["status"] == "failed" and not auto:
+            runs.RunStore().rpc("retry_agent_run", p_run_id=run["id"], p_user_id=user_id)
+        return {"posting_id": posting["id"], "run_id": run["id"], "title": posting.get("title"), "company": posting.get("company")}
     run_id = str(uuid.uuid4())
     manager.register(run_id, user_id)
     supabase.table("job_postings").update({
@@ -360,7 +382,9 @@ async def _run_drafts(supabase, user_id: str, queued: list[dict], user_token: st
 
 def start_manual_draft(supabase, user_id: str, posting: dict, *, user_token: str, user_email: str) -> dict:
     queued = begin_draft(supabase, user_id, posting, auto=False)
-    _spawn(draft_posting(supabase, user_id, posting["id"], queued["run_id"], user_token=user_token, user_email=user_email))
+    from app.services.runs import durable_enabled
+    if not durable_enabled():
+        _spawn(draft_posting(supabase, user_id, posting["id"], queued["run_id"], user_token=user_token, user_email=user_email))
     return queued
 
 

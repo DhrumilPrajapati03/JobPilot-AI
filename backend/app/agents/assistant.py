@@ -19,6 +19,7 @@ import copy
 import json
 import re
 import uuid
+import time
 from datetime import date
 from typing import Any, AsyncIterator
 
@@ -325,10 +326,14 @@ async def _get_saved_answers(user: CurrentUser, _args: dict) -> dict:
 
 
 async def _create_application(user: CurrentUser, args: dict) -> dict:
+    from app.services import runs
     jd_text = (args.get("jd_text") or "").strip() or None
     jd_url = (args.get("jd_url") or "").strip() or None
     if not jd_text and not jd_url:
         return {"error": "Ask the user for the job description text or URL first."}
+    if runs.durable_enabled():
+        run = runs.enqueue_for_user(user.id, "application", {"jd_url": jd_url, "jd_text": jd_text, "source": "assistant"})
+        return {"run_id": run["id"], "status": run["status"], "message": "Application queued for a background worker."}
     run_id = str(uuid.uuid4())
     manager.register(run_id, user.id)
     task = asyncio.create_task(run_agent_pipeline(run_id, user.id, user.token, jd_url, jd_text, user.email))
@@ -427,6 +432,10 @@ async def _propose_referral_request(user: CurrentUser, args: dict) -> dict:
 
 
 async def _scan_jobs(user: CurrentUser, _args: dict) -> dict:
+    from app.services import runs
+    if runs.durable_enabled():
+        run = runs.enqueue_for_user(user.id, "scan", {"auto_draft": True}, f"manual-scan:{int(time.time() // 60)}")
+        return {"run_id": run["id"], "status": run["status"], "message": "Scan queued; results will appear in the job feed."}
     supabase = get_supabase_client(user_jwt=user.token)
     try:
         summary = await discovery.scan_user(supabase, user.id, user_token=user.token, user_email=user.email)

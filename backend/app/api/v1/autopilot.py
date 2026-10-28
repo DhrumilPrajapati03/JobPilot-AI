@@ -8,6 +8,7 @@ from app.api.v1.applications import _get_owned_application
 from app.config import settings
 from app.models.user import WorkPreferences
 from app.services import autopilot, digest
+from app.services import runs
 from app.services.auth import CurrentUser, get_current_user
 from app.services.supabase import get_supabase_admin_client, get_supabase_client
 
@@ -79,10 +80,13 @@ async def digest_preview(current_user: CurrentUser = Depends(get_current_user)):
 
 
 @router.post("/digest/send")
-async def digest_send(current_user: CurrentUser = Depends(get_current_user)):
+async def digest_send(current_user: CurrentUser = Depends(get_current_user), idempotency_key: str | None = Header(default=None)):
     """Send today's digest now (a test; it doesn't replace tomorrow morning's)."""
     supabase = _client(current_user)
     prefs = _prefs(supabase, current_user.id)
+    if runs.durable_enabled():
+        run = runs.enqueue_for_user(current_user.id, "digest", {}, idempotency_key)
+        return {"status": run["status"], "run_id": run["id"], "to": prefs.digest_email or current_user.email}
     try:
         return await digest.send_digest(supabase, current_user.id, prefs, prefs.digest_email or current_user.email)
     except digest.DigestError as e:
@@ -99,6 +103,9 @@ async def cron_tick(x_cron_secret: str = Header(default="")):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Bad or missing X-Cron-Secret.")
     if not autopilot.server_ready():
         raise HTTPException(status_code=503, detail="Set SUPABASE_SERVICE_KEY on the server to run the schedule.")
+    if runs.durable_enabled():
+        # Only enqueue date-keyed jobs. The long-running work happens in workers.
+        return await autopilot.tick(get_supabase_admin_client())
     task = asyncio.create_task(autopilot.tick(get_supabase_admin_client()))
     _background.add(task)
     task.add_done_callback(_background.discard)

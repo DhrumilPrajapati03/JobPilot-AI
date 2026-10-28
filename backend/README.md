@@ -2,6 +2,8 @@
 
 FastAPI application that powers the JobPilot AI autonomous career agent system.
 
+For Sprint 2 durable execution, apply the new migrations, set `EXECUTION_MODE=durable` on API and worker, and start `python -m app.workers.runner` alongside the API. Full setup and recovery details are in [SPRINT_2_STATUS.md](../SPRINT_2_STATUS.md). `docker-compose.durable.yml` provides the two processes without Redis; the original Compose file remains the legacy configuration.
+
 ## Setup Instructions
 
 ### Local Development (Python Virtual Environment)

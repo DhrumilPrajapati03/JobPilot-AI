@@ -24,7 +24,7 @@ export interface StepProgress {
 
 interface AgentEvent {
   type: 'status' | 'unknown_run';
-  step: PipelineStepId | 'complete';
+  step: string;
   status: 'running' | 'done' | 'warning' | 'error' | 'success';
   message: string;
   data?: Record<string, unknown>;
@@ -78,6 +78,7 @@ export function useAgentStream({ persist = true, runId }: { persist?: boolean; r
   const [error, setError] = useState<string | null>(null);
   const [applicationId, setApplicationId] = useState<string | null>(null);
   const [result, setResult] = useState<Record<string, unknown> | null>(null);
+  const [activity, setActivity] = useState<string | null>(null);
 
   const socketRef = useRef<WebSocket | null>(null);
   const finishedRef = useRef(false);
@@ -103,6 +104,7 @@ export function useAgentStream({ persist = true, runId }: { persist?: boolean; r
         return;
       }
       if (event.type !== 'status') return;
+      setActivity(event.message);
 
       if (event.step === 'complete') {
         finishedRef.current = true;
@@ -119,19 +121,20 @@ export function useAgentStream({ persist = true, runId }: { persist?: boolean; r
         return;
       }
 
-      setSteps((prev) => {
+      const stepId = ['cover_draft', 'email_drafts', 'dm_drafts'].includes(event.step) ? 'outreach_generation' : event.step;
+      if (PIPELINE_STEPS.some((s) => s.id === stepId)) setSteps((prev) => {
         const next = { ...prev };
-        const index = PIPELINE_STEPS.findIndex((s) => s.id === event.step);
+        const index = PIPELINE_STEPS.findIndex((s) => s.id === stepId);
         // Anything before the reported step that never reported back is done.
         PIPELINE_STEPS.slice(0, index).forEach((s) => {
           if (next[s.id].state === 'idle' || next[s.id].state === 'running') {
             next[s.id] = { ...next[s.id], state: 'done' };
           }
         });
-        next[event.step] = {
+        next[stepId] = {
           state: event.status === 'success' ? 'done' : event.status,
           message: event.message,
-          data: event.data ?? prev[event.step]?.data,
+          data: event.data ?? prev[stepId]?.data,
         };
         return next;
       });
@@ -197,6 +200,7 @@ export function useAgentStream({ persist = true, runId }: { persist?: boolean; r
       setError(null);
       setApplicationId(null);
       setResult(null);
+      setActivity(null);
       setPhase('running');
       remember(runId);
       connect(runId);
@@ -213,6 +217,7 @@ export function useAgentStream({ persist = true, runId }: { persist?: boolean; r
     setError(null);
     setApplicationId(null);
     setResult(null);
+    setActivity(null);
   }, [close, remember]);
 
   // Follow the given run, or resume one that was in progress before a page refresh.
@@ -225,5 +230,5 @@ export function useAgentStream({ persist = true, runId }: { persist?: boolean; r
     };
   }, [start, close, runId, persist]);
 
-  return { steps, phase, error, applicationId, result, start, reset };
+  return { steps, phase, error, applicationId, result, activity, start, reset };
 }

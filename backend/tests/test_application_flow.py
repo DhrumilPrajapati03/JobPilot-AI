@@ -48,8 +48,9 @@ class FakeQuery:
         self.op, self.payload = "update", payload
         return self
 
-    def upsert(self, payload, on_conflict=""):
+    def upsert(self, payload, on_conflict="", ignore_duplicates=False):
         self.op, self.payload = "upsert", payload
+        self.ignore_duplicates = ignore_duplicates
         self.conflict_cols = [c.strip() for c in on_conflict.split(",") if c.strip()] or ["id"]
         return self
 
@@ -99,7 +100,8 @@ class FakeQuery:
                 self._check_columns(row)
                 existing = next((r for r in rows if all(r.get(c) == row.get(c) for c in self.conflict_cols)), None)
                 if existing is not None:
-                    existing.update(copy.deepcopy(row))
+                    if not self.ignore_duplicates:
+                        existing.update(copy.deepcopy(row))
                     written.append(existing)
                 else:
                     created = {"id": str(uuid.uuid4()), "created_at": datetime.now(timezone.utc).isoformat(), **row}

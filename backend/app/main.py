@@ -14,6 +14,7 @@ from app.api.v1.router import api_v1_router
 from app.config import settings
 from app.services import autopilot
 from app.services import auth
+from app.services import runs
 from app.services.request_limits import UploadBodyLimitMiddleware
 
 
@@ -99,6 +100,10 @@ async def agent_stream(websocket: WebSocket, run_id: str):
         await websocket.close(code=4401)
         return
     except WebSocketDisconnect:
+        return
+    if runs.durable_enabled():
+        from app.services.run_stream import stream_run
+        await stream_run(websocket, run_id, identity["sub"], token)
         return
     # Replays history only after verifying this session and the run owner.
     if not await manager.connect(run_id, websocket, identity["sub"]):

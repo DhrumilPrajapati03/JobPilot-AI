@@ -14,3 +14,7 @@ backend/data/
 # Local project analysis and portfolio assets
 /PROJECT_ANALYSIS.md
 /assets/portfolio/
+
+# Project-local development tooling
+/.tool-cache/
+/backend/supabase/.temp/

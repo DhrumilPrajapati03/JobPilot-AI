@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 
 from app.services import discovery, referrals
+from app.services import runs
 from app.services.auth import CurrentUser, get_current_user
 from app.services.job_boards import ATS_NAMES, REMOTE_BOARDS, BoardError, fetch_board, parse_board
 from app.services.supabase import get_supabase_client
@@ -219,6 +220,9 @@ async def delete_source(source_id: str, current_user: CurrentUser = Depends(get_
 async def scan_now(current_user: CurrentUser = Depends(get_current_user)):
     """Scan every followed board now. Auto-drafts (if on) continue in the background."""
     with _guard():
+        if runs.durable_enabled():
+            run = runs.enqueue_for_user(current_user.id, "scan", {"auto_draft": True})
+            return {"status": "queued", "run_id": run["id"]}
         return await discovery.scan_user(
             _client(current_user), current_user.id, user_token=current_user.token, user_email=current_user.email,
         )

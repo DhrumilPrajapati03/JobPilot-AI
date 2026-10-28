@@ -2,6 +2,8 @@
 
 An AI assistant for finding relevant jobs, preparing tailored application materials, and tracking your job search. JobPilot includes a web app, a FastAPI backend, and a Chrome extension that fills application forms for you to review and submit.
 
+Sprint 2 adds opt-in durable Supabase runs and a separate worker. See [setup, architecture and verification](SPRINT_2_STATUS.md), and keep the deferred [production readiness work](PRODUCTION_READINESS.md) as a release gate.
+
 ## Features
 
 - **Identity vault:** Store your profile, base resume, skills, work preferences, and reusable screening answers. Upload a resume or edit its structured content.

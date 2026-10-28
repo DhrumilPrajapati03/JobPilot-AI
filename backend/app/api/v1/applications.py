@@ -8,7 +8,7 @@ generated materials, and updating application status.
 import uuid
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, status
 from pydantic import BaseModel, Field
 
 from app.agents.jd_parser import JDParserAgent
@@ -23,6 +23,7 @@ from app.services.materials import (
 from app.services.referrals import contact_counts
 from app.services.supabase import get_supabase_client
 from app.services.websocket import manager
+from app.services import runs
 
 router = APIRouter()
 
@@ -120,7 +121,8 @@ async def parse_jd(
 async def generate_application(
     request: ApplicationGenerateRequest,
     background_tasks: BackgroundTasks,
-    current_user: CurrentUser = Depends(get_current_user)
+    current_user: CurrentUser = Depends(get_current_user),
+    idempotency_key: str | None = Header(default=None),
 ):
     """Run the full agent pipeline for a single application.
 
@@ -142,6 +144,9 @@ async def generate_application(
             detail="Provide a job URL or the job description text.",
         )
 
+    if runs.durable_enabled():
+        run = runs.enqueue_for_user(current_user.id, "application", {"jd_url": jd_url, "jd_text": jd_text, "source": "manual"}, idempotency_key)
+        return {"status": run["status"], "run_id": run["id"], "message": "Application queued. A background worker will prepare it."}
     run_id = str(uuid.uuid4())
     manager.register(run_id, current_user.id)
     background_tasks.add_task(
@@ -234,6 +239,10 @@ async def get_application_details(
     Pulls information from job_applications, tailored_resumes,
     and cold_emails tables.
     """
+    try:
+        uuid.UUID(application_id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Application not found")
     supabase = get_supabase_client(user_jwt=current_user.token)
     application = _get_owned_application(supabase, application_id, current_user.id)
 

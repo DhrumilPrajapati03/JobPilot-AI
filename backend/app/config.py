@@ -4,6 +4,9 @@ Loads environment variables from .env file and provides
 typed settings accessible throughout the application.
 """
 
+from typing import Literal
+
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -67,6 +70,11 @@ class Settings(BaseSettings):
 
     # Infrastructure
     REDIS_URL: str = "redis://localhost:6379/0"
+    # Inline preserves existing installs; durable requires the Sprint 2 migration
+    # and `python -m app.workers.runner`. No Redis broker is required in this mode.
+    EXECUTION_MODE: Literal["inline", "durable"] = "inline"
+    RUN_LEASE_SECONDS: int = Field(default=120, ge=30, le=1800)
+    RUN_POLL_SECONDS: float = Field(default=2.0, ge=0.1, le=60)
 
     # App Config
     FRONTEND_URL: str = "http://localhost:5173"  # comma-separated for several origins; the first is used in emails

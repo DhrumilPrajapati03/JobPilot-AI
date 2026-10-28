@@ -87,7 +87,7 @@ function stepLabel(part: ToolPart): string {
     case 'propose_referral_request':
       return running ? 'Drafting a referral request' : 'Drafted a referral request for your approval';
     case 'scan_jobs':
-      return running ? 'Scanning your job boards' : `Scanned ${r.sources ?? 0} board${r.sources === 1 ? '' : 's'}: ${r.new ?? 0} new match${r.new === 1 ? '' : 'es'}`;
+      return running ? 'Scanning your job boards' : r.status === 'queued' ? 'Job board scan queued. Follow progress in your feed.' : `Scanned ${r.sources ?? 0} board${r.sources === 1 ? '' : 's'}: ${r.new ?? 0} new match${r.new === 1 ? '' : 'es'}`;
     case 'open_view':
       return running ? 'Opening the workspace' : `Opened ${VIEW_LABEL[r.opened as StageView] ?? 'a view'} in the workspace`;
     default:
@@ -357,6 +357,7 @@ export function PipelineCard({ runId, onReview, onFinish }: { runId: string; onR
           {done}/{PIPELINE_STEPS.length}
         </span>
       </div>
+      {stream.phase === 'running' && stream.activity && <p className="mt-2 text-xs text-muted-foreground" role="status">{stream.activity}</p>}
       <div className="mt-2 h-1 overflow-hidden rounded-full bg-secondary">
         <div className="h-full rounded-full bg-accent transition-all duration-500" style={{ width: `${(done / PIPELINE_STEPS.length) * 100}%` }} />
       </div>
