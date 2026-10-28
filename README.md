@@ -6,6 +6,8 @@ Sprint 2 adds opt-in durable Supabase runs and a separate worker. See [setup, ar
 
 Sprint 3 adds source-linked resume confirmations, structured eligibility, explainable semantic ranking, and conservative job deduplication. See [workflow, setup and evaluation results](SPRINT_3_STATUS.md).
 
+Sprint 4 adds per-user Composio/Gmail consent, immutable draft approval, durable sending and reconciliation, tracked replies and source-backed recruiter research. See [configuration, workflow and verification](SPRINT_4_STATUS.md). Provider credentials and real OAuth acceptance remain setup steps; sending defaults to disabled.
+
 ## Features
 
 - **Identity vault:** Store your profile, base resume, skills, work preferences, and reusable screening answers. Upload a resume or edit its structured content.

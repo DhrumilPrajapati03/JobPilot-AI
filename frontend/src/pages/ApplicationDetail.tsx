@@ -136,7 +136,7 @@ function buildTimeline({ application, cold_emails }: ApplicationDetails): Timeli
     if (email.sent_at) {
       events.push({
         at: email.sent_at,
-        label: `${email.sequence_number === 1 ? 'Cold email' : `Follow-up ${email.sequence_number - 1}`} sent${
+          label: `${email.sequence_number === 1 ? 'Cold email' : `Follow-up ${email.sequence_number - 1}`} manually marked sent${
           email.replied ? ' · replied' : ''
         }`,
         tone: email.replied ? 'accent' : 'default',

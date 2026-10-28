@@ -16,6 +16,7 @@ import {
   type JobApplication,
 } from '../../hooks/use-applications';
 import { cn } from '@/lib/utils';
+import { MailOutreach } from '../email/MailOutreach';
 
 const LINKEDIN_NOTE_LIMIT = 300;
 // Matches the email writer prompt: initial, +5 days, +12 days.
@@ -128,7 +129,7 @@ function EmailCard({
             <CardTitle className="text-sm">{sequenceLabel(index)}</CardTitle>
             <p className="text-xs text-muted-foreground mt-0.5">
               {email.sent_at
-                ? `Sent ${formatDate(email.sent_at)}`
+                ? `Manually marked sent ${formatDate(email.sent_at)}`
                 : offset === 0
                   ? 'Send when you apply'
                   : sendOn
@@ -156,7 +157,7 @@ function EmailCard({
             onClick={() => update.mutate({ emailId: email.id, data: { sent: !email.sent_at } })}
           >
             {email.sent_at ? <CheckCircle2 size={14} className="mr-1.5 text-accent" /> : <MailCheck size={14} className="mr-1.5" />}
-            {email.sent_at ? 'Sent' : 'Mark sent'}
+            {email.sent_at ? 'Manually marked sent' : 'Mark sent manually'}
           </Button>
           <Button type="button" variant="outline" size="sm" asChild>
             <a href={mailto}>
@@ -212,14 +213,16 @@ function EmailCard({
 export function EmailPanel({ application, emails }: { application: JobApplication; emails: ColdEmail[] }) {
   if (emails.length === 0) {
     return (
-      <Card className="border-dashed p-12 text-center">
+      <div className="space-y-4"><MailOutreach applicationId={application.id} emails={emails}/><Card className="border-dashed p-12 text-center">
         <Mail size={36} className="mx-auto text-muted-foreground/40" />
-        <p className="mt-3 text-sm font-semibold text-muted-foreground">No cold email drafts for this application.</p>
-      </Card>
+        <p className="mt-3 text-sm font-semibold text-muted-foreground">No generated email templates for this application.</p>
+      </Card></div>
     );
   }
   return (
     <div className="space-y-4">
+      <MailOutreach applicationId={application.id} emails={emails}/>
+      <p className="text-sm text-muted-foreground">Generated templates and manual activity log</p>
       {emails.map((email) => (
         <EmailCard key={email.id} email={email} index={email.sequence_number - 1} application={application} />
       ))}

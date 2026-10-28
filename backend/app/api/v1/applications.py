@@ -264,11 +264,18 @@ async def get_application_details(
         .order("sequence_number")
         .execute()
     )
+    try:
+        gmail = supabase.table("outreach_messages").select("id,state,to_email,from_email,provider_message_id,sent_at,delivery_status").eq("application_id", application_id).eq("user_id", current_user.id).order("created_at", desc=True).limit(25).execute().data
+    except Exception as exc:
+        if "outreach_messages" not in str(exc) or not any(code in str(exc) for code in ("PGRST205", "does not exist")):
+            raise HTTPException(503, "Email acceptance history is temporarily unavailable") from exc
+        gmail = []
 
     return {
         "application": normalize_application(application),
         "tailored_resume": tailored_resume,
         "cold_emails": email_res.data,
+        "gmail_outreach": gmail,
     }
 
 
@@ -385,6 +392,14 @@ async def delete_application(
     supabase = get_supabase_client(user_jwt=current_user.token)
     _get_owned_application(supabase, application_id, current_user.id)
 
+    try:
+        history = supabase.table("outreach_messages").select("id").eq("application_id", application_id).eq("user_id", current_user.id).limit(1).execute().data
+    except Exception as exc:
+        if "outreach_messages" not in str(exc) or not any(code in str(exc) for code in ("PGRST205", "does not exist")):
+            raise HTTPException(503, "Email history could not be checked before deletion") from exc
+        history = []
+    if history:
+        raise HTTPException(409, "This application has email history. Archive it to preserve send and approval records.")
     supabase.table("cold_emails").delete().eq("application_id", application_id).execute()
     supabase.table("tailored_resumes").delete().eq("application_id", application_id).eq("user_id", current_user.id).execute()
     supabase.table("job_applications").delete().eq("id", application_id).eq("user_id", current_user.id).execute()

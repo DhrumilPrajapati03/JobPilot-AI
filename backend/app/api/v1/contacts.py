@@ -1,39 +1,32 @@
-"""HR Contact discovery endpoints.
-
-Finds and enriches HR/recruiter contacts for target companies
-using Hunter.io and Apollo.io APIs.
-"""
-
+"""Owner-scoped recruiter research with source evidence and verification."""
+import uuid
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel, Field, field_validator
 from app.services.auth import CurrentUser, get_current_user
+from app.api.v1.email import admin, owned
+from app.services import recruiters
 
-router = APIRouter()
+router=APIRouter()
 
+class ResearchRequest(BaseModel):
+    application_id: uuid.UUID
+    company_domain: str = Field(max_length=253)
+    @field_validator('company_domain')
+    @classmethod
+    def domain(cls,value): return recruiters.domain_name(value)
 
-@router.get("/find")
-async def find_contacts(company_domain: str, _current_user: CurrentUser = Depends(get_current_user)):
-    """Find HR/recruiter contacts for a given company domain.
+@router.post('/research')
+async def research_contacts(body: ResearchRequest,user: CurrentUser=Depends(get_current_user)):
+    db=admin(); application=owned(db,'job_applications',body.application_id,user.id)
+    return await recruiters.research(db,user.id,application,body.company_domain)
 
-    Uses Hunter.io and Apollo.io APIs to discover email addresses
-    and LinkedIn profiles of HR personnel at the target company.
+@router.get('/find')
+async def find_contacts(company_domain: str,application_id: uuid.UUID,user: CurrentUser=Depends(get_current_user)):
+    return await research_contacts(ResearchRequest(company_domain=company_domain,application_id=application_id),user)
 
-    Args:
-        company_domain: The company's domain (e.g., 'google.com').
-    """
-    # TODO: Integrate Hunter.io + Apollo.io API
-    return {
-        "company_domain": company_domain,
-        "contacts": [],
-        "message": "HR contact finder - not yet implemented",
-    }
-
-
-@router.get("/")
-async def list_contacts(company: str | None = None, _current_user: CurrentUser = Depends(get_current_user)):
-    """List all discovered HR contacts, optionally filtered by company.
-
-    Args:
-        company: Optional company name filter.
-    """
-    # TODO: Query contacts from Supabase
-    return {"contacts": [], "total": 0}
+@router.get('/')
+async def list_contacts(application_id: uuid.UUID|None=None,user: CurrentUser=Depends(get_current_user)):
+    query=admin().table('recruiter_leads').select('*').eq('user_id',user.id).order('verified_at',desc=True).limit(100)
+    if application_id: query=query.eq('application_id',str(application_id))
+    rows=query.execute().data
+    return {'contacts':rows,'total':len(rows)}

@@ -16,6 +16,8 @@ INPUT_FIELDS = {
     "application": {"jd_url", "jd_text", "source", "posting_id", "auto"},
     "scan": {"auto_draft", "source_ids", "scheduled_on"},
     "digest": {"scheduled_on"},
+    "mail_send": {"message_id"},
+    "mail_sync": {"connection_id", "cycle", "after_id"},
 }
 current_execution: ContextVar = ContextVar("current_execution", default=None)
 

@@ -17,6 +17,8 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=True,
+        extra="ignore",
+        hide_input_in_errors=True,
     )
 
     # Supabase
@@ -63,6 +65,11 @@ class Settings(BaseSettings):
     # Shared secret for POST /api/v1/autopilot/tick, called by an external cron (e.g. cron-job.org)
     # so a host that sleeps when idle (Render free tier) still runs the nightly scan and digest.
     CRON_SECRET: str = ""
+    COMPOSIO_API_KEY: str = ""
+    COMPOSIO_GMAIL_AUTH_CONFIG_ID: str = ""
+    MAILBOX_ENABLED: bool = False
+    MAIL_SEND_ENABLED: bool = False
+    MAIL_SYNC_ENABLED: bool = True
 
     # Job Data APIs
     ADZUNA_APP_ID: str = ""

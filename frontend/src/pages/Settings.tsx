@@ -21,6 +21,7 @@ import {
   useSendDigest,
 } from '../hooks/use-autopilot';
 import { cn } from '@/lib/utils';
+import { GmailConnection } from '../components/email/GmailConnection';
 
 const hourLabel = (h: number) => new Date(2000, 0, 1, h).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 
@@ -313,6 +314,7 @@ export default function Settings() {
         <h1 className="text-xl font-semibold tracking-tight">Settings</h1>
         <p className="text-sm text-muted-foreground">Your morning digest, the overnight schedule and the Chrome extension.</p>
       </div>
+      <GmailConnection />
       <DigestCard />
       <ExtensionCard />
       <ScheduleCard />

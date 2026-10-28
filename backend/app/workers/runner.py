@@ -76,6 +76,9 @@ class Worker:
         db, uid = self.store.client, ctx.run["user_id"]
         email = autopilot.account_email(db, uid)
         kind = ctx.run["kind"]
+        if kind in {"mail_send", "mail_sync"}:
+            from app.services import mailbox
+            return await (mailbox.execute_send(ctx) if kind == "mail_send" else mailbox.execute_sync(ctx))
         if kind == "application":
             return await run_application(ctx, email)
         if kind == "scan":
@@ -122,6 +125,8 @@ async def main(once=False):
             if not once and asyncio.get_running_loop().time() - last_schedule >= autopilot.TICK_SECONDS:
                 if settings.DISCOVERY_AUTO_SCAN:
                     await autopilot.tick(worker.store.client)
+                from app.services import mailbox
+                await mailbox.schedule_sync(worker.store.client)
                 last_schedule = asyncio.get_running_loop().time()
             worked = await worker.run_once()
             if once:
