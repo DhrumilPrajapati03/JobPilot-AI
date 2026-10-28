@@ -121,6 +121,28 @@ export function useApplicationDetail(id: string) {
   });
 }
 
+export function useReportSubmission() {
+  const client = useQueryClient();
+  const requests = useRef(new Map<string, string>());
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const account = useAuthStore.getState().user?.id;
+      if (!account) throw new Error('Sign in before reporting a submission.');
+      const key = `${account}:${id}`;
+      if (!requests.current.has(key)) requests.current.set(key, crypto.randomUUID());
+      await api.post(`/applications/${id}/report-submission`, {request_key:requests.current.get(key)});
+      if (useAuthStore.getState().user?.id !== account) throw new Error('Account changed. Reopen your applications.');
+      requests.current.delete(key);
+      return {id,account};
+    },
+    onSuccess: ({id,account}) => {
+      if (useAuthStore.getState().user?.id !== account) return;
+      for (const key of ['applications','analytics','execution-evidence','application-detail']) client.invalidateQueries({queryKey:key === 'execution-evidence' || key === 'application-detail' ? [key,id] : [key]});
+      client.invalidateQueries({queryKey:['autopilot','queue']});
+    },
+  });
+}
+
 export function useGenerateApplication() {
   const attempt = useRef<{ payload: string; key: string } | null>(null);
   return useMutation<GenerateApplicationResponse, Error, { jd_url?: string; jd_text?: string }>({

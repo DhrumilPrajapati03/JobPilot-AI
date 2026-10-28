@@ -6,6 +6,8 @@ filtered to the token's user. The extension fills forms; it never submits them.
 """
 
 import re
+import uuid
+from typing import Literal
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
@@ -14,7 +16,8 @@ from pydantic import BaseModel, Field
 
 from app.resume_engine.builder import build_render_content
 from app.resume_engine.renderer import render_resume_pdf
-from app.services import autopilot, form_answers
+from app.services import autopilot, form_answers, application_execution as execution
+from pydantic import ValidationError
 from app.services.supabase import get_supabase_admin_client
 
 router = APIRouter()
@@ -68,6 +71,26 @@ class MatchRequest(BaseModel):
 
 class AppliedRequest(BaseModel):
     application_id: str
+    session_id: uuid.UUID | None = None
+    request_key: uuid.UUID | None = None
+
+
+class SessionRequest(BaseModel):
+    id: uuid.UUID
+    application_id: uuid.UUID
+    url: str = Field(max_length=2000)
+    link_confirmed: bool = False
+
+
+class EventRequest(BaseModel):
+    session_id: uuid.UUID
+    request_key: uuid.UUID
+    kind: Literal["form_prepared", "submission_attempted", "submission_confirmation_observed"]
+    details: dict
+
+
+class DocumentRequest(BaseModel):
+    session_id: uuid.UUID
 
 
 class SavedAnswer(BaseModel):
@@ -91,12 +114,10 @@ def _application(user: ExtensionUser, application_id: str) -> dict:
 
 def _key(url: str) -> str:
     """Comparable form of a job URL: host + path, without apply/application suffixes or tracking."""
-    url = (url or "").lower().split("#")[0]
-    gh = re.search(r"gh_jid=(\d+)", url) or re.search(r"greenhouse\.io/[\w-]+/jobs/(\d+)", url)
-    if gh:
-        return f"gh:{gh.group(1)}"
-    url = re.sub(r"^https?://(www\.)?", "", url.split("?")[0]).rstrip("/")
-    return re.sub(r"/(apply|application)$", "", url)
+    try:
+        return execution.page_key(url)
+    except HTTPException:
+        return ""
 
 
 @router.get("/me")
@@ -152,25 +173,40 @@ async def resume_pdf(application_id: str, user: ExtensionUser = Depends(get_exte
         content = build_render_content(tailored[0].get("content") or {}, profile, email=user.email)
         pdf, _ = await render_resume_pdf(content)
     except Exception as e:
-        raise HTTPException(status_code=503, detail=f"PDF renderer unavailable on the server: {str(e).splitlines()[0]}")
+        raise HTTPException(status_code=503, detail="PDF renderer unavailable on the server") from None
     name = re.sub(r"[^A-Za-z0-9]+", "_", content.name or "Resume").strip("_") or "Resume"
-    return Response(content=pdf, media_type="application/pdf", headers={"Content-Disposition": f'attachment; filename="{name}_Resume.pdf"'})
+    return Response(content=pdf, media_type="application/pdf", headers={"Content-Disposition": f'attachment; filename="{name}_Resume.pdf"', "Cache-Control": "private, no-store"})
+
+
+@router.post("/sessions", status_code=201)
+async def start_session(request: SessionRequest, user: ExtensionUser = Depends(get_extension_user)):
+    return await execution.start(user.supabase, user.id, user.email, request.application_id, request.id, request.url, request.link_confirmed)
+
+
+@router.post("/events", status_code=201)
+async def record_event(request: EventRequest, user: ExtensionUser = Depends(get_extension_user)):
+    try:
+        return execution.append(user.supabase, user.id, request.session_id, request.kind, request.request_key, request.details)
+    except ValidationError:
+        raise HTTPException(422, "Invalid form observation; raw answer content is not accepted") from None
+
+
+@router.post("/document")
+async def session_document(request: DocumentRequest, response: Response, user: ExtensionUser = Depends(get_extension_user)):
+    s = execution.session(user.supabase, user.id, request.session_id)
+    rows = user.supabase.table("application_documents").select("id,name,sha256,size_bytes,pdf_base64,resume_version").eq("id", s.get("document_id")).eq("user_id", user.id).execute().data
+    if not rows:
+        raise HTTPException(404, "No tailored PDF snapshot for this session. Attach the document yourself.")
+    response.headers["Cache-Control"] = "private, no-store"
+    return rows[0]
 
 
 @router.post("/applied")
 async def mark_applied(request: AppliedRequest, user: ExtensionUser = Depends(get_extension_user)):
     """The user submitted the form: move the application to Applied and schedule a follow-up."""
-    from datetime import timedelta
-
-    app = _application(user, request.application_id)
-    now = datetime.now(timezone.utc)
-    payload = {"status": "applied"}
-    if not app.get("applied_at"):
-        payload["applied_at"] = now.isoformat()
-    if not app.get("follow_up_at"):
-        payload["follow_up_at"] = (now + timedelta(days=FOLLOW_UP_AFTER_DAYS)).isoformat()
-    user.supabase.table("job_applications").update(payload).eq("id", app["id"]).eq("user_id", user.id).execute()
-    return {"application_id": app["id"], "status": "applied"}
+    event = execution.report(user.supabase, user.id, request.application_id, request.session_id, request.request_key)
+    current = execution.owned(user.supabase, user.id, request.application_id)
+    return {"application_id": request.application_id, "status": current["status"], "evidence": "user_reported", "event_id": event["id"]}
 
 
 @router.post("/answers", status_code=status.HTTP_201_CREATED)

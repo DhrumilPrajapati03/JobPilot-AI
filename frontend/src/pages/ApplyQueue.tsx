@@ -9,7 +9,7 @@ import { AlertTriangle, ArrowRight, Check, ChevronDown, ExternalLink, Loader2, P
 import { Button } from '../components/ui/button';
 import { ScoreBadge } from '../components/applications/shared';
 import { useChatStore } from '../agent/store';
-import { useUpdateApplicationStatus } from '../hooks/use-applications';
+import { useReportSubmission } from '../hooks/use-applications';
 import { useApplyQueue, useExtensionPresence, usePrepareForm, type QueueItem } from '../hooks/use-autopilot';
 import { cn } from '@/lib/utils';
 
@@ -22,7 +22,7 @@ function Readiness({ item }: { item: QueueItem }) {
   return (
     <span>
       <span className="font-medium text-foreground">
-        {ready} of {s.total} answers ready
+        {ready} of {s.total} draft answers prepared
       </span>
       {s.flagged > 0 && <span className="text-warning"> · {s.flagged} to check</span>}
     </span>
@@ -32,7 +32,7 @@ function Readiness({ item }: { item: QueueItem }) {
 function QueueRow({ item, embedded }: { item: QueueItem; embedded: boolean }) {
   const navigate = useNavigate();
   const openStage = useChatStore((s) => s.openStage);
-  const updateStatus = useUpdateApplicationStatus();
+  const updateStatus = useReportSubmission();
   const prepare = usePrepareForm();
   const [showFlags, setShowFlags] = useState(false);
   const [applied, setApplied] = useState(false);
@@ -82,12 +82,13 @@ function QueueRow({ item, embedded }: { item: QueueItem; embedded: boolean }) {
             disabled={applied || updateStatus.isPending}
             onClick={() =>
               window.confirm(`Did you submit the ${item.role} application at ${item.company}?`) &&
-              updateStatus.mutate({ id: item.id, status: 'applied' }, { onSuccess: () => setApplied(true) })
+              updateStatus.mutate(item.id, { onSuccess: () => setApplied(true) })
             }
           >
             {applied ? <Check size={13} className="mr-1" /> : <Send size={13} className="mr-1" />}
-            {applied ? 'Applied' : 'I submitted it'}
+            {applied ? 'Reported submitted' : 'Report that I submitted'}
           </Button>
+          {updateStatus.error && <p role="alert" className="text-xs text-warning">{updateStatus.error.message}</p>}
           <Button
             size="icon"
             variant="ghost"

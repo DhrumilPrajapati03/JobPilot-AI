@@ -210,7 +210,15 @@ def test_cron_tick_needs_the_secret(ap, client, monkeypatch):
     assert client.post("/api/v1/autopilot/tick", headers={"X-Cron-Secret": "s3cret"}).json() == {"status": "started"}
 
 
-def test_extension_flow(ap, client):
+def test_extension_flow(ap, client, monkeypatch):
+    # Evidence RPC transactions are exercised against PostgreSQL in
+    # supabase/tests/application_execution.sql; stub that boundary here.
+    def report(db, uid, application_id, *args):
+        from datetime import datetime, timezone, timedelta
+        now=datetime.now(timezone.utc)
+        db.table('job_applications').update({'status':'applied','applied_at':now.isoformat(),'follow_up_at':(now+timedelta(days=5)).isoformat()}).eq('id',application_id).eq('user_id',uid).execute()
+        return {'id':1}
+    monkeypatch.setattr(extension_api.execution,'report',report)
     token = client.post("/api/v1/autopilot/extension-tokens").json()["token"]
     assert token.startswith("jpx_") and token not in str(ap.tables["extension_tokens"])  # only the hash is stored
     h = {"X-JobPilot-Token": token}

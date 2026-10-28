@@ -151,29 +151,28 @@ def match_option(value: str, options: list[str]) -> str | None:
     if not options or not value:
         return None
     v = value.strip().lower()
-    for o in options:
-        if o.strip().lower() == v:
-            return o
+    exact = [o for o in options if o.strip().lower() == v]
+    if len(exact) == 1:
+        return exact[0]
+    if exact:
+        return None
     first = v.split()[0].strip(",.") if v.split() else v
     if first in _YES or first in _NO:
         want = "yes" if first in _YES else "no"
-        for o in options:
-            if o.strip().lower().split()[0].strip(",.") == want:
-                return o
-    for o in options:
-        ol = o.lower()
-        if v in ol or (len(ol) > 2 and ol in v):
-            return o
-    if (num := re.search(r"\d+(\.\d+)?", v)) is not None:
-        n = float(num.group())
+        candidates = [o for o in options if o.strip().lower().split()[0].strip(",.") == want]
+        return candidates[0] if len(candidates) == 1 else None
+    if (num := re.fullmatch(r"\d+(?:\.\d+)?(?:\s+years?)?", v)) is not None:
+        n = float(re.match(r"\d+(?:\.\d+)?", num.group()).group())
+        candidates = []
         for o in options:
             bounds = [float(x) for x in re.findall(r"\d+(?:\.\d+)?", o)]
             if len(bounds) == 2 and bounds[0] <= n <= bounds[1]:
-                return o
-            if len(bounds) == 1 and re.search(r"\+|or more|more than|above", o, re.I) and n >= bounds[0]:
-                return o
+                candidates.append(o)
+            if len(bounds) == 1 and ((re.search(r"\+|or more", o, re.I) and n >= bounds[0]) or (re.search(r"more than|above", o, re.I) and n > bounds[0])):
+                candidates.append(o)
             if len(bounds) == 1 and re.search(r"less than|under|below|fewer", o, re.I) and n < bounds[0]:
-                return o
+                candidates.append(o)
+        return candidates[0] if len(candidates) == 1 else None
     return None
 
 
@@ -216,7 +215,7 @@ def _rule_answer(f: FormField, ctx: ApplicantContext) -> FieldAnswer | None:
             return FieldAnswer(f.key, label, f.type, f.required, None, "none", f.required, "Attach a cover letter file if you want one; the text is in JobPilot.")
         return FieldAnswer(f.key, label, f.type, f.required, None, "none", f.required, "Attach this file yourself.")
 
-    if _LEGAL.search(l) and not re.search(r"(sponsor|authori[sz]ed|eligib)", l):
+    if _LEGAL.search(l):
         return FieldAnswer(f.key, label, f.type, f.required, None, "none", True, "Legal agreement or consent: read it and answer it yourself.")
 
     if _EEO.search(l):

@@ -27,6 +27,34 @@ from app.services import runs
 
 router = APIRouter()
 
+
+class ReportSubmissionRequest(BaseModel):
+    request_key: uuid.UUID
+
+
+@router.post("/{application_id}/report-submission")
+async def report_submission(application_id: uuid.UUID, request: ReportSubmissionRequest, current_user: CurrentUser = Depends(get_current_user)):
+    from app.services import application_execution as execution
+    from app.services.supabase import get_supabase_admin_client
+    sid = uuid.uuid5(uuid.NAMESPACE_URL, f"jobpilot:web-report:{current_user.id}:{application_id}:{request.request_key}")
+    execution.report(get_supabase_admin_client(), current_user.id, str(application_id), sid, request.request_key)
+    return {"application_id": str(application_id), "evidence": "user_reported_not_independently_verified"}
+
+
+@router.get("/{application_id}/execution")
+async def execution_history(application_id: uuid.UUID, current_user: CurrentUser = Depends(get_current_user)):
+    from app.services.application_execution import DOCUMENT_FIELDS, owned
+    db = get_supabase_client(user_jwt=current_user.token)
+    owned(db, current_user.id, application_id)
+    try:
+        sessions = db.table("application_execution_sessions").select("*").eq("application_id", str(application_id)).eq("user_id", current_user.id).order("created_at", desc=True).limit(20).execute().data
+        ids = [s["id"] for s in sessions]
+        events = db.table("application_events").select("*").eq("user_id", current_user.id).in_("session_id", ids).order("id", desc=True).limit(200).execute().data if ids else []
+        documents = db.table("application_documents").select(DOCUMENT_FIELDS).eq("application_id", str(application_id)).eq("user_id", current_user.id).order("created_at", desc=True).limit(20).execute().data
+    except Exception:
+        raise HTTPException(503, "Submission evidence is unavailable. Apply the Sprint 5 migration.") from None
+    return {"sessions": sessions, "events": events, "documents": documents}
+
 # Days after applying before the tracker flags an application for follow-up.
 FOLLOW_UP_AFTER_DAYS = 5
 
@@ -400,6 +428,14 @@ async def delete_application(
         history = []
     if history:
         raise HTTPException(409, "This application has email history. Archive it to preserve send and approval records.")
+    try:
+        execution_history = supabase.table("application_execution_sessions").select("id").eq("application_id", application_id).eq("user_id", current_user.id).limit(1).execute().data
+    except Exception as exc:
+        if "application_execution_sessions" not in str(exc) or not any(code in str(exc) for code in ("PGRST205", "does not exist")):
+            raise HTTPException(503, "Submission history could not be checked before deletion") from None
+        execution_history = []
+    if execution_history:
+        raise HTTPException(409, "This application has preparation or submission history. Archive it to preserve the evidence.")
     supabase.table("cold_emails").delete().eq("application_id", application_id).execute()
     supabase.table("tailored_resumes").delete().eq("application_id", application_id).eq("user_id", current_user.id).execute()
     supabase.table("job_applications").delete().eq("id", application_id).eq("user_id", current_user.id).execute()

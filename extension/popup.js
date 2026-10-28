@@ -31,7 +31,7 @@ $('fill').addEventListener('click', async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab?.id) return;
   try {
-    await chrome.scripting.executeScript({ target: { tabId: tab.id, allFrames: true }, files: ['content/fill.js'] });
+    await chrome.scripting.executeScript({ target: { tabId: tab.id, allFrames: true }, files: ['content/form-engine.js', 'content/fill.js'] });
     // Open the panel (and fill) in the frame that actually has the form.
     await chrome.scripting.executeScript({
       target: { tabId: tab.id, allFrames: true },

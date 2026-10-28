@@ -15,6 +15,7 @@ This is the durable reminder for work deliberately deferred while implementing t
 - Roll out matching API/frontend changes together and reload the exact-origin extension configuration.
 - Verify running worker capacity, lease expiry/recovery, graceful shutdown, and provider idempotency behavior on the chosen host. Sleeping processes cannot execute queued work until a worker runs again.
 - Apply Sprint 3's identity/matching migration before enabling its API/UI. Verify confirmation and revocation through two real accounts, choose retention for historical confirmations, warm the local MiniLM model in the intended worker image, and evaluate matching against representative labeled employer data in addition to the synthetic regression set.
+- Apply Sprint 5's evidence and index migrations before using its extension/session or web report workflows. Reload extension 1.1.0 with exact deployed origins; complete real employer/custom-AJAX/multi-step/iframe/upload-rejection acceptance. Select retention/quotas/backups for frozen PDFs and audit events. See [SPRINT_5_STATUS.md](SPRINT_5_STATUS.md). Local configuration still needs matching development project credentials before development feature testing; the live database intentionally lacks Sprint 2–5 feature migrations.
 
 ## Recommendation for timing
 

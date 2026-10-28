@@ -1,245 +1,13 @@
-// JobPilot extension — fills the application form on this page.
-//
-// Reads the form's fields, asks JobPilot for answers (profile, saved answers,
-// tailored resume and cover letter, flagged AI drafts), fills empty fields, and
-// shows what still needs you. It never clicks Submit: you review and submit.
-
+// Supervised form preparation. Employer submission always belongs to the user.
 (() => {
   if (window.__jobpilot) return;
-
-  const GREEN = '#0f7b6c';
+  const engine = globalThis.JOBPILOT_FORM_ENGINE;
+  if (!engine) return;
   const AMBER = '#b45309';
-  const SKIP_INPUTS = new Set(['hidden', 'submit', 'button', 'image', 'reset', 'search', 'password']);
   const EEO = /\b(gender|race|ethnic|hispanic|latin|veteran|disabilit|sexual orientation|pronoun)/i;
-
-  const send = (message) => new Promise((resolve) => chrome.runtime.sendMessage(message, resolve));
-  const api = (path, method = 'GET', body) => send({ type: 'api', path, method, body });
-  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-  const clean = (t) => (t || '').replace(/\s+/g, ' ').replace(/\s*[*✱]\s*$/, '').trim();
-
-  // --- Reading the form -------------------------------------------------------------
-
-  function visible(el) {
-    const style = getComputedStyle(el);
-    const rect = el.getBoundingClientRect();
-    return style.display !== 'none' && style.visibility !== 'hidden' && (rect.width > 0 || rect.height > 0);
-  }
-
-  function textOf(node) {
-    return clean(node ? node.innerText || node.textContent : '');
-  }
-
-  function labelFor(el) {
-    if (el.id) {
-      const l = document.querySelector(`label[for="${CSS.escape(el.id)}"]`);
-      if (textOf(l)) return textOf(l);
-    }
-    const aria = el.getAttribute('aria-label');
-    if (aria && clean(aria)) return clean(aria);
-    const by = el.getAttribute('aria-labelledby');
-    if (by) {
-      const t = clean(by.split(/\s+/).map((id) => document.getElementById(id)?.innerText || '').join(' '));
-      if (t) return t;
-    }
-    const wrap = el.closest('label');
-    if (textOf(wrap)) return textOf(wrap);
-    return containerLabel(el) || clean(el.placeholder || el.name || '');
-  }
-
-  // The question text near a control: Lever's .application-label, Greenhouse/Ashby labels, legends.
-  function containerLabel(el, exclude = [], raw = false) {
-    const legend = el.closest('fieldset')?.querySelector('legend');
-    if (textOf(legend)) return raw ? legend.innerText : textOf(legend);
-    let node = el.parentElement;
-    const own = new Set([el, ...exclude]);
-    for (let depth = 0; depth < 6 && node; depth++, node = node.parentElement) {
-      // Stop at the first ancestor that also holds other questions' controls.
-      const others = [...node.querySelectorAll('input:not([type=hidden]), textarea, select')].some((c) => !own.has(c));
-      if (others) break;
-      const candidates = node.querySelectorAll('label, legend, .application-label, [class*="label"], [class*="question"], [class*="heading"]');
-      for (const c of candidates) {
-        if (c.contains(el) || exclude.some((x) => c.contains(x) || x.contains?.(c))) continue;
-        const t = textOf(c);
-        if (t && t.length < 500) return raw ? c.innerText : t;
-      }
-    }
-    return '';
-  }
-
-  const optionLabel = (el) => {
-    if (el.id) {
-      const l = document.querySelector(`label[for="${CSS.escape(el.id)}"]`);
-      if (textOf(l)) return textOf(l);
-    }
-    return textOf(el.closest('label')) || clean(el.value);
-  };
-
-  function isRequired(el, rawLabel) {
-    return el.required || el.getAttribute('aria-required') === 'true' || /[*✱]/.test(rawLabel || '');
-  }
-
-  function rawLabelText(el) {
-    if (el.id) {
-      const l = document.querySelector(`label[for="${CSS.escape(el.id)}"]`);
-      if (l) return l.innerText;
-    }
-    return el.closest('label')?.innerText || '';
-  }
-
-  function collect() {
-    const fields = [];
-    const elements = new Map();
-    const groups = new Set();
-    const controls = [...document.querySelectorAll('input, textarea, select')].filter((el) => !el.closest('#jobpilot-root'));
-
-    controls.forEach((el) => {
-      const type = (el.getAttribute('type') || el.tagName).toLowerCase();
-      if (el.tagName === 'INPUT' && SKIP_INPUTS.has(type)) return;
-      if (el.disabled) return;
-      if (type !== 'file' && !visible(el)) return;
-
-      const key = `jp-${fields.length}`;
-      if (type === 'radio' || type === 'checkbox') {
-        const name = el.name || el.id;
-        if (groups.has(type + name)) return;
-        groups.add(type + name);
-        const group = name ? controls.filter((c) => c.type === type && (c.name || c.id) === name) : [el];
-        const single = type === 'checkbox' && group.length === 1;
-        const label = single ? labelFor(el) : containerLabel(el, group) || labelFor(el);
-        elements.set(key, { kind: type, group });
-        fields.push({
-          key, label, type: single ? 'checkbox' : type,
-          required: group.some((g) => isRequired(g, '')) || /[*✱]/.test(containerLabel(el, group, true)),
-          options: group.map(optionLabel),
-        });
-        return;
-      }
-
-      const kind = el.tagName === 'TEXTAREA' ? 'textarea'
-        : el.tagName === 'SELECT' ? 'select'
-        : el.getAttribute('role') === 'combobox' ? 'combobox'
-        : type;
-      const options = kind === 'select'
-        ? [...el.options].filter((o, i) => !(i === 0 && (o.value === '' || /^(select|choose|--|please)/i.test(o.text)))).map((o) => clean(o.text))
-        : [];
-      const label = labelFor(el);
-      if (!label) return;
-      elements.set(key, { kind, el });
-      fields.push({
-        key, label,
-        type: ['email', 'tel', 'url', 'number', 'date', 'textarea', 'select', 'file'].includes(kind) ? kind : kind === 'combobox' ? 'select' : 'text',
-        required: isRequired(el, rawLabelText(el) || containerLabel(el, [], true)),
-        options,
-      });
-    });
-    return { fields, elements };
-  }
-
-  // --- Filling ------------------------------------------------------------------------
-
-  function setValue(el, value) {
-    const proto = el.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : el.tagName === 'SELECT' ? HTMLSelectElement.prototype : HTMLInputElement.prototype;
-    Object.getOwnPropertyDescriptor(proto, 'value').set.call(el, value);
-    el.dispatchEvent(new Event('input', { bubbles: true }));
-    el.dispatchEvent(new Event('change', { bubbles: true }));
-    el.dispatchEvent(new Event('blur', { bubbles: true }));
-  }
-
-  const same = (a, b) => clean(a).toLowerCase() === clean(b).toLowerCase();
-  const loose = (a, b) => same(a, b) || clean(a).toLowerCase().startsWith(clean(b).toLowerCase());
-
-  function mark(el, flagged, note) {
-    const target = el.type === 'file' && !visible(el) ? el.parentElement : el;
-    if (!target) return;
-    target.style.outline = `2px solid ${flagged ? AMBER : GREEN}`;
-    target.style.outlineOffset = '2px';
-    if (note) target.title = `JobPilot: ${note}`;
-  }
-
-  async function pickCombobox(el, value) {
-    el.focus();
-    el.click();
-    setValue(el, value);
-    await sleep(450);
-    const options = [...document.querySelectorAll('[role="option"]')];
-    const choice = options.find((o) => same(o.innerText, value)) || options.find((o) => loose(o.innerText, value));
-    if (!choice) {
-      setValue(el, '');
-      el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-      return false;
-    }
-    choice.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-    choice.click();
-    await sleep(100);
-    return true;
-  }
-
-  async function attachResume(el, applicationId) {
-    if (!applicationId) return 'Link this page to an application to attach its tailored resume.';
-    if (el.files && el.files.length) return null;
-    const res = await send({ type: 'resume', applicationId });
-    if (!res || !res.ok) return (res && res.detail) || 'Attach your resume yourself.';
-    const bytes = Uint8Array.from(atob(res.base64), (c) => c.charCodeAt(0));
-    const transfer = new DataTransfer();
-    transfer.items.add(new File([bytes], res.name, { type: 'application/pdf' }));
-    el.files = transfer.files;
-    el.dispatchEvent(new Event('input', { bubbles: true }));
-    el.dispatchEvent(new Event('change', { bubbles: true }));
-    return null;
-  }
-
-  async function apply(answers, elements, applicationId) {
-    const results = [];
-    for (const a of answers) {
-      const ref = elements.get(a.key);
-      if (!ref) continue;
-      let flagged = a.flagged;
-      let note = a.note;
-      const values = Array.isArray(a.value) ? a.value : a.value == null ? [] : [String(a.value)];
-      try {
-        if (ref.kind === 'radio' || ref.kind === 'checkbox') {
-          for (const v of values) {
-            const box = ref.group.find((g) => same(optionLabel(g), v)) || ref.group.find((g) => loose(optionLabel(g), v)) || (ref.group.length === 1 ? ref.group[0] : null);
-            if (box && !box.checked) box.click();
-          }
-          ref.group.forEach((g) => mark(g.closest('label') || g, flagged, note));
-        } else if (ref.kind === 'file') {
-          if (a.value === '__resume__') {
-            const problem = await attachResume(ref.el, applicationId);
-            if (problem) [flagged, note] = [true, problem];
-          }
-          mark(ref.el, flagged, note);
-        } else if (values.length && !ref.el.value) {
-          if (ref.kind === 'select') {
-            const opt = [...ref.el.options].find((o) => same(o.text, values[0])) || [...ref.el.options].find((o) => loose(o.text, values[0]));
-            if (opt) setValue(ref.el, opt.value);
-            else [flagged, note] = [true, 'Pick an option'];
-          } else if (ref.kind === 'combobox') {
-            if (!(await pickCombobox(ref.el, values[0]))) [flagged, note] = [true, `Choose “${values[0]}” (or the closest option)`];
-          } else {
-            setValue(ref.el, values[0]);
-          }
-          mark(ref.el, flagged, note);
-        } else {
-          mark(ref.el, flagged || (a.required && !ref.el.value), note);
-        }
-      } catch (e) {
-        [flagged, note] = [true, 'Fill this one yourself'];
-      }
-      results.push({ ...a, flagged, note });
-    }
-    return results;
-  }
-
-  function currentValue(ref) {
-    if (ref.kind === 'radio' || ref.kind === 'checkbox') return ref.group.filter((g) => g.checked).map(optionLabel).join(', ');
-    if (ref.kind === 'select') return ref.el.selectedIndex > 0 || ref.el.value ? clean(ref.el.options[ref.el.selectedIndex]?.text) : '';
-    if (ref.kind === 'file') return '';
-    return clean(ref.el.value);
-  }
-
-  // --- Panel ---------------------------------------------------------------------------
-
+  const send = message => new Promise(resolve => chrome.runtime.sendMessage(message, result => resolve(result || {ok:false})));
+  const api = (path, method = 'GET', body) => send({type:'api',path,method,body});
+  const {collect, currentValue, clean} = engine;
   const STYLE = `
     :host { all: initial; }
     * { box-sizing: border-box; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; }
@@ -265,7 +33,7 @@
     .note { margin: 0; padding: 0 12px 10px; font-size: 11px; color: #6b6966; line-height: 1.4; }
   `;
 
-  const state = { applicationId: null, queue: [], last: null, open: false };
+  const state = { applicationId: null, queue: [], last: null, open: false, session: null, document: null, attempt: null, busy: false, epoch: 0 };
   let host, root;
 
   function el(tag, attrs = {}, ...children) {
@@ -276,10 +44,11 @@
   }
 
   function render(status = '', isError = false) {
+    state.status = status; state.statusError = isError;
     root.innerHTML = '';
     root.append(el('style', {}, STYLE));
     if (!state.open) {
-      root.append(el('button', { class: 'pill', onclick: () => openPanel(false) }, 'JobPilot · Fill this application'));
+      root.append(el('button', { class: 'pill', onclick: event => { if (event.isTrusted) openPanel(false); } }, 'JobPilot · Fill this application'));
       return;
     }
     const options = [el('option', { value: '' }, 'Not linked (profile answers only)'), ...state.queue.map((q) => {
@@ -292,16 +61,16 @@
       el('header', {}, el('span', { class: 'logo' }, 'JP'), 'JobPilot', el('button', { 'aria-label': 'Close', onclick: () => { state.open = false; render(); } }, '×')),
       el('div', { class: 'body' },
         el('label', {}, 'Application'),
-        el('select', { onchange: (e) => { state.applicationId = e.target.value || null; } }, options),
+        el('select', { ...(state.busy ? {disabled:''} : {}), onchange: (e) => { if (!e.isTrusted) return; state.applicationId = e.target.value || null; state.session = null; state.last = null; state.attempt = null; state.document = null; state.epoch++; render('Application changed. Fill again to start a new session.'); } }, options),
         el('div', { class: `status${isError ? ' err' : ''}` }, status),
         flags.length ? el('ul', {}, flags.map((f) => el('li', { onclick: () => focusField(f.key) }, el('b', {}, f.label.slice(0, 90)), el('span', {}, f.note || 'Check this')))) : null,
       ),
       el('div', { class: 'actions' },
-        el('button', { class: 'primary', onclick: fill }, state.last ? 'Fill again' : 'Fill form'),
-        el('button', { onclick: saveAnswers, ...(state.last ? {} : { disabled: '' }) }, 'Save my answers'),
-        el('button', { onclick: markApplied, ...(state.applicationId ? {} : { disabled: '' }) }, 'I submitted it'),
+        el('button', { class: 'primary', onclick: event => { if (event.isTrusted) fill(); }, ...(state.busy ? {disabled:''} : {}) }, state.last ? 'Read and fill again' : 'Fill form'),
+        el('button', { onclick: event => { if (event.isTrusted && !state.busy) saveAnswers(); }, ...(state.last && !state.busy ? {} : { disabled: '' }) }, 'Save my answers'),
+        el('button', { onclick: markApplied, ...(state.applicationId && !state.busy ? {} : { disabled: '' }) }, 'Report that I submitted'),
       ),
-      el('p', { class: 'note' }, 'JobPilot never clicks Submit. Green fields are filled, amber need you. Check everything, then submit yourself.'),
+      el('p', { class: 'note' }, 'Review every field and submit yourself. Selected files are not proof of employer upload acceptance. Browser confirmations and your reports are recorded separately.'),
     ));
   }
 
@@ -316,16 +85,70 @@
   }
 
   async function fill() {
-    render('Reading the form…');
-    current = collect();
-    if (!current.fields.length) return render('No form fields found on this page. Open the application form (often an “Apply” button) and try again.', true);
-    render(`Getting answers for ${current.fields.length} fields…`);
-    const res = await api('/extension/fill', 'POST', { url: location.href, application_id: state.applicationId, fields: current.fields });
-    if (!res.ok) return render(res.data?.detail || `JobPilot error (${res.status})`, true);
-    state.last = await apply(res.data.answers, current.elements, state.applicationId);
-    const filled = state.last.filter((a) => a.value != null && a.value !== '' && !(a.flagged && a.value == null)).length;
-    const need = state.last.filter((a) => a.flagged).length;
-    render(`Filled ${filled} of ${state.last.length} fields.${need ? ` ${need} need you:` : ' Check them, then submit.'}`);
+    if (state.busy) return;
+    state.busy = true;
+    const epoch = state.epoch;
+    const filledThisTime = new Map();
+    try {
+      if (state.session && Date.parse(state.session.expires_at) <= Date.now()) { state.session = null; state.document = null; state.attempt = null; }
+      render('Reading the form…');
+      current = collect();
+      if (!current.fields.length) throw Error('No supported fields found. Open the employer’s application form and try again.');
+      if (state.applicationId && !state.session) {
+        const id = crypto.randomUUID();
+        let res = await api('/extension/sessions', 'POST', {id, application_id:state.applicationId, url:location.href});
+        if (!res.ok && res.status === 409 && /Confirm that this form/.test(res.data?.detail || '')) {
+          const app = state.queue.find(q => q.id === state.applicationId);
+          if (!confirm(`Is this form at ${location.hostname} for ${app?.role} at ${app?.company}? Check the company and opening before continuing.`)) return;
+          res = await api('/extension/sessions', 'POST', {id, application_id:state.applicationId, url:location.href, link_confirmed:true});
+        }
+        if (!res.ok) throw Error(res.data?.detail || 'Could not start a preparation session.');
+        state.session = res.data.session;
+      }
+      for (let pass = 0; pass < 3; pass++) {
+        current = collect();
+        render(`Checking ${current.fields.length} visible controls…`);
+        const res = await api('/extension/fill', 'POST', {url:location.href, application_id:state.applicationId, fields:current.fields});
+        if (epoch !== state.epoch) return;
+        if (!res.ok) throw Error(res.data?.detail || 'Could not prepare answers.');
+        if (state.session && res.data.answers.some(a => a.value === '__resume__') && !state.document) {
+          const doc = await api('/extension/document', 'POST', {session_id:state.session.id});
+          if (doc.ok) state.document = doc.data;
+        }
+        if (epoch !== state.epoch) return;
+        const applied = await engine.apply(res.data.answers, current.elements, state.document, () => epoch === state.epoch);
+        if (epoch !== state.epoch) return;
+        state.last = applied;
+        state.last = state.last.map(answer => {
+          const previous = filledThisTime.get(answer.key), ref = current.elements.get(answer.key);
+          const expected = previous && (Array.isArray(previous.value) ? previous.value.join(', ') : previous.value);
+          if (answer.outcome === 'preserved' && previous && ref && (currentValue(ref) === expected || ref.kind === 'file' && previous.value === '__resume__' && engine.uploads.has(ref.el))) return {...answer,outcome:previous.outcome,source:previous.source,flagged:previous.flagged,note:previous.note};
+          if (answer.outcome === 'filled' || answer.source === 'ai' && answer.outcome === 'review') filledThisTime.set(answer.key, answer);
+          return answer;
+        });
+        const fresh = collect();
+        if (fresh.fields.every(f => current.elements.has(f.key))) break;
+      }
+      state.last = await engine.audit(state.last || [], current.elements);
+      const latest = collect();
+      const unseen = latest.fields.filter(f => !current.elements.has(f.key));
+      if (unseen.length) {
+        current.elements = new Map([...current.elements, ...latest.elements]);
+        state.last.push(...unseen.map(f => ({...f, value:null, source:'none', flagged:true, outcome:'review', note:'New question appeared. Read and fill again.'})));
+      }
+      let saved = true;
+      if (state.session) {
+        const selectedHash = [...current.elements.values()].some(r => engine.uploads.get(r.el) === state.document?.sha256 && r.el.files?.length) ? state.document?.sha256 : null;
+        const event = await send({type:'execution-event', body:{session_id:state.session.id, request_key:crypto.randomUUID(), kind:'form_prepared', details:{url:location.href, truncated:latest.truncated, document_sha256:selectedHash, fields:state.last.slice(0,150).map(a => ({key:a.key,type:a.type,required:a.required,outcome:a.outcome,source:a.outcome === 'preserved' ? 'user' : a.source}))}}});
+        saved = event.ok;
+        if (!saved && [404,409,422].includes(event.status)) { state.session = null; state.document = null; state.attempt = null; }
+      }
+      const filled = state.last.filter(a => a.outcome === 'filled').length;
+      const preserved = state.last.filter(a => a.outcome === 'preserved').length;
+      const need = state.last.filter(a => a.flagged).length;
+      render(`${filled} filled and checked; ${preserved} existing entries preserved. ${need} need review.${latest.truncated ? ' Only the first 150 controls were inspected; review the remaining form yourself.' : ''}${!saved ? ' Evidence not saved yet; reconnect and read/fill again to recover.' : ''}`);
+    } catch (error) { render(error.message || 'Preparation failed. Review the form yourself.', true); }
+    finally { state.busy = false; render(state.status, state.statusError); }
   }
 
   async function saveAnswers() {
@@ -343,21 +166,23 @@
     render(res.ok ? `Saved ${res.data.saved} answer${res.data.saved === 1 ? '' : 's'} to your answer bank. Next time they fill automatically.` : res.data?.detail || 'Saving failed', !res.ok);
   }
 
-  async function markApplied() {
+  async function markApplied(event) {
+    if (!event?.isTrusted) return;
     if (!state.applicationId) return;
     if (!confirm('Did you click Submit on this application? JobPilot will move it to Applied and remind you to follow up in 5 days.')) return;
-    const res = await api('/extension/applied', 'POST', { application_id: state.applicationId });
-    render(res.ok ? 'Marked as applied in JobPilot. Follow-up reminder set for 5 days from now. Good luck!' : res.data?.detail || 'Update failed', !res.ok);
+    const res = await api('/extension/applied', 'POST', { application_id: state.applicationId, session_id:state.session?.id, request_key:crypto.randomUUID() });
+    render(res.ok ? 'Saved as user-reported submitted. Employer acceptance has not been independently verified.' : res.data?.detail || 'Update failed', !res.ok);
   }
 
   async function openPanel(autoFill) {
     state.open = true;
     render('Connecting to JobPilot…');
-    const [queue, match] = await Promise.all([api('/extension/queue'), api('/extension/match', 'POST', { url: location.href, title: document.title })]);
+    const [queue, match, pending] = await Promise.all([api('/extension/queue'), api('/extension/match', 'POST', { url: location.href, title: document.title }), send({type:'execution-context'})]);
     if (!queue.ok) return render(queue.data?.detail || 'Not connected to JobPilot.', true);
     state.queue = queue.data.queue || [];
+    if (pending.ok && pending.context) { state.session = pending.context.session; state.applicationId = state.session.application_id; state.attempt = pending.context.attempt; if (pending.context.application && !state.queue.some(q => q.id === state.applicationId)) state.queue.unshift(pending.context.application); }
     const matched = match.ok && match.data.application;
-    if (matched) {
+    if (matched && !state.session) {
       state.applicationId = matched.id;
       if (!state.queue.some((q) => q.id === matched.id)) state.queue.unshift(matched);
     }
@@ -374,7 +199,7 @@
   }
 
   function looksLikeApplication() {
-    return [...document.querySelectorAll('input:not([type=hidden]), textarea, select')].length >= 3 || document.querySelector('input[type=file]');
+    return collect().fields.length > 0;
   }
 
   window.__jobpilot = {
@@ -383,6 +208,51 @@
       openPanel(autoFill);
     },
   };
+
+  let userIntent = null;
+  const finalSubmit = button => !!button && /^(submit(?: (?:my|your|this))?(?: application)?|send application|apply(?: now)?|complete application|finish application)$/i.test(clean(button.getAttribute('aria-label') || button.textContent || button.value));
+  chrome.runtime.onMessage.addListener((message,sender) => {
+    if (sender.id !== chrome.runtime.id || message.type !== 'jobpilot-connection-changed') return;
+    state.epoch++; state.applicationId = null; state.queue = []; state.session = null; state.document = null; state.last = null; state.attempt = null;
+    if (host) render('Account connection changed. Reopen this form to continue.',true);
+  });
+  document.addEventListener('click', event => {
+    if (!event.isTrusted) return;
+    const button = event.target.closest?.('button,input[type="submit"]');
+    if (button?.form && (button.type || 'submit') === 'submit') userIntent = finalSubmit(button) ? {form:button.form, at:Date.now()} : null;
+  }, true);
+  document.addEventListener('keydown', event => {
+    if (event.isTrusted && event.key === 'Enter' && event.target.form && event.target.tagName !== 'TEXTAREA') userIntent = {form:event.target.form, at:Date.now()};
+  }, true);
+  document.addEventListener('submit', async event => {
+    if (!event.isTrusted || !state.session || !userIntent || userIntent.form !== event.target || Date.now() - userIntent.at > 2500 || !state.last) return;
+    if (!finalSubmit(event.submitter || event.target.querySelector('button[type="submit"],input[type="submit"],button:not([type])'))) return;
+    userIntent = null;
+    const request_key = crypto.randomUUID();
+    const res = await send({type:'execution-event',body:{session_id:state.session.id,request_key,kind:'submission_attempted',details:{url:location.href}}});
+    // Pending metadata is also persisted by the broker before the network call.
+    state.attempt = {key:request_key, at:Date.now()};
+    if (!res.ok) render('Submission attempt observed; evidence is waiting for reconnection. This does not prove acceptance.');
+    checkConfirmation();
+  }, true);
+  let checking = false;
+  async function checkConfirmation() {
+    if (checking || !state.session || !state.attempt || Date.now() - state.attempt.at > 15*60*1000) return;
+    const rule = engine.confirmationFor();
+    if (!rule) return;
+    checking = true;
+    const result = await send({type:'execution-event',body:{session_id:state.session.id,request_key:crypto.randomUUID(),kind:'submission_confirmation_observed',details:{url:location.href,attempt_key:state.attempt.key,rule}}});
+    if (result.ok) { state.attempt = null; if (!host) mount(); state.open = true; render('Confirmation observed in this browser. It is not independently verified. You can report submission to update your application status.'); }
+    checking = false;
+  }
+  let timer;
+  new MutationObserver(mutations => {
+    if (mutations.every(m => m.target === host || host?.contains(m.target))) return;
+    clearTimeout(timer); timer = setTimeout(checkConfirmation, 350);
+  }).observe(document.documentElement, {childList:true,subtree:true});
+  send({type:'execution-context'}).then(pending => {
+    if (pending.ok && pending.context) { state.session = pending.context.session; state.applicationId = state.session.application_id; state.attempt = pending.context.attempt; if (pending.context.application) state.queue = [pending.context.application]; checkConfirmation(); }
+  });
 
   // On known job boards, offer the launcher once the form has rendered (they're single-page apps).
   let tries = 0;

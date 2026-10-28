@@ -8,6 +8,8 @@ Sprint 3 adds source-linked resume confirmations, structured eligibility, explai
 
 Sprint 4 adds per-user Composio/Gmail consent, immutable draft approval, durable sending and reconciliation, tracked replies and source-backed recruiter research. See [configuration, workflow and verification](SPRINT_4_STATUS.md). Provider credentials and real OAuth acceptance remain setup steps; sending defaults to disabled.
 
+Sprint 5 improves supervised form filling, freezes application PDF snapshots and records preparation, submission attempts, browser observations and explicit user reports separately. See [setup, browser coverage and remaining acceptance work](SPRINT_5_STATUS.md).
+
 ## Features
 
 - **Identity vault:** Store your profile, base resume, skills, work preferences, and reusable screening answers. Upload a resume or edit its structured content.

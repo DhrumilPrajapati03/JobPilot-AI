@@ -1,7 +1,8 @@
 {
   "manifest_version": 3,
+  "minimum_chrome_version": "102",
   "name": "JobPilot Autofill",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Fills job application forms with your JobPilot resume and saved answers. You review and click Submit yourself.",
   "permissions": ["storage", "activeTab", "scripting"],
   "host_permissions": [
@@ -22,7 +23,7 @@
         "https://jobs.ashbyhq.com/*",
         "https://jobs.smartrecruiters.com/*"
       ],
-      "js": ["content/fill.js"],
+      "js": ["content/form-engine.js", "content/fill.js"],
       "all_frames": true,
       "run_at": "document_idle"
     },

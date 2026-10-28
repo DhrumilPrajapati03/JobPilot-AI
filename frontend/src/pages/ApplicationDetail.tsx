@@ -26,6 +26,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { ReferralPanel } from '../components/applications/ReferralPanel';
+import { ExecutionEvidence } from '../components/applications/ExecutionEvidence';
 import { useReferrals } from '../hooks/use-network';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -131,7 +132,7 @@ interface TimelineEvent {
 
 function buildTimeline({ application, cold_emails }: ApplicationDetails): TimelineEvent[] {
   const events: TimelineEvent[] = [{ at: application.created_at, label: 'Materials generated', tone: 'default' }];
-  if (application.applied_at) events.push({ at: application.applied_at, label: 'Applied', tone: 'accent' });
+  if (application.applied_at) events.push({ at: application.applied_at, label: 'Application marked applied (user reported)', tone: 'accent' });
   cold_emails.forEach((email) => {
     if (email.sent_at) {
       events.push({
@@ -463,6 +464,7 @@ export default function ApplicationDetail({ applicationId, initialTab, embedded 
         </div>
       )}
 
+      <ExecutionEvidence applicationId={application.id} />
       <div className="grid gap-5 @4xl:grid-cols-12">
         <div className="min-w-0 @4xl:col-span-8">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">

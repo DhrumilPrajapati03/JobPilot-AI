@@ -28,8 +28,22 @@ You can revoke tokens in Settings at any time.
 - Green outlines: filled. Amber: needs you (legal agreements, questions with no saved
   answer, AI drafts to personalise). Click an item in the panel to jump to it.
 - After typing missing answers, **Save my answers** stores them so they fill next time.
-- After you click the site's Submit button, click **I submitted it** to move the
-  application to *Applied* in JobPilot (with a follow-up reminder).
+- After you submit yourself, click **Report that I submitted** to record a
+  user-reported submission and move the application to *Applied*. Browser
+  confirmation observations are stored separately and never mark it applied.
+
+Sprint 5 freezes the application's tailored PDF per preparation session, checks
+actual field values and file hashes, preserves existing answers, and flags
+unresolved controls. Selected files and completed forms do not prove employer
+acceptance. See [setup and verification](../SPRINT_5_STATUS.md) and the
+[compatibility matrix](tests/browser/COMPATIBILITY.md). Apply the development
+migrations and reload the extension before using the new session workflow.
+
+## Development checks
+
+From this folder: `npm ci`, `npm test`, and `npm run test:browser`. Install the
+pinned Playwright Chromium browser into the ignored project cache first; the
+PowerShell commands are in [SPRINT_5_STATUS.md](../SPRINT_5_STATUS.md).
 
 ## Hosting
 
