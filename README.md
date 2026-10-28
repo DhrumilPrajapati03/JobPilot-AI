@@ -4,6 +4,8 @@ An AI assistant for finding relevant jobs, preparing tailored application materi
 
 Sprint 2 adds opt-in durable Supabase runs and a separate worker. See [setup, architecture and verification](SPRINT_2_STATUS.md), and keep the deferred [production readiness work](PRODUCTION_READINESS.md) as a release gate.
 
+Sprint 3 adds source-linked resume confirmations, structured eligibility, explainable semantic ranking, and conservative job deduplication. See [workflow, setup and evaluation results](SPRINT_3_STATUS.md).
+
 ## Features
 
 - **Identity vault:** Store your profile, base resume, skills, work preferences, and reusable screening answers. Upload a resume or edit its structured content.

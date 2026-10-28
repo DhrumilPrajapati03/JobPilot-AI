@@ -12,6 +12,9 @@ export interface WorkPreferences {
   blocked_companies: string[];
   skip_keywords: string[];
   requires_sponsorship: boolean;
+  career_level?: 'any' | 'intern' | 'entry' | 'mid' | 'senior';
+  experience_years?: number | null;
+  authorized_countries?: string[];
   salary_min: number | null;
   salary_currency: string;
   auto_draft_enabled: boolean;
@@ -96,6 +99,7 @@ export function useUpdateProfile() {
     onSuccess: () => {
       // Invalidate the 'profile' query cache so the browser refetches fresh data
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['discovery'] });
     },
   });
 }
@@ -120,6 +124,8 @@ export function useUpdateResume() {
     onSuccess: () => {
       // Invalidate 'resume' so any list previews are updated
       queryClient.invalidateQueries({ queryKey: ['resume'] });
+      queryClient.invalidateQueries({ queryKey: ['identity-facts'] });
+      queryClient.invalidateQueries({ queryKey: ['discovery'] });
     },
   });
 }

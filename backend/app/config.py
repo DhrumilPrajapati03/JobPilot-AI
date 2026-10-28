@@ -75,6 +75,7 @@ class Settings(BaseSettings):
     EXECUTION_MODE: Literal["inline", "durable"] = "inline"
     RUN_LEASE_SECONDS: int = Field(default=120, ge=30, le=1800)
     RUN_POLL_SECONDS: float = Field(default=2.0, ge=0.1, le=60)
+    MATCHING_SEMANTIC: bool = True  # Cached local MiniLM only; never downloads during a scan.
 
     # App Config
     FRONTEND_URL: str = "http://localhost:5173"  # comma-separated for several origins; the first is used in emails

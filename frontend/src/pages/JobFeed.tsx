@@ -26,6 +26,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { ScoreRing } from '../components/applications/shared';
 import { PipelineCard } from '../components/agent/ToolCards';
+import { MatchExplanation } from '../components/discovery/MatchExplanation';
 import { useChatStore } from '../agent/store';
 import {
   ATS_LABEL,
@@ -308,6 +309,7 @@ function PostingRow({ posting, onOpenApplication }: { posting: JobPosting; onOpe
               </p>
             )}
             <SkillChips matched={posting.matched_skills} missing={posting.missing_skills} />
+            <MatchExplanation details={posting.matching_details} />
             {posting.skip_flags.length > 0 && (
               <ul className="mt-2 space-y-0.5">
                 {posting.skip_flags.map((flag) => (

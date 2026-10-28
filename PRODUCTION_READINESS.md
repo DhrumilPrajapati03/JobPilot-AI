@@ -9,6 +9,7 @@ This is the durable reminder for work deliberately deferred while implementing t
 - Confirm backup/recovery, monitoring, error alerts, data retention, and supported dependency versions.
 - Roll out matching API/frontend changes together and reload the exact-origin extension configuration.
 - Verify running worker capacity, lease expiry/recovery, graceful shutdown, and provider idempotency behavior on the chosen host. Sleeping processes cannot execute queued work until a worker runs again.
+- Apply Sprint 3's identity/matching migration before enabling its API/UI. Verify confirmation and revocation through two real accounts, choose retention for historical confirmations, warm the local MiniLM model in the intended worker image, and evaluate matching against representative labeled employer data in addition to the synthetic regression set.
 
 ## Recommendation for timing
 

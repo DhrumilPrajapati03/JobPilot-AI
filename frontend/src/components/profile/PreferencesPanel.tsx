@@ -51,9 +51,26 @@ export function PreferencesPanel({ profile }: { profile: UserProfile | undefined
       <Card>
         <CardHeader>
           <CardTitle>What you're looking for</CardTitle>
-          <p className="text-sm text-muted-foreground">Used to filter and rank the jobs in your job feed.</p>
+          <p className="text-sm text-muted-foreground">Used to filter and rank your job feed. Scan your boards after saving changes to refresh scores.</p>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="pref-career">Career target</Label>
+              <select id="pref-career" className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={draft.career_level ?? 'any'} onChange={(e) => set({ career_level: e.target.value as WorkPreferences['career_level'] })}>
+                <option value="any">Any career level</option><option value="intern">Internships</option><option value="entry">Entry level / graduate</option><option value="mid">Mid level</option><option value="senior">Senior</option>
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="pref-years">Professional experience (years)</Label>
+              <Input id="pref-years" type="number" min={0} max={60} step={0.5} value={draft.experience_years ?? ''} onChange={(e) => set({ experience_years: e.target.value === '' ? null : Number(e.target.value) })} placeholder="0 for a first role" />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="pref-authorization">Countries where you already have work authorization</Label>
+            <TagInput id="pref-authorization" value={draft.authorized_countries ?? []} onChange={(v) => set({ authorized_countries: v })} placeholder="e.g. India" />
+            <p className="text-xs text-muted-foreground">Your declaration is used when a job explicitly requires local authorization. Missing information is flagged for review.</p>
+          </div>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="pref-roles">Target roles</Label>

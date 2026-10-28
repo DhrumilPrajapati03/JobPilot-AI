@@ -9,6 +9,7 @@ import pytest
 from app.agents import assistant
 from app.api.v1 import discovery as discovery_api
 from app.services import discovery, job_boards
+from app.services.identity import extract_facts
 from app.services.job_boards import BoardError, Posting, parse_board
 from app.services.auth import CurrentUser
 from test_application_flow import USER_ID, client, db  # noqa: F401  (pytest fixtures)
@@ -53,6 +54,11 @@ def board(db, monkeypatch):
 
 def _prefs(db, **values):
     db.tables["user_profiles"][0]["work_preferences"].update(values)
+
+
+def _confirm_resume(db):
+    source_digest, facts = extract_facts(db.tables["resumes"][0])
+    db.tables["identity_confirmations"] = [{"user_id": USER_ID, "source_digest": source_digest, "fact_id": f["id"]} for f in facts]
 
 
 async def _scan_and_finish(db, **kwargs):
@@ -191,6 +197,7 @@ def test_missing_tables_explain_the_migration(board, client, db, monkeypatch):
 # --- Drafting -----------------------------------------------------------------------
 
 def test_auto_draft_respects_threshold_and_daily_cap(board, db):
+    _confirm_resume(db)
     db.tables["job_sources"] = [{"id": "src-1", "user_id": USER_ID, "ats": "greenhouse", "slug": "globex", "company": "", "enabled": True}]
     _prefs(db, auto_draft_enabled=True, auto_draft_min_score=50, auto_draft_daily_cap=1)
 
@@ -217,6 +224,7 @@ def test_auto_draft_is_off_by_default(board, db):
 
 
 def test_failed_draft_returns_posting_to_feed(board, db, monkeypatch):
+    _confirm_resume(db)
     db.tables["job_sources"] = [{"id": "src-1", "user_id": USER_ID, "ats": "greenhouse", "slug": "globex", "company": "", "enabled": True}]
     _prefs(db, auto_draft_enabled=True, auto_draft_min_score=50, auto_draft_daily_cap=1)
 

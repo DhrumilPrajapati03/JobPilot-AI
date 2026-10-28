@@ -5,7 +5,6 @@ Ensures generated PDFs meet length limitations and do not hallucinate facts.
 
 import io
 import re
-import re
 from pypdf import PdfReader
 
 def validate_page_count(pdf_bytes: bytes) -> int:
@@ -18,54 +17,66 @@ def validate_page_count(pdf_bytes: bytes) -> int:
         return 1
 
 
-def validate_no_hallucinations(
-    tailored: dict,
-    base: dict,
-    jd_keywords: list[str]
-) -> list[str]:
+def validate_no_hallucinations(tailored: dict, base: dict, jd_keywords: list[str]) -> list[str]:
+    """Check fixed facts and unsupported skill/numeric claims against the base.
+
+    Job keywords describe an employer's needs; they never authorize a claim.
+    Prose still requires human review; this is not a proof of semantic truth.
     """
-    Check that the tailored resume contains no content
-    not present in the base resume or JD keywords.
-    
-    Returns:
-        List of violation strings (empty list = clean).
-    """
+    import json
+    from collections import Counter
+    from app.services.job_matching import _norm, TECH_TERMS, _mentions
     violations = []
-
-    # 1. Check company names
-    base_companies = {e.get("company", "").strip().lower() for e in base.get("experience", []) if e.get("company")}
-    for exp in tailored.get("experience", []):
-        company = exp.get("company", "").strip()
-        if company and company.lower() not in base_companies:
-            violations.append(f"Unknown company: {company}")
-
-    # 2. Check employment dates/durations
-    base_dates = {e.get("duration", "").strip().lower() for e in base.get("experience", []) if e.get("duration")}
-    for exp in tailored.get("experience", []):
-        duration = exp.get("duration", "").strip()
-        if duration and duration.lower() not in base_dates:
-            violations.append(f"Modified date/duration: {duration} for company {exp.get('company')}")
-
-    # 3. Check skills
-    base_all_skills = set()
-    skills_obj = base.get("skills", {})
-    if isinstance(skills_obj, dict):
-        base_all_skills.update(s.strip().lower() for s in skills_obj.get("primary", []) if isinstance(s, str))
-        base_all_skills.update(s.strip().lower() for s in skills_obj.get("secondary", []) if isinstance(s, str))
-    
-    jd_kw_lower = {k.strip().lower() for k in jd_keywords if isinstance(k, str)}
-    
-    tailored_skills = tailored.get("skills", {})
-    if isinstance(tailored_skills, dict):
-        for skill in tailored_skills.get("primary", []) + tailored_skills.get("secondary", []):
-            if not isinstance(skill, str):
-                continue
-            skill_clean = skill.strip().lower()
-            # If the skill is not in the base resume AND is not a keyword from the JD, flag it
-            if skill_clean not in base_all_skills and skill_clean not in jd_kw_lower:
-                violations.append(f"New skill not in base resume or job keywords: {skill}")
-
-    return violations
+    canonical = lambda value: json.dumps(value, sort_keys=True, ensure_ascii=False)
+    numbers = lambda text: set(re.findall(r"(?<![\w])\d+(?:[.,]\d+)?(?:%|x|\+)?", text))
+    text = lambda value: json.dumps(value, ensure_ascii=False)
+    def check_numbers(value, original, label):
+        if numbers(text(value)) - numbers(text(original)):
+            violations.append(f"Unsupported numeric claim in {label}")
+    base_skill_values = [s for group in ('primary', 'secondary') for s in (base.get('skills') or {}).get(group, [])]
+    # A skill can also be evidenced in a source bullet/project, not only a tag.
+    source_text = text(base)
+    source_norm = f" {_norm(source_text)} "
+    allowed = {_norm(s) for s in base_skill_values}
+    for term in TECH_TERMS:
+        normalized = _norm(term)
+        if _mentions(normalized, source_norm, source_text): allowed.add(normalized)
+    for group in ('primary', 'secondary'):
+        for skill in (tailored.get('skills') or {}).get(group, []):
+            if _norm(skill) not in allowed:
+                violations.append(f"New skill not supported by base resume: {skill}")
+    # Employment identities are paired, so swapping dates between employers fails.
+    originals = {(e.get('company','').strip().lower(), e.get('role','').strip().lower(), e.get('duration','').strip().lower()): e for e in base.get('experience', [])}
+    for e in tailored.get('experience', []):
+        key = (e.get('company','').strip().lower(), e.get('role','').strip().lower(), e.get('duration','').strip().lower())
+        if key not in originals:
+            violations.append('Modified employment company, role or duration')
+        else:
+            check_numbers(e.get('bullets', []), originals[key].get('bullets', []), 'experience bullets')
+    if len(tailored.get('experience', [])) > len(base.get('experience', [])):
+        violations.append('Added employment entry')
+    for group in ('education', 'certifications'):
+        allowed_entries = Counter(canonical(e) for e in base.get(group, []))
+        output_entries = Counter(canonical(e) for e in tailored.get(group, []))
+        if output_entries - allowed_entries:
+            violations.append(f'Added or modified {group} credential')
+    projects = {p.get('name','').strip().lower(): p for p in base.get('projects', [])}
+    for project in tailored.get('projects', []):
+        original = projects.get(project.get('name','').strip().lower())
+        if original is None:
+            violations.append('Added or renamed project')
+        else:
+            check_numbers(project, original, 'project')
+            if {_norm(t) for t in project.get('tech', [])} - {_norm(t) for t in original.get('tech', [])}:
+                violations.append('Added project technology')
+    check_numbers([tailored.get('summary',''), tailored.get('headline','')], base, 'summary/headline')
+    output_text = text(tailored)
+    output_norm = f" {_norm(output_text)} "
+    for term in TECH_TERMS:
+        normalized = _norm(term)
+        if _mentions(normalized, output_norm, output_text) and normalized not in allowed:
+            violations.append(f'Unsupported technology claim: {term}')
+    return list(dict.fromkeys(violations))
 
 
 def calculate_ats_score(tailored: dict, jd_analysis: dict) -> tuple[float, list[str]]:

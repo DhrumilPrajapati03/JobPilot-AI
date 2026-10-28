@@ -11,7 +11,6 @@ and nightly on the server when a service key is set (see ``autopilot``).
 """
 
 import asyncio
-import re
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -32,6 +31,9 @@ from app.services.job_matching import (
     user_country,
 )
 from app.services.referrals import contact_counts
+from app.services import identity
+from app.services.eligibility import evaluate_eligibility
+from app.services.job_identity import identity_keys
 from app.services.websocket import manager
 
 MIGRATION_FILE = "supabase/migrations/20261011_job_discovery.sql"
@@ -43,7 +45,7 @@ CHUNK = 100
 # Descriptions are needed to enforce eligibility on previously stored postings.
 POSTING_FIELDS = (
     "id, source_id, ats, external_id, company, title, location, remote, url, posted_at, fit_score, title_match, "
-    "matched_skills, missing_skills, skip_flags, status, application_id, auto_drafted, drafted_at, closed_at, discovered_at, description"
+    "matched_skills, missing_skills, skip_flags, status, application_id, auto_drafted, drafted_at, closed_at, discovered_at, description, matching_details, dedupe_key"
 )
 
 _scanning: set[str] = set()
@@ -72,13 +74,6 @@ def _parse_ts(value) -> datetime | None:
 def is_table_missing(error: Exception) -> bool:
     message = str(error)
     return "PGRST205" in message or (("job_postings" in message or "job_sources" in message) and "does not exist" in message)
-
-
-def _job_key(company: str, title: str) -> tuple[str, str]:
-    """Same company + same title: the same job, wherever it was found."""
-    def norm(s: str) -> str:
-        return " ".join(re.sub(r"[^a-z0-9]+", " ", (s or "").lower()).split())
-    return norm(company), norm(title)
 
 
 def _chunks(items: list, size: int = CHUNK):
@@ -117,13 +112,20 @@ def _evaluate(prefs, profile, country, *, ats, company, title, description, loca
         flags.append(region)
     if eligibility := india_eligibility_flag({"location": location, "remote": remote, "description": description}):
         flags.append(eligibility)
-    return fit, flags
+    eligibility = evaluate_eligibility({"title": title, "description": description, "location": location, "remote": remote}, prefs)
+    fit.details["eligibility"] = eligibility
+    flags.extend(c["reason"] for c in eligibility["checks"] if c["status"] != "eligible")
+    if eligibility["status"] == "ineligible":
+        fit.score = 0
+    elif eligibility["status"] == "review":
+        fit.score = min(fit.score, 60)
+    return fit, list(dict.fromkeys(flags))
 
 
 def _rescore_stored(supabase, user_id: str, prefs, profile, country, skip_ids: set) -> dict:
     """Re-apply current preferences and scoring to stored open postings."""
     rows = supabase.table("job_postings").select(
-        "id, ats, external_id, company, title, location, remote, description, status, fit_score, skip_flags"
+        "id, ats, external_id, company, title, location, remote, description, status, fit_score, skip_flags, matching_details"
     ).eq("user_id", user_id).in_("status", ["new", "skipped"]).execute().data
     changed, dropped = [], []
     for r in rows:
@@ -137,11 +139,12 @@ def _rescore_stored(supabase, user_id: str, prefs, profile, country, skip_ids: s
             description=r.get("description") or "", location=r.get("location") or "", remote=r.get("remote"),
         )
         status = "skipped" if flags else "new"
-        if abs(float(r.get("fit_score") or 0) - fit.score) > 0.05 or flags != (r.get("skip_flags") or []) or status != r["status"]:
+        if abs(float(r.get("fit_score") or 0) - fit.score) > 0.05 or flags != (r.get("skip_flags") or []) or status != r["status"] or fit.details != (r.get("matching_details") or {}):
             changed.append({
                 "user_id": user_id, "ats": r["ats"], "external_id": r["external_id"], "fit_score": fit.score,
                 "title_match": fit.title_match, "matched_skills": fit.matched[:12], "missing_skills": fit.missing[:12],
                 "skip_flags": flags, "status": status,
+                "matching_details": fit.details,
             })
     for chunk in _chunks(changed):
         supabase.table("job_postings").upsert(chunk, on_conflict="user_id,ats,external_id").execute()
@@ -176,6 +179,9 @@ def _posting_row(user_id: str, source: dict, posting, fit, flags: list[str]) -> 
         "skip_flags": flags,
         "status": "skipped" if flags else "new",
         "discovered_at": _now().isoformat(),
+        "matching_details": fit.details,
+        "dedupe_key": identity_keys({"ats": posting.ats, "external_id": posting.external_id, "company": posting.company if posting.ats in REMOTE_BOARDS else source.get("company") or posting.company,
+                                      "title": posting.title, "location": posting.location, "url": posting.url, "description": posting.description})[0],
     }
 
 
@@ -219,16 +225,17 @@ async def _scan(supabase, user_id, user_token, user_email, auto_draft, source_id
     base_resume = _load_base_resume(supabase, user_id)
     if not base_resume:
         raise DiscoveryError("Add your base resume on the Profile page first. Matches are scored against it.")
-    profile = build_profile(base_resume, prefs)
+    profile = identity.attach_confirmation(build_profile(base_resume, prefs), identity.load_vault(supabase, user_id, base_resume))
     country = user_country(_load_location(supabase, user_id))
 
     known_rows = supabase.table("job_postings").select(
-        "id, ats, external_id, source_id, status, closed_at, company, title"
+        "id, ats, external_id, source_id, status, closed_at, company, title, location, remote, url, description, posted_at"
     ).eq("user_id", user_id).execute().data
     known = {(r["ats"], r["external_id"]): r for r in known_rows}
     # The source each job was first stored from, so a job listed on two boards
     # (say Himalayas and the company's own board) appears once.
-    job_sources = {_job_key(r.get("company") or "", r.get("title") or ""): r.get("source_id") for r in known_rows}
+    job_sources = {key: r for r in known_rows for key in identity_keys(r)}
+    alias_seen = set()
 
     def worth_details(ats: str):
         def keep(title: str, external_id: str) -> bool:
@@ -281,6 +288,17 @@ async def _scan(supabase, user_id, user_token, user_email, auto_draft, source_id
             seen.add(posting.external_id)
             row = known.get((posting.ats, posting.external_id))
             if row:
+                # Refresh changed employer metadata without resetting user state.
+                patch = {"title": posting.title, "location": posting.location, "remote": posting.remote, "url": posting.url}
+                if posting.description:
+                    patch["description"] = posting.description
+                if posting.posted_at:
+                    patch["posted_at"] = posting.posted_at
+                patch = {key: value for key, value in patch.items() if row.get(key) != value}
+                if patch:
+                    supabase.table("job_postings").update(patch).eq("id", row["id"]).eq("user_id", user_id).execute()
+                    row.update(patch)
+                    job_sources.update({key: row for key in identity_keys(row)})
                 if row.get("closed_at"):
                     reopen.append(row["id"])
                 continue
@@ -288,11 +306,17 @@ async def _scan(supabase, user_id, user_token, user_email, auto_draft, source_id
                 summary["filtered"] += 1
                 continue
             row_company = posting.company if posting.ats in REMOTE_BOARDS else source.get("company") or posting.company
-            job_key = _job_key(row_company, posting.title)
-            if job_sources.get(job_key, source["id"]) != source["id"]:
+            keys = identity_keys({"ats": posting.ats, "external_id": posting.external_id, "company": row_company, "title": posting.title,
+                                  "location": posting.location, "url": posting.url, "description": posting.description})
+            if any(key in job_sources for key in keys):
                 summary["duplicates"] += 1
+                canonical = next(job_sources[key] for key in keys if key in job_sources)
+                if canonical.get("id"):
+                    alias_seen.add(canonical["id"])
+                    if canonical.get("closed_at"):
+                        reopen.append(canonical["id"])
                 continue
-            job_sources[job_key] = source["id"]
+            job_sources.update({key: {"id": None, "source_id": source["id"]} for key in keys})
             fit, flags = _evaluate(
                 prefs, profile, country, ats=posting.ats, company=posting.company, title=posting.title,
                 description=posting.description, location=posting.location, remote=posting.remote,
@@ -315,6 +339,7 @@ async def _scan(supabase, user_id, user_token, user_email, auto_draft, source_id
         supabase.table("job_postings").upsert(chunk, on_conflict="user_id,ats,external_id", ignore_duplicates=True).execute()
     for chunk in _chunks(reopen):
         supabase.table("job_postings").update({"closed_at": None}).in_("id", chunk).eq("user_id", user_id).execute()
+    closing = [pid for pid in closing if pid not in alias_seen]
     for chunk in _chunks(closing):
         supabase.table("job_postings").update({"closed_at": now}).in_("id", chunk).eq("user_id", user_id).execute()
 
@@ -341,8 +366,11 @@ def start_auto_drafts(supabase, user_id: str, prefs: WorkPreferences, *, user_to
     if remaining <= 0:
         return []
     rows = supabase.table("job_postings").select(POSTING_FIELDS).eq("user_id", user_id).eq("status", "new").execute().data
+    if not identity.load_vault(supabase, user_id)["complete"]:
+        return []
     candidates = sorted(
-        (r for r in rows if not r.get("closed_at") and not india_eligibility_flag(r) and float(r.get("fit_score") or 0) >= prefs.auto_draft_min_score),
+        (r for r in rows if not r.get("closed_at") and not r.get("skip_flags") and not india_eligibility_flag(r)
+         and evaluate_eligibility(r, prefs)["status"] == "eligible" and float(r.get("fit_score") or 0) >= prefs.auto_draft_min_score),
         key=lambda r: float(r.get("fit_score") or 0),
         reverse=True,
     )[:remaining]
@@ -357,6 +385,9 @@ def begin_draft(supabase, user_id: str, posting: dict, *, auto: bool) -> dict:
     """Mark a posting as drafting and reserve a pipeline run id for it."""
     if reason := india_eligibility_flag(posting):
         raise DiscoveryError(reason)
+    eligibility = evaluate_eligibility(posting, load_preferences(supabase, user_id))
+    if eligibility["status"] == "ineligible":
+        raise DiscoveryError("; ".join(c["reason"] for c in eligibility["checks"] if c["status"] == "ineligible"))
     from app.services import runs
     if runs.durable_enabled():
         where = (posting.get("location") or "Not stated") + (" (remote)" if posting.get("remote") else "")
@@ -394,6 +425,12 @@ async def draft_posting(supabase, user_id: str, posting_id: str, run_id: str, *,
     if not res.data:
         return None
     p = res.data[0]
+    if p.get("auto_drafted"):
+        prefs = load_preferences(supabase, user_id)
+        if not prefs.auto_draft_enabled or not identity.load_vault(supabase, user_id)["complete"] or evaluate_eligibility(p, prefs)["status"] != "eligible":
+            supabase.table("job_postings").update({"status": "new", "drafted_at": None, "auto_drafted": False}).eq("id", posting_id).eq("user_id", user_id).execute()
+            await manager.send_update(run_id, {"type": "status", "step": "execution", "status": "error", "message": "Automatic drafting stopped: review your current resume facts and job preferences."})
+            return None
     if reason := india_eligibility_flag(p):
         supabase.table("job_postings").update({"status": "skipped", "skip_flags": [reason]}).eq("id", posting_id).eq("user_id", user_id).execute()
         await manager.send_update(run_id, {"type": "status", "step": "complete", "status": "error", "message": reason})

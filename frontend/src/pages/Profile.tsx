@@ -10,6 +10,7 @@ import { Separator } from '../components/ui/separator';
 import { User, Briefcase, Code2, FolderKanban, Plus, Trash2, Save, Loader2 } from 'lucide-react';
 import { PreferencesPanel } from '../components/profile/PreferencesPanel';
 import { AnswerBankPanel } from '../components/profile/AnswerBankPanel';
+import { FactsPanel } from '../components/profile/FactsPanel';
 
 export default function Profile() {
   // 1. Fetch data from backend using our custom React Query hooks
@@ -179,6 +180,7 @@ export default function Profile() {
             ['experience', 'Experience'],
             ['projects', 'Projects'],
             ['skills', 'Skills'],
+            ['facts', 'Review facts'],
             ['preferences', 'Preferences'],
             ['answers', 'Answers'],
           ].map(([value, label]) => (
@@ -195,6 +197,7 @@ export default function Profile() {
         <TabsContent value="preferences" className="mt-4">
           <PreferencesPanel profile={profile} />
         </TabsContent>
+        <TabsContent value="facts" className="mt-4"><FactsPanel /></TabsContent>
         <TabsContent value="answers" className="mt-4">
           <AnswerBankPanel skills={skills.primary} />
         </TabsContent>

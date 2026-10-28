@@ -4,6 +4,8 @@ Rewrites resume sections to match JD keywords and requirements
 using RAG over user skills + LLM rewriting.
 """
 
+import copy
+
 from app.models.resume import Resume
 from app.services.llm import get_default_llm, with_structured
 from app.services.vector_store import search_relevant
@@ -79,7 +81,7 @@ class ResumeTailorAgent:
             f"{base_resume}\n\n"
             "=== Rewriting Rules ===\n"
             "1. **Summary**: Rewrite the professional summary (3 lines max) to match "
-            "the job's seniority level, role focus, and tone. Incorporate primary keywords.\n"
+            "the role focus and tone without inflating seniority. Use only supported keywords.\n"
             "2. **Skills**: Reorder the skills arrays so that JD-matching primary skills "
             "are placed at the top of the 'primary' list. Non-matching but relevant skills "
             "should go to the 'secondary' list.\n"
@@ -90,7 +92,7 @@ class ResumeTailorAgent:
             "and tailor descriptions to emphasize matching technology stacks.\n"
             "5. **Strict Guardrails**: Do NOT invent new employment periods, company names, "
             "or educational credentials. Every output must correspond strictly to the "
-            "provided base resume inputs.\n\n"
+            "provided CURRENT base resume inputs. Job requirements and older RAG snippets are not evidence of candidate qualifications.\n\n"
             "Generate and return the tailored resume as valid JSON matching the requested schema."
         )
 
@@ -114,33 +116,13 @@ class ResumeTailorAgent:
             jd_keywords=jd_analysis.get("keywords", []) + jd_analysis.get("required_skills", [])
         )
 
-        # If hallucinations are detected, we could log them or clean them (fallback to base for safety)
         if violations:
-            print(f"⚠️ Hallucinations detected: {violations}. Reverting invalid fields.")
-            # For simplicity, if a company/date was altered, overwrite it back with the base resume values
-            for idx, exp in enumerate(tailored_dict.get("experience", [])):
-                if idx < len(base_resume.get("experience", [])):
-                    base_exp = base_resume["experience"][idx]
-                    exp["company"] = base_exp.get("company", "")
-                    exp["duration"] = base_exp.get("duration", "")
-            
-            # Clean primary/secondary skills
-            base_all_skills = set(
-                s.strip().lower() for s in 
-                base_resume.get("skills", {}).get("primary", []) + 
-                base_resume.get("skills", {}).get("secondary", [])
-            )
-            jd_kw_lower = {k.strip().lower() for k in jd_analysis.get("keywords", []) + jd_analysis.get("required_skills", [])}
-            
-            cleaned_primary = [
-                s for s in tailored_dict.get("skills", {}).get("primary", [])
-                if s.strip().lower() in base_all_skills or s.strip().lower() in jd_kw_lower
-            ]
-            cleaned_secondary = [
-                s for s in tailored_dict.get("skills", {}).get("secondary", [])
-                if s.strip().lower() in base_all_skills or s.strip().lower() in jd_kw_lower
-            ]
-            tailored_dict["skills"] = {"primary": cleaned_primary, "secondary": cleaned_secondary}
+            # Preserve original facts as one unit. Fixing only tags/dates would
+            # leave fabricated bullets or credentials in the generated prose.
+            self.used_fallback = True
+            tailored_dict = copy.deepcopy(base_resume)
+            for key in RESUME_METADATA_KEYS:
+                tailored_dict.pop(key, None)
 
         # Calculate final simulated ATS score
         score, missing = calculate_ats_score(tailored_dict, jd_analysis)

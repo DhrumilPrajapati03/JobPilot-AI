@@ -175,8 +175,8 @@ def test_bulk_follow_suggested_boards(board, client, db):  # noqa: F811
 def test_same_job_on_two_boards_is_stored_once(board, client, db, monkeypatch):  # noqa: F811
     async def fetch(ats, slug, client=None, opts=None):
         if ats == "himalayas":
-            return "Himalayas", [Posting("himalayas", "h1", "Globex", "Senior Machine Learning Engineer", "Remote, worldwide", True, "u", "Python", None)]
-        return "Globex", [Posting("greenhouse", "1", "Globex", "Senior Machine Learning Engineer", "Remote", True, "u", "Python", None)]
+            return "Himalayas", [Posting("himalayas", "h1", "Globex", "Senior Machine Learning Engineer", "Remote, worldwide", True, "https://boards.greenhouse.io/globex/jobs/1?utm_source=himalayas", "Python", None)]
+        return "Globex", [Posting("greenhouse", "1", "Globex", "Senior Machine Learning Engineer", "Remote - India", True, "https://boards.greenhouse.io/globex/jobs/1", "Python", None)]
 
     monkeypatch.setattr(discovery, "fetch_board", fetch)
     monkeypatch.setattr("app.api.v1.discovery.fetch_board", fetch)

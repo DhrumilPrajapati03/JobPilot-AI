@@ -12,6 +12,9 @@ from app.agents import orchestrator as agents
 from app.services import autopilot, referrals
 from app.services.job_filters import evaluate_skip_rules, india_eligibility_flag
 from app.services.runs import PermanentRunError
+from app.services import identity
+from app.models.user import WorkPreferences
+from app.services.eligibility import evaluate_eligibility
 
 
 class GraphState(TypedDict):
@@ -23,6 +26,28 @@ async def run_application(ctx, email: str):
     saved = ctx.checkpoints.get("database_saving")
     if saved and not db.table("job_applications").select("id").eq("id", saved["application_id"]).eq("user_id", uid).execute().data:
         raise PermanentRunError("The generated application was deleted. Start a new application deliberately.")
+    def ensure_auto_current():
+        if not inputs.get("auto"):
+            return
+        vault = identity.load_vault(db, uid)
+        snapshot = ctx.checkpoints.get("profile_loading", {}).get("resume")
+        if not vault["complete"]:
+            raise PermanentRunError("Confirm the saved resume facts in your Identity Vault before automatic drafting.")
+        if snapshot and identity.extract_facts(snapshot)[0] != vault["source_digest"]:
+            raise PermanentRunError("Your resume changed during this run. Start a new application from the job description.")
+        preferences = (db.table("user_profiles").select("work_preferences").eq("id", uid).execute().data or [{}])[0].get("work_preferences") or {}
+        prefs = WorkPreferences.model_validate(preferences)
+        if not prefs.auto_draft_enabled:
+            raise PermanentRunError("Automatic drafting was disabled before this run completed.")
+        if inputs.get("posting_id"):
+            rows = db.table("job_postings").select("*").eq("id", inputs["posting_id"]).eq("user_id", uid).execute().data
+            if not rows:
+                raise PermanentRunError("The source posting was removed.")
+            posting = rows[0]
+            flags = evaluate_skip_rules(prefs, posting.get("company") or "", posting.get("description") or "", {"remote": posting.get("remote")})
+            if flags or evaluate_eligibility(posting, prefs)["status"] != "eligible":
+                raise PermanentRunError("The posting no longer meets your automatic drafting preferences.")
+    ensure_auto_current()
 
     async def parse():
         if inputs.get("posting_id"):
@@ -75,6 +100,7 @@ async def run_application(ctx, email: str):
             ctx.checkpoints[k].get("warning") for k in ("cover_draft", "email_drafts", "dm_drafts")) else ""}
 
     async def persist():
+        ensure_auto_current()
         jd = analysis()
         application = {"company": jd.get("company") or "Unknown Company", "role": jd.get("role") or "Unknown Role",
                        "jd_url": inputs.get("jd_url") or "", "jd_text": inputs.get("jd_text") or ctx.checkpoints["jd_parsing"]["source_text"],

@@ -3,7 +3,12 @@
 Discovery can see hundreds of postings per scan, far too many to send to an
 LLM on a free-tier budget, so postings are scored locally:
 
-    fit = 40% title match (against preferred roles) + 60% skill coverage
+    fallback = 40% role relevance + 60% smoothed skill coverage
+    local MiniLM available = 85% fallback + 15% resume/job cosine similarity
+
+Role relevance uses normalized title overlap with a conservative semantic
+rescue for paraphrased titles. Structured eligibility is applied by discovery
+after scoring: conflicts score zero and unknown requirements require review.
 
 Title match is the word overlap (Dice) between the posting title and the
 closest preferred role. Skill coverage is the share of tech skills the
@@ -81,6 +86,9 @@ class CandidateProfile:
     skills: set[str]
     resume_text: str
     vocabulary: list[str] = field(default_factory=list)
+    owner: str = ""
+    confirmation: dict = field(default_factory=dict)
+    confirmed_evidence: str = ""
 
 
 @dataclass
@@ -89,6 +97,7 @@ class Fit:
     title_match: float
     matched: list[str]
     missing: list[str]
+    details: dict = field(default_factory=dict)
 
 
 def _norm(text: str) -> str:
@@ -128,7 +137,7 @@ def build_profile(base_resume: dict, prefs: WorkPreferences) -> CandidateProfile
         " ".join(f"{p.get('name', '')} {p.get('description', '')} {' '.join(p.get('tech') or [])}" for p in base_resume.get("projects") or []),
     ])
     vocabulary = sorted({_norm(t) for t in TECH_TERMS} | skills)
-    return CandidateProfile(role_terms=role_terms, roles=[r.strip() for r in roles], skills=skills, resume_text=f" {_norm(resume_text)} ", vocabulary=vocabulary)
+    return CandidateProfile(role_terms=role_terms, roles=[r.strip() for r in roles], skills=skills, resume_text=f" {_norm(resume_text)} ", vocabulary=vocabulary, owner=base_resume.get("user_id") or "")
 
 
 def _mentions(term: str, normalised_text: str, raw_text: str) -> bool:
@@ -152,6 +161,11 @@ def title_match(title: str, profile: CandidateProfile) -> float:
         if words & _MANAGEMENT and not role & _MANAGEMENT:
             match *= 0.5
         best = max(best, match)
+    if best < MIN_TITLE_MATCH and not (words & _MANAGEMENT and not any(r & _MANAGEMENT for r in profile.role_terms)):
+        from app.services.matching_semantics import similarity
+        semantic, _ = similarity("; ".join(profile.roles), title, profile.owner)
+        if semantic is not None and semantic >= 0.58:
+            best = max(best, semantic)
     return best
 
 
@@ -163,8 +177,20 @@ def score_posting(title: str, description: str, profile: CandidateProfile) -> Fi
     matched = [term for term in mentioned if term in profile.skills or f" {term} " in profile.resume_text]
     missing = [term for term in mentioned if term not in matched]
     coverage = min(1.0, (len(matched) + 1) / (len(mentioned) + 2) / FULL_COVERAGE)
-    score = round(100 * (TITLE_WEIGHT * t_match + SKILL_WEIGHT * coverage), 1)
-    return Fit(score=score, title_match=round(t_match, 2), matched=matched, missing=missing)
+    lexical = 100 * (TITLE_WEIGHT * t_match + SKILL_WEIGHT * coverage)
+    from app.services.matching_semantics import similarity
+    semantic, model = similarity(profile.resume_text, raw, profile.owner)
+    score = round(0.85 * lexical + 0.15 * semantic * 100 if semantic is not None else lexical, 1)
+    evidence = f" {_norm(profile.confirmed_evidence)} "
+    confirmed = [s for s in matched if f" {s} " in evidence]
+    details = {"version": "matching-v2", "components": {"title": round(t_match*100, 1), "skills": round(coverage*100, 1),
+               "semantic": round(semantic*100, 1) if semantic is not None else None},
+               "weights": {"title": 0.34, "skills": 0.51, "semantic": 0.15} if semantic is not None else {"title": 0.4, "skills": 0.6, "semantic": 0},
+               "semantic_model": model, "identity": profile.confirmation,
+               "confirmed_matched_skills": confirmed,
+               "reasons": [f"{len(matched)} of {len(mentioned)} recognized job skills appear in your base resume",
+                           f"{len(confirmed)} matched skills have user-confirmed source evidence"]}
+    return Fit(score=score, title_match=round(t_match, 2), matched=matched, missing=missing, details=details)
 
 
 # Regions a remote job may name that include candidates in a given country.

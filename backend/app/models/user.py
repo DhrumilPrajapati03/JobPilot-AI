@@ -5,6 +5,7 @@ salary expectations, and work preferences.
 """
 
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -27,6 +28,9 @@ class WorkPreferences(BaseModel):
     blocked_companies: list[str] = Field(default_factory=list)
     skip_keywords: list[str] = Field(default_factory=lambda: list(DEFAULT_SKIP_KEYWORDS))
     requires_sponsorship: bool = False
+    career_level: Literal["any", "intern", "entry", "mid", "senior"] = "any"
+    experience_years: float | None = Field(default=None, ge=0, le=60)
+    authorized_countries: list[str] = Field(default_factory=list, max_length=20)
     salary_min: int | None = None
     salary_currency: str = "USD"
     # Job discovery: draft applications for the best new matches automatically.
