@@ -16,24 +16,27 @@ from app.services import autopilot
 from app.services import auth
 from app.services import runs
 from app.services.request_limits import UploadBodyLimitMiddleware
+from app.services.observability import RequestMetricsMiddleware, setup_monitoring
+from app.api.v1.operations import router as operations_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan handler for startup/shutdown events."""
     # Startup
-    print("🚀 JobPilot AI API starting up...")
+    setup_monitoring()
+    print("JobPilot AI API starting up...")
     scheduler = None
     if settings.DISCOVERY_AUTO_SCAN and autopilot.server_ready():
         scheduler = asyncio.create_task(autopilot.scheduler_loop())
-        print("🌙 Autopilot: nightly scans and morning digests are on")
+        print("Autopilot: nightly scans and morning digests are on")
     yield
     if scheduler:
         scheduler.cancel()
         with suppress(asyncio.CancelledError):
             await scheduler
     # Shutdown
-    print("👋 JobPilot AI API shutting down...")
+    print("JobPilot AI API shutting down...")
 
 
 app = FastAPI(
@@ -51,6 +54,7 @@ app = FastAPI(
 
 # CORS Middleware
 app.add_middleware(UploadBodyLimitMiddleware)
+app.add_middleware(RequestMetricsMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[o.strip().rstrip("/") for o in settings.FRONTEND_URL.split(",") if o.strip()],
@@ -61,6 +65,7 @@ app.add_middleware(
 
 # Include API v1 router
 app.include_router(api_v1_router, prefix="/api/v1")
+app.include_router(operations_router)
 
 
 @app.get("/health", tags=["Health"])

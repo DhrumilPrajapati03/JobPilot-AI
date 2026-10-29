@@ -81,8 +81,11 @@ class ApiClient {
   }
 
   /** POST a file as multipart form data (the browser sets the boundary header). */
-  async upload<T>(endpoint: string, file: File, field = 'file'): Promise<T> {
-    const token = await this.getAuthToken();
+  async upload<T>(endpoint: string, file: File, field = 'file', expectedUserId?: string): Promise<T> {
+    const {supabase} = await import('./supabase');
+    const {data:{session}} = await supabase.auth.getSession();
+    if (expectedUserId && session?.user.id !== expectedUserId) throw new Error('Account changed. Reopen your profile.');
+    const token = session?.access_token;
     const form = new FormData();
     form.append(field, file);
     const response = await fetch(`${this.baseUrl}${endpoint}`, {

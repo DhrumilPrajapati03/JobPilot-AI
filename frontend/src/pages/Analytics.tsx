@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { useAnalyticsSummary, useSkillGaps, type AnalyticsSummary } from '../hooks/use-analytics';
 import { SkillGapsView } from '../components/applications/SkillGaps';
 import { formatDate } from '../components/applications/shared';
+import { ProductMetrics } from '../components/applications/ProductMetrics';
 
 /** Funnel: how many applications reached at least each stage. */
 function funnelStages(summary: AnalyticsSummary) {
@@ -81,9 +82,10 @@ function WeeklyChart({ weeks }: { weeks: AnalyticsSummary['weekly_applications']
 }
 
 export default function Analytics() {
-  const { data: summary, isLoading } = useAnalyticsSummary();
+  const { data: summary, isLoading, isError, refetch } = useAnalyticsSummary();
   const { data: skillGaps } = useSkillGaps();
 
+  if (isError) return <p role="alert" className="text-sm text-warning">Analytics could not be loaded. <button onClick={()=>refetch()} className="underline">Retry</button></p>;
   if (isLoading || !summary) {
     return (
       <div className="flex h-[40vh] items-center justify-center gap-2 text-muted-foreground">
@@ -98,16 +100,17 @@ export default function Analytics() {
     { label: 'Response rate', value: summary.submitted ? `${summary.response_rate}%` : '—', icon: TrendingUp },
     { label: 'Interview rate', value: summary.submitted ? `${summary.interview_rate}%` : '—', icon: Target },
     { label: 'Avg ATS score', value: summary.avg_keyword_score === null ? '—' : `${summary.avg_keyword_score}%`, icon: Percent },
-    { label: 'Email reply rate', value: summary.emails_sent ? `${summary.email_reply_rate}%` : '—', icon: Mail },
+    { label: 'Manual email reply rate', value: summary.emails_sent ? `${summary.email_reply_rate}%` : '—', icon: Mail },
   ];
 
   return (
     <div className="page-analytics">
       <div className="analytics-header">
         <h2>Analytics</h2>
-        <p className="text-muted">Rates are measured against applications you've marked as applied.</p>
+        <p className="text-muted">The status funnel uses user-managed application records. Observed evidence and Gmail receipts appear separately below.</p>
       </div>
 
+      <ProductMetrics />
       <div className="grid gap-4 sm:grid-cols-2 @4xl:grid-cols-5">
         {stats.map((stat) => {
           const Icon = stat.icon;

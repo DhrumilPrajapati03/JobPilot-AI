@@ -7,13 +7,26 @@ and weekly activity summaries.
 from collections import Counter
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.models.application import ApplicationStatus
 from app.services.auth import CurrentUser, get_current_user
-from app.services.supabase import get_supabase_client
+from app.services.supabase import get_supabase_client, select_all
 
 router = APIRouter()
+
+
+@router.get('/outcomes')
+def product_outcomes(current_user: CurrentUser = Depends(get_current_user)):
+    try:
+        result = get_supabase_client(user_jwt=current_user.token).rpc('get_product_metrics',{}).execute().data
+    except Exception:
+        raise HTTPException(503,'Evidence analytics are unavailable. Apply the Sprint 6 migration.') from None
+    gmail = result['gmail']
+    gmail['reviewed_human_reply_rate'] = round(100*gmail['reviewed_human_replied_messages']/gmail['accepted_messages'],1) if gmail['accepted_messages'] else None
+    prep = result['preparation']
+    prep['completion_rate'] = round(100*(prep['filled_fields']+prep['preserved_fields'])/prep['inspected_fields'],1) if prep['inspected_fields'] else None
+    return result
 
 WEEKS_OF_HISTORY = 8
 # Statuses that mean the employer has answered (positively or not).
@@ -25,7 +38,8 @@ def _parse_ts(value: str | None) -> datetime | None:
     if not value:
         return None
     try:
-        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
     except ValueError:
         return None
 
@@ -43,33 +57,30 @@ async def get_analytics_summary(current_user: CurrentUser = Depends(get_current_
     average ATS score, weekly trend and recent activity.
     """
     supabase = get_supabase_client(user_jwt=current_user.token)
-    apps = (
+    apps = select_all(lambda: (
         supabase.table("job_applications")
-        .select("*")
+        .select("id,user_id,company,role,status,created_at,updated_at,applied_at,follow_up_at")
         .eq("user_id", current_user.id)
-        .order("created_at", desc=True)
-        .execute()
-    ).data
+        .order("id")
+    ))
 
     ids = [a["id"] for a in apps]
     scores: list[float] = []
     emails: list[dict] = []
-    if ids:
-        scores = [
+    for i in range(0,len(ids),100):
+        batch = ids[i:i+100]
+        scores.extend([
             r["keyword_match_score"]
-            for r in supabase.table("tailored_resumes")
+            for r in select_all(lambda: supabase.table("tailored_resumes")
             .select("keyword_match_score")
-            .in_("application_id", ids)
-            .execute()
-            .data
+            .eq("user_id",current_user.id).in_("application_id", batch).order('id'))
             if r.get("keyword_match_score") is not None
-        ]
-        emails = (
+        ])
+        emails.extend(select_all(lambda: (
             supabase.table("cold_emails")
-            .select("*")
-            .in_("application_id", ids)
-            .execute()
-        ).data
+            .select("id,sent_at,replied").eq('user_id',current_user.id)
+            .in_("application_id", batch).order('id')
+        )))
 
     now = datetime.now(timezone.utc)
     breakdown = Counter(a["status"] for a in apps)

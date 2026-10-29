@@ -10,6 +10,8 @@ Sprint 4 adds per-user Composio/Gmail consent, immutable draft approval, durable
 
 Sprint 5 improves supervised form filling, freezes application PDF snapshots and records preparation, submission attempts, browser observations and explicit user reports separately. See [setup, browser coverage and remaining acceptance work](SPRINT_5_STATUS.md).
 
+Sprint 6 adds evidence-based product metrics, guided résumé onboarding, worker readiness, privacy-filtered monitoring and full-stack browser validation. See [implementation and verification](SPRINT_6_STATUS.md) and the [operations/release runbook](OPERATIONS_RUNBOOK.md). Real integration acceptance and deployment remain separate release gates.
+
 ## Features
 
 - **Identity vault:** Store your profile, base resume, skills, work preferences, and reusable screening answers. Upload a resume or edit its structured content.

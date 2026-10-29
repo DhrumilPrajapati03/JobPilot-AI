@@ -1,5 +1,6 @@
 import asyncio
 import json
+import time
 
 from app.services.runs import LeaseLost
 
@@ -38,8 +39,10 @@ class ExecutionContext:
                             **{k: value[k] for k in ("score", "missing_keywords") if k in value})
             return value
         await self.emit(name, "running", message)
+        started = time.perf_counter()
         value = await operation()
         await self.save(name, value)
         await self.emit(name, "warning" if value.get("warning") else "done", value.get("warning") or "Step completed",
+                        duration_ms=round((time.perf_counter()-started)*1000,3),
                         **{k: value[k] for k in ("score", "missing_keywords") if k in value})
         return value

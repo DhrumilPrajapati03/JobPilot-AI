@@ -99,6 +99,7 @@ export function useUpdateProfile() {
     onSuccess: () => {
       // Invalidate the 'profile' query cache so the browser refetches fresh data
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['onboarding'] });
       queryClient.invalidateQueries({ queryKey: ['discovery'] });
     },
   });
@@ -124,6 +125,7 @@ export function useUpdateResume() {
     onSuccess: () => {
       // Invalidate 'resume' so any list previews are updated
       queryClient.invalidateQueries({ queryKey: ['resume'] });
+      queryClient.invalidateQueries({ queryKey: ['onboarding'] });
       queryClient.invalidateQueries({ queryKey: ['identity-facts'] });
       queryClient.invalidateQueries({ queryKey: ['discovery'] });
     },

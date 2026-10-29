@@ -88,6 +88,9 @@ class Settings(BaseSettings):
     FRONTEND_URL: str = "http://localhost:5173"  # comma-separated for several origins; the first is used in emails
     SECRET_KEY: str = "change-me-in-production"
     DEBUG: bool = True
+    OBSERVABILITY_TOKEN: str = ''  # Private operations scraper; backend only.
+    REQUEST_LOGS_ENABLED: bool = False
+    SENTRY_DSN: str = ''  # Optional, allowlisted error events only; no tracing/data.
 
 
 settings = Settings()

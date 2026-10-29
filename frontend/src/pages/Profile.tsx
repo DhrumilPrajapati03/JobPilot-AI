@@ -11,6 +11,7 @@ import { User, Briefcase, Code2, FolderKanban, Plus, Trash2, Save, Loader2 } fro
 import { PreferencesPanel } from '../components/profile/PreferencesPanel';
 import { AnswerBankPanel } from '../components/profile/AnswerBankPanel';
 import { FactsPanel } from '../components/profile/FactsPanel';
+import { OnboardingPanel } from '../components/profile/OnboardingPanel';
 
 export default function Profile() {
   // 1. Fetch data from backend using our custom React Query hooks
@@ -173,7 +174,8 @@ export default function Profile() {
         </div>
       </div>
 
-      <Tabs defaultValue={initialTab} className="w-full">
+      <OnboardingPanel hasResume={!!(resume?.headline || resume?.summary || resume?.experience?.length || resume?.skills?.primary?.length)} />
+      <Tabs key={initialTab} defaultValue={initialTab} className="w-full">
         <TabsList className="flex w-full max-w-2xl overflow-x-auto rounded-lg bg-secondary p-1">
           {[
             ['personal', 'Personal'],

@@ -19,6 +19,7 @@ export function FactsPanel() {
   const refresh = () => {
     setSelected([]);
     client.invalidateQueries({ queryKey: ['identity-facts'] });
+    client.invalidateQueries({ queryKey: ['onboarding'] });
     client.invalidateQueries({ queryKey: ['discovery'] });
   };
   const confirm = useMutation({

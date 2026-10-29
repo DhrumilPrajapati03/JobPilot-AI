@@ -15,6 +15,15 @@ from pydantic import BaseModel, Field
 router = APIRouter()
 
 
+@router.get('/onboarding')
+def onboarding_status(current_user: CurrentUser = Depends(get_current_user)):
+    from app.services.onboarding import status
+    try:
+        return status(get_supabase_client(user_jwt=current_user.token),current_user.id)
+    except Exception:
+        raise HTTPException(503,'Onboarding status is unavailable. Check development database provisioning.') from None
+
+
 class ConfirmFacts(BaseModel):
     source_digest: str = Field(pattern=r"^[0-9a-f]{64}$")
     fact_ids: list[str] = Field(min_length=1, max_length=500)
