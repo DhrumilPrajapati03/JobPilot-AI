@@ -1,4 +1,4 @@
-# JobDots — Final End-to-End Plan (v1.4, 24 Nov 2026)
+# JobDots — Final End-to-End Plan (v1.5, 25 Nov 2026)
 
 Owner: Dhrumil. Single-user personal job-hunting assistant. Python backend, React frontend, local-first hosting on his laptop (Render with credit later), Postgres + pgvector (local; Neon in Phase B), Groq + local Ollama models, backups to his Google Drive.
 Status of claims: items marked **[unverified]** come from memory or third-party sources and must be checked before relying on them.
@@ -11,6 +11,14 @@ Status of claims: items marked **[unverified]** come from memory or third-party 
 4. **Per-case concurrency replaces the old one-running-job-per-user lock**, which would have serialised all experts (section 4, Day 2).
 5. LangChain, Chroma, Supabase, Celery/Redis and LangSmith are removed; reuse and removals are listed in section 16 and in `jobdots_codebase_triage.md`.
 6. New **Day 0** (freeze, secret scan, export, legacy snapshot) before Day 1.
+
+### v1.5 changes (25 Nov: agentic UI)
+
+1. The UI is organised around a **roster of persistent experts**, not a chat history. The sidebar lists Supervisor and the experts with live avatars (section 6).
+2. **Animated expert avatars carry state** (idle, working, waiting for approval, needs hand-off, blocked, done, paused); hover shows the current step. No spinners for agent activity (section 6.2).
+3. The expert's browser has three levels: **status, preview, takeover**. Takeover is the `hand off` tier (section 6.2).
+4. Threads are **heterogeneous**: messages, grouped activity, system events, typed cards and approval cards on one timeline. Routines live in the expert's panel.
+5. Every frontend task uses two project skills: `frontend-design` (visual identity) and `jobdots-agentic-ui` (agent patterns), both in `.claude/skills/`.
 
 ---
 
@@ -35,7 +43,7 @@ JobDots does what Dhrumil does by hand: take a job description, tailor the resum
 | Integrations | Composio for everything | **Hybrid**: direct Gmail, Calendar, Hunter, search; Composio optional for long-tail with minimal payloads | Spike: Composio's Calendar tool needs broader scopes than the raw API; free-plan logs keep payloads up to a year. |
 | LinkedIn rules | Prompt knowledge of policy | Prompt policy file **and** `policy.yaml` limits enforced by Courier | Prompts help drafting; only code enforces. |
 | Autonomy | Auto-apply | Approve first; autonomy loosens per proven action kind | A wrong send cannot be unsent. |
-| UI | OpenClaw/OpenBots-style | Same layout and patterns, **reimplemented** | OpenBots repo has no LICENSE file → don't copy code. |
+| UI | OpenClaw/OpenBots-style | OpenBots layout plus **persistent-agent patterns** (expert roster, animated avatars as status, status/preview/takeover, typed cards), **reimplemented** | OpenBots repo has no LICENSE file → don't copy code. Patterns learned from the Grok Bot design write-up and bloub avatars; no copied code or assets. |
 | Timeline | 14 weeks | 10 days core + 4 days hardening/custom agents | Coding agents; he has build time. |
 | Background engine | Trigger.dev-style | Existing Postgres durable queue (leases, checkpoints, idempotency) | Already built; better than restart-from-scratch runs. |
 | Durability layer | LangGraph with a Postgres checkpointer | **The queue's per-stage checkpoints with lease fencing**; LangGraph only where branching helps | The audit showed the queue already survives crashes at stage level; two checkpoint systems would be redundant. |
@@ -278,15 +286,15 @@ Two copies, on purpose: an **immutable raw export** (as is) and an **imported co
 
 ---
 
-## 6. UI (OpenBots-style layout, reimplemented)
+## 6. UI (agentic, OpenBots-style layout, reimplemented)
 
-Reference only: layout and patterns from OpenBots (activity-stream grouping, sheets, memory sheet). **Do not copy its files** (no LICENSE).
+Reference only: layout and patterns from OpenBots (activity-stream grouping, sheets, memory sheet) and from the Grok Bot design write-up (roster, presence, the agent's own computer, typed widgets, routines). **Do not copy files or assets** (OpenBots has no LICENSE). Every frontend task loads the `frontend-design` and `jobdots-agentic-ui` skills (`.claude/skills/`); the second one holds the detailed rules summarised in 6.2.
 
-**Shell:** left sidebar → Command center, Cases, Approvals, Experts, Answer bank, Contacts, Routines, Connections, Settings. Top bar with kill switch and budget meter.
+**Shell:** left sidebar = **expert roster** (Supervisor first, then the experts, each with a live avatar and a one-line status), then Cases, Approvals (count), Answer bank, Contacts, Settings. Routines and Connections are reached from an expert's panel and from Settings rather than as top-level pages. Top bar with kill switch and budget meter. Three columns on desktop: roster, thread, right panel (expert's browser preview, routines, artifacts); the right panel collapses on smaller screens.
 
 **Screens**
-1. **Command center:** board of cases by stage (Found → Tailored → Researched → Ready to apply → Applied → Replied → Interview); today's approvals count.
-2. **Case view** (chat-pane equivalent): center = activity stream + composer with slash commands (`/apply <url>`, `/recon <company>`, `/draft`, `/research`); right sheets = Resume diff/PDF, People, Drafts, Timeline.
+1. **Command center:** board of cases by stage (Found → Tailored → Researched → Ready to apply → Applied → Replied → Interview); today's approvals count. The default home is the Supervisor thread with this board one click away.
+2. **Case view** (a group thread): the experts working on the case post into one timeline; composer with slash commands (`/apply <url>`, `/recon <company>`, `/draft`, `/research`); right sheets = Resume diff/PDF, People, Drafts, Timeline.
 3. **Activity stream:** classify tool calls into groups ("Researching · 4 sources", "Tailored resume", "Found 5 contacts", "Drafted email") with a Details toggle showing sanitized input/output. Implement as `classify_tool → group_builder → presentation`.
 4. **Approval inbox:** cards per action: resume diff + PDF, email draft, LinkedIn DM draft (one-click send in extension), form answers. Buttons: Approve, Edit, Reject. Reviewer notes shown on the card.
 5. **Experts page:** list of agents; configure sheet (model, tools, per-action mode, budgets); "New expert" flow (custom agents).
@@ -295,9 +303,39 @@ Reference only: layout and patterns from OpenBots (activity-stream grouping, she
 8. **Routines, Connections, Run history.**
 9. **Extension side panel:** capture JD, detected questions, answer review panel (badges: vault / reused / adapted / generated), "Fill form", and the LinkedIn paste/send helper.
 
-**Typed UI cards:** agents emit typed JSON (`resume_diff`, `email_draft`, `contact_list`, `question_card`); the frontend renders them. Agents never emit HTML.
+**Typed UI cards:** agents emit typed JSON (`resume_diff`, `email_draft`, `dm_draft`, `contact_list`, `question_card`, `company_brief`, `comp_report`, `interview_prep`, `chart`); the frontend renders them. Agents never emit HTML. The form of the answer is part of the answer: lists become tables, funnels become charts, drafts become editable cards.
 
 **Tech:** React 19 + Vite, Tailwind v4, own component library (shadcn-style primitives are fine), TanStack Query, SSE for live runs, OpenAPI-generated TypeScript client from FastAPI.
+
+**Visual direction:** decided at the start of the first UI day with the `frontend-design` two-pass process (palette, type, layout, principles, then a review against this brief). The constraint from the agent design: the experts' avatar colours carry most of the colour, so the chrome stays neutral; light and dark themes both supported.
+
+### 6.2 Agentic UI patterns
+
+**Roster, not history.** Experts are persistent: returning tomorrow means returning to the same expert with the same memory. Memory and routines belong to an expert; tools belong to the account. Supervisor (the Chief of Staff) coordinates experts, so there are no assignment boards or manual hand-off controls.
+
+**Avatars show state.** One `ExpertAvatar` component: soft shape + two expressive eyes, varied by shape and colour per expert, readable at 24 px. State comes from run and action data:
+
+| State | Expression | Motion |
+|---|---|---|
+| idle | neutral | slow breathing |
+| acknowledged | attentive | one hop |
+| working | focused | steady loop (the only continuous motion) |
+| waiting for approval | curious | gentle tilt + approval count badge |
+| needs hand-off | surprised | single pulse |
+| blocked (policy, budget) | confused | still |
+| failed | sad | still |
+| done | happy | one settle, then idle |
+| paused (kill switch) | sleepy | eyes closed |
+
+Hover shows the current step in plain words from the latest `run_step`. Reduced motion keeps expressions and drops movement. Built as our own inline SVG kit animated with CSS or the `motion` library. **bloub** (bloub.vercel.app, animated SVG blob avatars: shapes such as circle, pebble, squircle, capsule, hexagon, cloud, droplet; expressions such as neutral, attentive, curious, happy, sad, confused, sleepy) is the reference and may be used to design the base avatars only if its licence allows **[verify licence; not found on the site]**.
+
+**The expert's browser: status → preview → takeover.** Status: browser icon in the thread header turns active while Researcher, Recon or Applicant use a browser. Preview: a pinned right panel with the latest screenshot, URL and step list, while chatting continues. Takeover: only for the `hand off` tier (CAPTCHA, 2FA, legal attestations), via a hand-off card with "Open in my Chrome" and "Hand back". The UI does not encourage watching the expert work.
+
+**Heterogeneous threads.** One timeline holds messages, grouped activity lines with a Details toggle, quiet system events (routine ran, expert handed work to another expert), typed cards and approval cards. Routines post their results into the owning expert's thread; runs with nothing to report stay silent.
+
+**Approval cards.** Same component inline and in the Approvals inbox: kind, drafting expert, status chip (`Draft`, `Reviewed`, `Ready to send`, `Sending`, `Sent`, `Send unknown`, `Failed`), labelled fields, editable body, Reviewer notes, and verb-first buttons (**Approve and send**, **Edit**, **Reject**). Pending drafts of one kind stack as a deck. Editing an approved draft clears the approval.
+
+**Remove before adding.** Each control must help him delegate rather than give him something to manage. Internal words (run id, lease, model, token) stay in Details or Live Ops.
 
 ### 6.1 Dashboards (two views)
 
@@ -356,7 +394,7 @@ Conventions: Pydantic for every agent output; SQLAlchemy 2 + Alembic; routes use
 | Other tools | Hunter and a search API via `httpx`; Playwright (public pages only); Tectonic + Jinja2 (LaTeX); `pypdf` (page-count checks) |
 | Security | `cryptography` (Fernet) for stored tokens, structured logging with redaction (`structlog`) |
 | Auth | Google + GitHub login via Authlib (single-owner allowlist on provider IDs), server-side sessions, bearer token as break-glass, hashed extension token (section 4.1) |
-| Frontend | React 19 + Vite + TypeScript, Tailwind v4, own shadcn-style components, TanStack Query, `EventSource` for SSE, pdf.js, generated API client from FastAPI's OpenAPI schema |
+| Frontend | React 19 + Vite + TypeScript, Tailwind v4, own shadcn-style components, TanStack Query, `EventSource` for SSE, pdf.js, generated API client from FastAPI's OpenAPI schema; inline SVG avatar kit animated with CSS or `motion`; project skills `frontend-design` + `jobdots-agentic-ui` |
 | Extension | Chrome MV3, TypeScript, content scripts + service worker + side panel, built with Vite |
 | Infra | Docker Compose on Windows (WSL2), Ollama on the host; Render blueprint ready for Phase B |
 | Testing / evals | `pytest`, `promptfoo`, JSONL golden datasets (section 8.1) |
@@ -379,7 +417,7 @@ Assumption: coding agents write most code; Dhrumil reviews and tests. Adding the
 | **6 Recon + CRM** | Search-based LinkedIn URL lookup, Hunter, GitHub/X handles, `role_class`, dedupe, caps, cooldowns. |
 | **7 Extension + Answerer** | Capture JD; question detection; answer bank (pgvector); review panel with badges. |
 | **8 Applicant + LinkedIn queue** | Form fill on Greenhouse/Lever/Ashby; extension **send queue** (invite and DM, one click each). |
-| **9 Dashboards + UI** | Command center, case view, approval inbox, activity stream, Pipeline and Live Ops dashboards, answer bank sheet. |
+| **9 Dashboards + UI** | `frontend-design` plan reviewed against the brief first; expert roster with `ExpertAvatar` states and hover steps; command center, case group threads, approval cards and inbox, activity stream, expert browser preview/takeover, Pipeline and Live Ops dashboards, answer bank sheet. Earlier days build their screens with the same two skills, so Day 9 is polish and dashboards, not a redesign. |
 | **10 Inbox** | Gmail reply classification, **acceptance watcher**, interview-invite detection, Calendar executor (direct API), follow-up routines. |
 | **11 Outreach loop** | Connector + DM Outreach, the full state machine (invite → accept → DM/referral), caps enforcement, end-to-end dry run. |
 | **12 Comp Analyst** | Pay research artifact, salary-field handling (confirm-before-fill), integration with Answerer. |
