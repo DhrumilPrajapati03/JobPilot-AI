@@ -12,7 +12,6 @@ import {
   JobFeed,
   Network,
   ApplyQueue,
-  Landing,
   Login,
   NewApplication,
   Profile,
@@ -31,7 +30,7 @@ function App() {
       <Suspense fallback={<div className="min-h-screen bg-background" />}>
       <Routes>
         {/* Public Routes */}
-        <Route path="/" element={<Landing />} />
+        <Route path="/" element={<Navigate to={ROUTES.OVERVIEW} replace />} />
         <Route path={ROUTES.LOGIN} element={<Login />} />
 
         {/* Authenticated/App Routes */}

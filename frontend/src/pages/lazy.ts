@@ -14,4 +14,3 @@ export const Templates = lazy(() => import('./Templates'));
 export const Analytics = lazy(() => import('./Analytics'));
 export const Settings = lazy(() => import('./Settings'));
 export const Login = lazy(() => import('./Login'));
-export const Landing = lazy(() => import('./Landing'));

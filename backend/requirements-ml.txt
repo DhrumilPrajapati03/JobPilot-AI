@@ -1,5 +1,0 @@
-# Optional experiment environment only. Not needed for the production baseline.
--r requirements.lock
-# Transformers 5 support is needed alongside the baseline's Hugging Face Hub 1.x.
-sentence-transformers==5.2.1
-transformers==5.17.0

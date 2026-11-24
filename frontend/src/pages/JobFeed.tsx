@@ -24,8 +24,6 @@ import {
   X,
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
-import {RecommendationFeedback,useVisibleRecommendations} from '../components/jobs/RecommendationFeedback';
-import {RankingExperiment} from '../components/jobs/RankingExperiment';
 import { Input } from '../components/ui/input';
 import { ScoreRing } from '../components/applications/shared';
 import { PipelineCard } from '../components/agent/ToolCards';
@@ -362,7 +360,6 @@ function PostingRow({ posting, onOpenApplication, hidden=false }: { posting: Job
           )}
         </div>
       </div>
-      <RecommendationFeedback postingId={posting.id}/>
       {(draft.error || setStatus.error) && <p className="mt-2 text-xs text-destructive">{(draft.error ?? setStatus.error)?.message}</p>}
       {runId && (
         <div className="mt-3">
@@ -399,11 +396,11 @@ function ScanResult({ summary }: { summary: ScanSummary }) {
   );
 }
 
-function OpportunityDesk({postings,onOpenApplication,recordVisibility}:{postings:JobPosting[];onOpenApplication:(id:string)=>void;recordVisibility:boolean}) {
+function OpportunityDesk({postings,onOpenApplication}:{postings:JobPosting[];onOpenApplication:(id:string)=>void}) {
   const [selected,setSelected]=useState<string|null>(null);
   const active=postings.find(p=>p.id===selected)??postings[0];
   const detailOpen=selected!==null&&postings.some(p=>p.id===selected);
-  const root=useVisibleRecommendations(postings.slice(0,100).map(p=>p.id),recordVisibility);
+  const root=useRef<HTMLDivElement>(null);
   const back=useRef<HTMLButtonElement>(null);
   const lastSelected=useRef<string|null>(null);
   useEffect(()=>{
@@ -412,7 +409,7 @@ function OpportunityDesk({postings,onOpenApplication,recordVisibility}:{postings
     else (root.current?.querySelector<HTMLButtonElement>(`button[data-posting="${CSS.escape(lastSelected.current)}"]`)??root.current?.querySelector<HTMLButtonElement>('.opportunity-index button'))?.focus();
   },[detailOpen,selected]);
   return <div ref={root} className={cn('opportunity-desk',detailOpen&&'opportunity-detail-open')}>
-    <ul className="opportunity-index" aria-label="Opportunities">{postings.map(p=><li key={p.id}><button type="button" data-posting={p.id} data-recommendation-id={p.id} aria-label={`View ${p.title} at ${p.company}`} aria-pressed={active.id===p.id} onClick={()=>{lastSelected.current=p.id;setSelected(p.id)}}><div><span className="desk-company-initial" aria-hidden="true">{p.company.slice(0,1)}</span><span>{p.company}</span><span className="desk-fit">{Math.round(p.fit_score)}<small>fit</small></span></div><h2>{p.title}</h2><p>{p.location||'Review location'}{p.remote===true?' · Remote':''}</p><div className="opportunity-tags">{p.matched_skills.slice(0,3).map(s=><span key={s}>{s}</span>)}<ArrowRight size={14}/></div></button></li>)}</ul>
+    <ul className="opportunity-index" aria-label="Opportunities">{postings.map(p=><li key={p.id}><button type="button" data-posting={p.id} aria-label={`View ${p.title} at ${p.company}`} aria-pressed={active.id===p.id} onClick={()=>{lastSelected.current=p.id;setSelected(p.id)}}><div><span className="desk-company-initial" aria-hidden="true">{p.company.slice(0,1)}</span><span>{p.company}</span><span className="desk-fit">{Math.round(p.fit_score)}<small>fit</small></span></div><h2>{p.title}</h2><p>{p.location||'Review location'}{p.remote===true?' · Remote':''}</p><div className="opportunity-tags">{p.matched_skills.slice(0,3).map(s=><span key={s}>{s}</span>)}<ArrowRight size={14}/></div></button></li>)}</ul>
     <section className="opportunity-detail" aria-label="Selected opportunity"><button ref={back} className="opportunity-back" type="button" onClick={()=>setSelected(null)}>← All opportunities</button><p className="desk-eyebrow">REVIEW THE MATCH. CHOOSE YOUR NEXT STEP.</p><ul>{postings.map(p=><PostingRow key={p.id} posting={p} hidden={p.id!==active.id} onOpenApplication={onOpenApplication}/>)}</ul><div className="opportunity-guidance"><ShieldCheck size={17}/><p>Preparation uses your saved experience. Review the requirements and generated materials before applying. You submit on the employer’s website.</p></div></section>
   </div>;
 }
@@ -427,7 +424,6 @@ export default function JobFeed({ embedded = false }: { embedded?: boolean }) {
   const [query, setQuery] = useState('');
   const [onlyStrong, setOnlyStrong] = useState(true);
   const [remoteOnly, setRemoteOnly] = useState(false);
-  const [recordVisibility,setRecordVisibility]=useState(false);
   const sources = useJobSources();
   const postings = useJobPostings(tab);
   const { data: briefing } = useBriefing();
@@ -551,8 +547,6 @@ export default function JobFeed({ embedded = false }: { embedded?: boolean }) {
             </label>
           </div>
 
-          {!embedded&&<div className="space-y-3"><label className="flex items-start gap-2 text-xs text-muted-foreground"><input type="checkbox" checked={recordVisibility} onChange={e=>setRecordVisibility(e.target.checked)} className="mt-0.5 h-4 w-4"/><span>Help evaluate recommendations by recording which results I see. Visible positions stay private; scores do not change automatically.</span></label><RankingExperiment postings={visible}/></div>}
-
           {postings.isLoading ? (
             <div className="flex h-32 items-center justify-center text-muted-foreground">
               <Loader2 className="animate-spin" size={18} />
@@ -572,7 +566,7 @@ export default function JobFeed({ embedded = false }: { embedded?: boolean }) {
                     : 'Nothing dismissed.'}
             </div>
           ) : (
-            embedded?<ul className="space-y-2.5">{visible.map(p=><PostingRow key={p.id} posting={p} onOpenApplication={openApplication}/>)}</ul>:<OpportunityDesk postings={visible} onOpenApplication={openApplication} recordVisibility={recordVisibility}/>
+            embedded?<ul className="space-y-2.5">{visible.map(p=><PostingRow key={p.id} posting={p} onOpenApplication={openApplication}/>)}</ul>:<OpportunityDesk postings={visible} onOpenApplication={openApplication}/>
           )}
         </>
       )}

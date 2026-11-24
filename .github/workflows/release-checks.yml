@@ -1,8 +1,8 @@
-name: Release checks
+name: JobDots checks
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, jobdots]
 permissions:
   contents: read
 concurrency:
@@ -46,14 +46,14 @@ jobs:
           npm test
           npm run build
           npm audit --audit-level=moderate
-          npx playwright install --with-deps chromium
-      - name: Browser workflows
-        working-directory: frontend
-        run: npm run test:e2e
+      # Frontend browser (E2E) tests are paused: the old suite targeted the JobPilot
+      # landing page and Supabase magic-link login, and the UI is being rebuilt
+      # (plan section 6). They return with the new screens.
       - name: Extension checks
         working-directory: extension
         run: |
           npm ci
+          npx playwright install --with-deps chromium
           npm test
           npm run test:browser
           npm audit --audit-level=moderate

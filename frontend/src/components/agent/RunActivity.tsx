@@ -5,7 +5,7 @@ import api from '../../lib/api';
 import {Button} from '../ui/button';
 
 interface Run {id:string;kind:string;status:string;stage:string;updated_at:string;application_id?:string;mail_outcome?:string}
-const LABEL:Record<string,string>={application:'Application preparation',scan:'Job discovery',digest:'Morning digest',mail_send:'Approved email',mail_sync:'Mailbox sync',company_research:'Company research',recommendation:'Ranking experiment'};
+const LABEL:Record<string,string>={application:'Application preparation',scan:'Job discovery',digest:'Morning digest',mail_send:'Approved email',mail_sync:'Mailbox sync',company_research:'Company research'};
 export function RunActivity(){
   const client=useQueryClient();
   const query=useQuery({queryKey:['run-activity'],queryFn:()=>api.get<{mode:string;runs:Run[]}>('/runs'),retry:false,refetchInterval:10000});

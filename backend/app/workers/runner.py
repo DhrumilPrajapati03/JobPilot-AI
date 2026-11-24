@@ -83,9 +83,6 @@ class Worker:
         db, uid = self.store.client, ctx.run["user_id"]
         email = autopilot.account_email(db, uid)
         kind = ctx.run["kind"]
-        if kind == 'recommendation':
-            from app.recommendation.ranking import execute
-            return await execute(ctx)
         if kind == 'company_research':
             from app.services.company_research import execute
             return await execute(ctx)

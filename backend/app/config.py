@@ -83,7 +83,6 @@ class Settings(BaseSettings):
     RUN_LEASE_SECONDS: int = Field(default=120, ge=30, le=1800)
     RUN_POLL_SECONDS: float = Field(default=2.0, ge=0.1, le=60)
     MATCHING_SEMANTIC: bool = True  # Cached local MiniLM only; never downloads during a scan.
-    RERANKER_PATH: str = ''  # Optional preinstalled CrossEncoder; never downloads at request time.
     MINILM_CACHE_PATH: str = ''
     CHROMA_PATH: str = 'data/chroma'
     USAGE_LIMITS_ENABLED: bool = False

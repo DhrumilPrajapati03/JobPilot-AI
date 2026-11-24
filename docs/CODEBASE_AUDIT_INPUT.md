@@ -1,7 +1,7 @@
 # JobPilot → JobDots: Codebase Audit (input for re-architecture)
 
 Audit date: 24 Nov 2026. Repo HEAD: `eb8c6d0` (Sprint 6) on `main`, plus an uncommitted release candidate.
-Target plan: [jobdots_final_plan.md](../jobdots_final_plan.md) (v1.3).
+Target plan: [jobdots_final_plan.md](jobdots_final_plan.md) (v1.3).
 Method: read-only. No code changes. No `.env` files were opened; no secret values appear here.
 Tests were run locally with `.env` loading disabled (`tests/run_offline.py`) and Chroma pointed at a temp dir.
 

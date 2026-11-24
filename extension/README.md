@@ -35,15 +35,15 @@ You can revoke tokens in Settings at any time.
 Sprint 5 freezes the application's tailored PDF per preparation session, checks
 actual field values and file hashes, preserves existing answers, and flags
 unresolved controls. Selected files and completed forms do not prove employer
-acceptance. See [setup and verification](../SPRINT_5_STATUS.md) and the
-[compatibility matrix](tests/browser/COMPATIBILITY.md). Apply the development
+acceptance. See the [compatibility matrix](tests/browser/COMPATIBILITY.md). Apply the development
 migrations and reload the extension before using the new session workflow.
 
 ## Development checks
 
 From this folder: `npm ci`, `npm test`, and `npm run test:browser`. Install the
-pinned Playwright Chromium browser into the ignored project cache first; the
-PowerShell commands are in [SPRINT_5_STATUS.md](../SPRINT_5_STATUS.md).
+pinned Playwright Chromium browser into the ignored project cache first:
+`npx playwright install chromium` (the config sets `PLAYWRIGHT_BROWSERS_PATH`
+to `../.tool-cache/playwright`).
 
 ## Hosting
 

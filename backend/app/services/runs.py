@@ -19,7 +19,6 @@ INPUT_FIELDS = {
     "mail_send": {"message_id"},
     "mail_sync": {"connection_id", "cycle", "after_id"},
     "company_research": {"application_id", "urls"},
-    "recommendation": {"posting_ids"},
 }
 current_execution: ContextVar = ContextVar("current_execution", default=None)
 

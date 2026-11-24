@@ -7,7 +7,7 @@ description: JobDots interface rules for a persistent-agent product - expert ros
 
 JobDots is not a chat app with a history list. It is a small team of persistent experts that work on Dhrumil's job cases, sometimes without being asked, and need his approval before anything leaves the system. The interface should make delegating easy and supervising cheap.
 
-**Always load `frontend-design` too.** That skill decides the visual identity (palette, type, layout, critique pass). This skill decides the product objects and the agent-specific patterns. Where they disagree, the plan (`jobdots_final_plan.md`, section 6) wins, then this skill.
+**Always load `frontend-design` too.** That skill decides the visual identity (palette, type, layout, critique pass). This skill decides the product objects and the agent-specific patterns. Where they disagree, the plan (`docs/jobdots_final_plan.md`, section 6) wins, then this skill.
 
 Sources of these patterns: xAI's write-up on designing Grok Bot, the OpenBots layout, and bloub (animated blob avatars). Learn the patterns; **do not copy their code, assets, names or exact look.** OpenBots has no licence; bloub's licence is unverified.
 
