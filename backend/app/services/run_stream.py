@@ -7,6 +7,7 @@ from fastapi import WebSocket, WebSocketDisconnect
 
 from app.services.runs import RunStore, TERMINAL
 from app.services.supabase import get_supabase_client
+from app.config import settings
 
 
 async def stream_run(websocket: WebSocket, run_id: str, user_id: str, token: str):
@@ -20,7 +21,17 @@ async def stream_run(websocket: WebSocket, run_id: str, user_id: str, token: str
         # An explicit retry starts a new replay segment. Otherwise an older
         # terminal failure would close the browser before it saw the retry.
         cursor = await asyncio.to_thread(store.replay_cursor, run_id, user_id)
+        checked=0.0
         while True:
+            if settings.APP_ENV=='production' and time.monotonic()-checked>=5:
+                from app.services.auth import _verify_token
+                from fastapi import HTTPException
+                try:
+                    if (await _verify_token(token)).get('sub')!=user_id:raise HTTPException(401)
+                except HTTPException as exc:
+                    await websocket.close(code=4401 if exc.status_code==401 else 1013,reason='Session validation required')
+                    return
+                checked=time.monotonic()
             rows = await asyncio.to_thread(store.events, run_id, user_id, cursor)
             if rows is None:
                 await websocket.close(code=4403)

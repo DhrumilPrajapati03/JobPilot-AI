@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
+import {useAuthStore} from '../stores/auth-store';
 
 export type AnswerCategory = 'contact' | 'work_auth' | 'experience' | 'compensation' | 'availability' | 'eeo' | 'custom';
 
@@ -20,9 +21,10 @@ export function useAnswers() {
 }
 
 export function useSaveAnswers() {
+  const owner=useAuthStore(s=>s.user?.id);
   const queryClient = useQueryClient();
   return useMutation<SavedAnswer[], Error, SavedAnswer[]>({
-    mutationFn: async (answers) => (await api.put<{ answers: SavedAnswer[] }>('/answers/', { answers })).answers,
+    mutationFn: async (answers) => (await api.put<{ answers: SavedAnswer[] }>('/answers/', { answers },{expectedUserId:owner})).answers,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['answers'] }),
   });
 }

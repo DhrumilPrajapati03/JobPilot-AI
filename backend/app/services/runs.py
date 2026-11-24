@@ -18,6 +18,8 @@ INPUT_FIELDS = {
     "digest": {"scheduled_on"},
     "mail_send": {"message_id"},
     "mail_sync": {"connection_id", "cycle", "after_id"},
+    "company_research": {"application_id", "urls"},
+    "recommendation": {"posting_ids"},
 }
 current_execution: ContextVar = ContextVar("current_execution", default=None)
 
@@ -47,6 +49,9 @@ class RunStore:
         key = str(uuid.uuid4()) if key is None else key
         if not key or len(key) > 200:
             raise ValueError("Idempotency key must contain 1 to 200 characters")
+        if kind in {'application','scan'}:
+            from app.services.usage import reserve
+            reserve(user_id, kind, settings.APPLICATION_DAILY_LIMIT if kind=='application' else 48, key)
         parent = current_execution.get()
         params = dict(p_user_id=user_id, p_kind=kind, p_inputs=inputs, p_key=key)
         if available_at:
@@ -75,6 +80,9 @@ class RunStore:
         rows = self.client.table("agent_runs").select("*").eq("id", run_id).eq("user_id", user_id).execute().data
         return rows[0] if rows else None
 
+    def recent(self, user_id: str):
+        return self.client.table('agent_runs').select('id,kind,status,stage,attempts,max_attempts,created_at,updated_at,result').eq('user_id',user_id).order('created_at',desc=True).limit(30).execute().data
+
     def events(self, run_id: str, user_id: str, after: int = 0, limit: int = 200):
         # Ownership checked here as well as at the HTTP/WebSocket entry point.
         if not self.get(run_id, user_id):
@@ -93,6 +101,8 @@ def enqueue_for_user(user_id, kind, inputs, key=None):
         return RunStore().enqueue(user_id, kind, inputs, key)
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
+    except HTTPException:
+        raise
     except Exception as exc:
         if "idempotency_key_conflict" in str(exc):
             raise HTTPException(409, "This request key was already used for different input.") from exc

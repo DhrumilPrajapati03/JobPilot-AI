@@ -2,6 +2,14 @@ import api from './api';
 import { useAuthStore } from '../stores/auth-store';
 
 export interface QueuedRun { status: 'queued' | 'running' | 'retry_wait' | 'succeeded' | 'failed'; run_id: string }
+export class FailedRunError extends Error {
+  runId: string;
+  constructor(message: string, runId: string) { super(message); this.runId = runId; }
+}
+export async function retryFailedRun<T>(runId: string): Promise<T> {
+  await api.post(`/runs/${runId}/retry`, {});
+  return resolveRun<T>({run_id: runId, status: 'queued'});
+}
 
 /** Keep mutation feedback pending until a durable worker commits success. */
 export async function resolveRun<T>(response: T | QueuedRun): Promise<T> {
@@ -15,7 +23,7 @@ export async function resolveRun<T>(response: T | QueuedRun): Promise<T> {
     const run = await api.get<{ status: string; result: T; last_error: string | null }>(`/runs/${response.run_id}`);
     if (useAuthStore.getState().user?.id !== account) throw new Error('Account changed while waiting for background work.');
     if (run.status === 'succeeded') return run.result;
-    if (run.status === 'failed') throw new Error(run.last_error || 'Background work failed.');
+    if (run.status === 'failed') throw new FailedRunError(run.last_error || 'Background work failed.', response.run_id);
     await new Promise((resolve) => window.setTimeout(resolve, 2000));
   }
   throw new Error('Background work is still pending. Check the feed or tracker shortly.');

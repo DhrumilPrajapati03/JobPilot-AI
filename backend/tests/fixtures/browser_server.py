@@ -22,7 +22,7 @@ import uuid
 from datetime import datetime,timezone,timedelta
 from types import SimpleNamespace
 from fastapi import Header,HTTPException,Response
-from jose import jwt
+import jwt
 from pypdf import PdfWriter
 from app.main import app
 from app.config import settings
@@ -48,7 +48,7 @@ for middleware in app.user_middleware:
     if middleware.cls.__name__=='CORSMiddleware':middleware.kwargs['allow_origins']=['http://127.0.0.1:5174']
 
 async def verify(token):
-    try:claims=jwt.get_unverified_claims(token)
+    try:claims=jwt.decode(token, options={"verify_signature": False})
     except Exception:raise HTTPException(401,'Invalid fixture session') from None
     if claims.get('sub') not in {ALICE,BOB}:raise HTTPException(401,'Invalid fixture session')
     return claims

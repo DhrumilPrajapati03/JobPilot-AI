@@ -24,6 +24,8 @@ def check_readiness():
             if time.monotonic() >= _cache['until'] or _cache['key'] != key:
                 try:
                     _cache['health'] = get_supabase_admin_client().rpc('get_execution_health',{}).execute().data
+                    if settings.APP_ENV=='production' and get_supabase_admin_client().rpc('release_schema_ready',{}).execute().data is not True:
+                        _cache['health']=None
                 except Exception:
                     _cache['health'] = None
                 _cache.update(key=key,until=time.monotonic()+5)

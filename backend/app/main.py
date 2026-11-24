@@ -24,10 +24,12 @@ from app.api.v1.operations import router as operations_router
 async def lifespan(app: FastAPI):
     """Application lifespan handler for startup/shutdown events."""
     # Startup
+    from app.services.production import validate_production
+    validate_production()
     setup_monitoring()
     print("JobPilot AI API starting up...")
     scheduler = None
-    if settings.DISCOVERY_AUTO_SCAN and autopilot.server_ready():
+    if settings.EXECUTION_MODE == 'inline' and settings.DISCOVERY_AUTO_SCAN and autopilot.server_ready():
         scheduler = asyncio.create_task(autopilot.scheduler_loop())
         print("Autopilot: nightly scans and morning digests are on")
     yield
@@ -47,8 +49,8 @@ app = FastAPI(
         "and application tracking."
     ),
     version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc",
+    docs_url="/docs" if settings.APP_ENV!='production' else None,
+    redoc_url="/redoc" if settings.APP_ENV!='production' else None,
     lifespan=lifespan,
 )
 

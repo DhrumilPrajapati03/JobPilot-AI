@@ -12,7 +12,7 @@ from pydantic_settings.sources import DotEnvSettingsSource
 
 if __name__ == "__main__":
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-    with patch.dict(os.environ, {"DEBUG": "false", "EXECUTION_MODE": "inline"}), patch.object(
+    with patch.dict(os.environ, {"APP_ENV": "test", "DEBUG": "false", "EXECUTION_MODE": "inline"}), patch.object(
         DotEnvSettingsSource, "__call__", return_value={}
     ):
         raise SystemExit(pytest.main(sys.argv[1:] or ["tests", "-q"]))

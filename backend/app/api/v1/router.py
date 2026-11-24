@@ -2,6 +2,9 @@
 
 from fastapi import APIRouter
 from app.api.v1 import runs
+from app.api.v1 import recommendations
+from app.api.v1 import research
+from app.api.v1 import templates
 
 from app.api.v1 import (
     agent,
@@ -20,6 +23,9 @@ from app.api.v1 import (
 )
 
 api_v1_router = APIRouter()
+api_v1_router.include_router(templates.router, prefix='/templates', tags=['Writing templates'])
+api_v1_router.include_router(research.router, prefix='/research', tags=['Cited company research'])
+api_v1_router.include_router(recommendations.router, prefix='/recommendations', tags=['Recommendation evidence'])
 api_v1_router.include_router(runs.router, prefix="/runs", tags=["Background runs"])
 
 api_v1_router.include_router(

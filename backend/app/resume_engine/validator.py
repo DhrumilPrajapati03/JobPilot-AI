@@ -13,7 +13,7 @@ def validate_page_count(pdf_bytes: bytes) -> int:
         reader = PdfReader(io.BytesIO(pdf_bytes))
         return len(reader.pages)
     except Exception as e:
-        print(f"Warning: Failed to parse PDF page count: {str(e)}")
+        print(f"Warning: Failed to parse PDF page count: {type(e).__name__}")
         return 1
 
 

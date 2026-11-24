@@ -8,6 +8,7 @@ import {
   ApplicationDetail,
   Applications,
   Chat,
+  Overview,
   JobFeed,
   Network,
   ApplyQueue,
@@ -35,6 +36,7 @@ function App() {
 
         {/* Authenticated/App Routes */}
         <Route element={<AppShell />}>
+          <Route path={ROUTES.OVERVIEW} element={<Overview />} />
           <Route path={ROUTES.CHAT} element={<Chat />} />
           <Route path={ROUTES.JOBS} element={<JobFeed />} />
           <Route path={ROUTES.NETWORK} element={<Network />} />

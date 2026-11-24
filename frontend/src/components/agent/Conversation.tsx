@@ -172,7 +172,7 @@ export function Composer({
           Looks like a job description — create an application from it?
         </button>
       )}
-      <div className="rounded-2xl border bg-card p-2 shadow-sm transition-shadow focus-within:border-foreground/30 focus-within:shadow-md">
+      <div className="agent-composer rounded-2xl border bg-card p-2 shadow-sm transition-shadow focus-within:border-foreground/30 focus-within:shadow-md">
         <label htmlFor="chat-input" className="sr-only">
           Message JobPilot
         </label>

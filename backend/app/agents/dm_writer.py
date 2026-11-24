@@ -5,6 +5,7 @@ and follow-up DM pairs for HR outreach.
 """
 
 from app.services.llm import get_default_llm
+from app.services.writing_evidence import messages
 
 
 class DMWriterAgent:
@@ -17,7 +18,7 @@ class DMWriterAgent:
 
     async def generate(self, jd_analysis: dict, hr_contact: dict, user_profile: dict) -> dict:
         """Generate a LinkedIn DM pair (connection request + follow-up)."""
-        llm = self._get_llm()
+        self.used_fallback = False
 
         company = jd_analysis.get("company", "the company")
         role = jd_analysis.get("role", "the role")
@@ -40,11 +41,12 @@ class DMWriterAgent:
         )
 
         try:
-            res = await llm.ainvoke(prompt)
+            llm = self._get_llm()
+            res = await llm.ainvoke(messages(prompt, user_profile, company_research if 'company_research' in locals() else None, kind='dm'))
             sections = res.content.split("---")
             
             conn_req = "Hi " + (first_name or "there") + ", I'd love to connect. I see you recruit for " + role + " roles at " + company + ". Let's connect!"
-            follow_up = "Hi " + (first_name or "there") + ",\n\nThanks for connecting. I'm reaching out because I recently applied for the " + role + " role at " + company + " and wanted to..."
+            follow_up = "Hi " + (first_name or "there") + ",\n\nThanks for connecting. I'm reaching out because I am interested in the " + role + " role at " + company + " and wanted to..."
             
             if len(sections) >= 2:
                 conn_req = sections[0].strip()
@@ -60,9 +62,9 @@ class DMWriterAgent:
             }
             
         except Exception as e:
-            print(f"Error generating DMs: {str(e)}")
+            print(f"DM fallback ({type(e).__name__})")
             self.used_fallback = True
             return {
                 "connection_request": f"Hi {first_name or 'there'}, I'd love to connect. I see you recruit for {role} roles at {company}.",
-                "follow_up": f"Hi {first_name or 'there'},\n\nThanks for connecting. I applied to the {role} position and would love to introduce myself..."
+                "follow_up": f"Hi {first_name or 'there'},\n\nThanks for connecting. I am interested in the {role} position and would like to introduce myself."
             }

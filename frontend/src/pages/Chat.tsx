@@ -5,7 +5,7 @@
 // ============================================================
 
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
-import { BellRing, FilePlus2, Gauge, ListChecks, PanelRight, Radar, TrendingUp } from 'lucide-react';
+import { BellRing, FilePlus2, Gauge, ListChecks, PanelRight, Radar, TrendingUp, Sparkles } from 'lucide-react';
 import { MessageList, Composer, CREATE_PREFIX } from '../components/agent/Conversation';
 import { Workspace } from '../components/agent/Workspace';
 import { VIEW_LABEL } from '../components/agent/ToolCards';
@@ -157,8 +157,8 @@ export default function Chat() {
         className={cn('flex min-h-0 min-w-0 flex-1 flex-col', stage && expanded && 'xl:hidden', stage && mobileTab === 'workspace' && 'max-xl:hidden')}
         aria-label="Chat"
       >
-        <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
-          <p className="min-w-0 flex-1 truncate text-sm font-medium">{empty ? 'New chat' : thread.title}</p>
+        <header className="agent-chat-header flex h-12 shrink-0 items-center gap-2 border-b px-4">
+          <Sparkles size={15}/><p className="min-w-0 flex-1 truncate text-sm font-medium">{empty ? 'Your job search copilot' : thread.title}</p>
           {!stage && lastView && lastView.kind === 'tool' && (
             <button
               type="button"
@@ -178,10 +178,11 @@ export default function Chat() {
         </header>
 
         {empty ? (
-          <div className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto px-4 py-10">
+          <div className="agent-chat-home flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto px-4 py-10">
             <div className="w-full max-w-2xl">
-              <h1 className="text-center text-3xl font-semibold tracking-tight">
-                {firstName ? `What can I help with, ${firstName}?` : 'What can I help with?'}
+              <div className="agent-home-mark" aria-hidden="true"><Sparkles size={27}/></div><p className="desk-eyebrow text-center">YOUR EXPERIENCE. A COORDINATED EFFORT.</p>
+              <h1 className="agent-home-heading text-center text-3xl font-semibold tracking-tight">
+                {firstName ? `What’s our next move, ${firstName}?` : 'What’s our next move?'}
               </h1>
               {starter.status.length > 0 && <p className="mt-2 text-center text-sm text-muted-foreground">{starter.status.join(' · ')}</p>}
               <Composer

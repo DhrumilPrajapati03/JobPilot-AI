@@ -4,6 +4,7 @@
 
 import { keepPreviousData, useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
+import {useAuthStore} from '../stores/auth-store';
 
 export type ReferralStatus = 'drafted' | 'sent' | 'referred' | 'declined' | 'no_reply';
 
@@ -94,17 +95,19 @@ export function useReferrals(applicationId: string) {
 }
 
 export function useImportConnections() {
+  const owner=useAuthStore(s=>s.user?.id);
   const queryClient = useQueryClient();
   return useMutation<ImportResult, Error, File>({
-    mutationFn: (file) => api.upload('/network/import', file),
+    mutationFn: (file) => api.upload('/network/import', file,'file',owner),
     onSuccess: () => refresh(queryClient),
   });
 }
 
 export function useAddContact() {
+  const owner=useAuthStore(s=>s.user?.id);
   const queryClient = useQueryClient();
   return useMutation<Contact, Error, Pick<Contact, 'full_name' | 'company' | 'position' | 'linkedin_url' | 'email'>>({
-    mutationFn: (body) => api.post('/network/contacts', body),
+    mutationFn: (body) => api.post('/network/contacts', body,{expectedUserId:owner}),
     onSuccess: () => refresh(queryClient),
   });
 }

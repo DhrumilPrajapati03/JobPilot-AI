@@ -319,7 +319,7 @@ async def _ai_drafts(questions: list[FormField], ctx: ApplicantContext) -> dict[
         text = res.content if isinstance(res.content, str) else str(res.content)
         data = json.loads(re.search(r"\{.*\}", text, re.S).group())
     except Exception as e:
-        print(f"AI drafts for form questions failed: {e}")
+        print(f"AI drafts for form questions failed: {type(e).__name__}")
         return {}
     return {questions[int(k) - 1].key: str(v).strip() for k, v in data.items() if str(k).isdigit() and 0 < int(k) <= len(questions) and str(v).strip()}
 

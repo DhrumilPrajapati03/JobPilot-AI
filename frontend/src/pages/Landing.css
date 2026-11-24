@@ -3,7 +3,7 @@
   --lp-bg: #0f0f0f;
   --lp-surface: #181818;
   --lp-blue: #51a2ff;
-  --lp-lime: #d4ff4a;
+  --lp-lime: #c9ee9d;
   --lp-line: rgba(255, 255, 255, .12);
   --lp-text: #f6f6f6;
   --lp-muted: #a2a2a2;
@@ -552,3 +552,34 @@
   .jobpilot-landing *, .jobpilot-landing *::before, .jobpilot-landing *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
   .jobpilot-landing .lp-feature:hover, .jobpilot-landing .lp-button:hover { transform: none; }
 }
+
+/* Agentic Career Desk: the public product story and the working UI share a language. */
+.jobpilot-landing .lp-agent-hero{background:radial-gradient(ellipse at 85% 40%,#22372a55,transparent 48%),#101713;border-bottom:1px solid #2c3b30}
+.jobpilot-landing .lp-agent-hero .lp-hero-content{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:64px;align-items:center;padding-top:76px;padding-bottom:65px;border:0}
+.jobpilot-landing .lp-agent-hero .lp-hero-badge{margin:0 0 28px;padding:0;border:0;font-size:10px;letter-spacing:.1em;color:#bbc8bc}
+.jobpilot-landing .lp-agent-hero h1{text-align:left;font-size:clamp(48px,5.1vw,72px);letter-spacing:-.065em;line-height:1.04;margin:0;font-weight:500}
+.jobpilot-landing .lp-agent-emphasis{color:var(--lp-lime)}
+.jobpilot-landing .lp-agent-hero .lp-hero-copy{text-align:left;max-width:460px;padding:0;margin:26px 0 29px;color:#adbcb0;font-size:15px;line-height:1.9}
+.jobpilot-landing .lp-agent-hero .lp-cta-row{justify-content:flex-start;gap:10px}
+.jobpilot-landing .lp-agent-hero .lp-button{font-size:10px;min-height:47px;padding:12px 18px;gap:15px;border-radius:6px}
+.jobpilot-landing .lp-agent-hero .lp-button-outline{border-color:#405042;background:#17221a;color:#d5dfd4}
+.jobpilot-landing .lp-agent-hero .lp-hero-note{justify-content:flex-start;margin:20px 0 0;gap:20px;color:#a9b9ac;font-size:11px}
+.jobpilot-landing .lp-agent-hero .lp-hero-note svg{color:#c9ee9d}
+.jobpilot-landing .lp-diagram-caption{display:flex;justify-content:space-between;gap:15px;margin:0 0 13px;font:9px/1.6 var(--lp-mono);letter-spacing:.06em;color:#91a495}
+.jobpilot-landing .workflow-map{--card:#1b261e;--foreground:#ebf2e9;--muted-foreground:#aabdac;--border:#394c3c;--accent:#8ebcfa;--ring:#8ebcfa;--agent-ink:#c5b6f4;--agent-surface:#332f43;--complete-ink:#c9ee9d;--complete-surface:#2b3c23;--review-ink:#e6c88f;--review-surface:#3b3324;--desk-shadow:0 15px 60px #0002;border-color:#3b503d;border-radius:11px}
+.jobpilot-landing .workflow-map .wm-top{font-size:8px;letter-spacing:.05em;padding:14px 18px}
+.jobpilot-landing .workflow-map .wm-canvas{padding:23px}
+.jobpilot-landing .workflow-map .wm-detail :is(h2,h3){font-size:19px;font-weight:500;line-height:1.4;letter-spacing:-.035em;margin:14px 0 9px}
+.jobpilot-landing .workflow-map .wm-detail p{font-size:12px;line-height:1.9;margin:0;color:#aabdac}
+.jobpilot-landing .workflow-map .wm-stages button{font-family:Inter,ui-sans-serif,system-ui,sans-serif}
+.jobpilot-landing .workflow-map .wm-stages button:hover{border-color:#9bb993}
+.jobpilot-landing .lp-diagram-footnote{font:9px/1.8 var(--lp-mono);color:#93a696;margin-top:12px;text-align:center}
+.jobpilot-landing .lp-agent-principles{display:grid;grid-template-columns:repeat(3,1fr) auto;align-items:center;border-top:1px solid #324234;gap:20px;padding-block:23px;color:#bbc9bb;font-size:12px}
+.jobpilot-landing .lp-agent-principles b{font:9px var(--lp-mono);color:#8fa687;font-weight:400;padding-right:9px}
+.jobpilot-landing .lp-agent-principles>span:last-child{font:8px var(--lp-mono);letter-spacing:.06em;color:#8fa687}
+.jobpilot-landing .lp-nav{background:#101713f2}.jobpilot-landing .lp-light{background:#f6f6f2}
+.jobpilot-landing .lp-feature>p{font-size:13px;line-height:1.9}.jobpilot-landing .lp-faq-answer p{font-size:14px;line-height:1.9}
+.jobpilot-landing .lp-source-disclaimer{font-size:11px}.jobpilot-landing .lp-eyebrow{font-size:10px}.jobpilot-landing .lp-desktop-links a,.jobpilot-landing .lp-login{font-size:11px}
+.jobpilot-landing .lp-final-cta{background:#101713}.jobpilot-landing .lp-final-cta h2{letter-spacing:-.055em}
+@media(max-width:1100px){.jobpilot-landing .lp-agent-hero .lp-hero-content{gap:35px}.jobpilot-landing .lp-agent-hero h1{font-size:57px}.jobpilot-landing .lp-agent-hero .lp-hero-copy{font-size:14px}.jobpilot-landing .workflow-map .wm-canvas{padding:17px}.jobpilot-landing .lp-agent-hero .lp-cta-row{flex-direction:column;align-items:flex-start}.jobpilot-landing .lp-agent-hero .lp-hero-note{flex-wrap:wrap;gap:8px 15px}.jobpilot-landing .lp-agent-principles{grid-template-columns:repeat(3,1fr)}.jobpilot-landing .lp-agent-principles>span:last-child{display:none}}
+@media(max-width:800px){.jobpilot-landing .lp-agent-hero .lp-hero-content{grid-template-columns:1fr;padding-top:48px;padding-bottom:38px;gap:40px}.jobpilot-landing .lp-agent-hero h1{font-size:clamp(48px,9vw,69px)}.jobpilot-landing .lp-agent-hero .lp-hero-copy{max-width:550px;font-size:14px}.jobpilot-landing .lp-agent-hero .lp-cta-row{flex-direction:row;align-items:center}.jobpilot-landing .lp-agent-hero .lp-hero-badge{margin-bottom:24px;font-size:9px}.jobpilot-landing .lp-agent-principles{gap:12px;font-size:10px;padding-block:20px}.jobpilot-landing .lp-agent-principles b{display:block;padding:0 0 5px}.jobpilot-landing .lp-diagram-caption{font-size:8px}.jobpilot-landing .workflow-map .wm-canvas{padding:18px}.jobpilot-landing .lp-agent-hero .lp-button{padding:12px 14px;font-size:9px;gap:12px}.jobpilot-landing .lp-diagram-footnote{font-size:8px}.jobpilot-landing .workflow-map .wm-top{font-size:7px}.jobpilot-landing .workflow-map .wm-detail :is(h2,h3){font-size:19px}}

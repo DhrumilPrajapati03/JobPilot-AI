@@ -3,7 +3,8 @@ import { Link, Navigate } from 'react-router-dom';
 import { ArrowDown, ArrowRight, ArrowUpRight, Check, ChevronDown, Command, FileText, Fingerprint, Globe2, Layers3, Loader2, Mail, Menu, Radar, ShieldCheck, Sparkles, X } from 'lucide-react';
 import { useAuth } from '../hooks/use-auth';
 import { ROUTES } from '../lib/constants';
-import { ApprovalDemo, AssistantDemo, HeroDemo, ResumeDemo, TrackerDemo, WorkflowDemo } from '../components/landing/LandingDemos';
+import { ApprovalDemo, AssistantDemo, ResumeDemo, TrackerDemo, WorkflowDemo } from '../components/landing/LandingDemos';
+import {WorkflowMap} from '../components/ui/workflow-map';
 import './Landing.css';
 
 const SOURCES = ['Greenhouse', 'Lever', 'Ashby', 'SmartRecruiters', 'Himalayas', 'Remotive'];
@@ -21,7 +22,7 @@ const FAQS = [
   ['Does JobPilot automatically apply to jobs?', 'No. JobPilot prepares your materials and its Chrome extension helps fill supported forms. You review the answers and submit yourself on the employer’s website. Automatic drafting is optional and controlled in your preferences.'],
   ['Can I customize my résumé before applying?', 'Yes. Review tailored content, compare it with your base résumé, edit it, and export the saved version. Always verify generated content against your actual experience.'],
   ['Which job platforms are supported?', 'Discovery supports Greenhouse, Lever, Ashby, SmartRecruiters, Himalayas, and Remotive. Supervised autofill includes dedicated support for the first four; other forms vary. These are supported sources, not endorsements or partnerships.'],
-  ['Can JobPilot help me contact recruiters?', 'It drafts a cover letter, recruiter emails with follow-ups, and LinkedIn messages for you to review and send yourself. Recruiter email and LinkedIn message delivery are not automated. Morning email digests are a separate feature.'],
+  ['Can JobPilot help me contact recruiters?', 'Prepare recruiter emails, follow-ups and LinkedIn drafts. Gmail delivery requires a connected account, configured sending and your explicit approval. LinkedIn drafts are sent by you. Morning email digests are a separate optional feature.'],
   ['Can I track applications and follow-ups?', 'Yes. Use list and Kanban views to manage saved roles, applications, interviews, offers, and other outcomes. Record updates and see follow-up reminders, activity, and skill-gap insights.'],
 ];
 
@@ -51,7 +52,7 @@ export default function Landing() {
   }, [loading]);
 
   if (loading) return <div className="lp-loading" role="status"><Loader2 size={24} className="animate-spin" /><span className="sr-only">Loading JobPilot</span></div>;
-  if (isAuthenticated) return <Navigate to={ROUTES.CHAT} replace />;
+  if (isAuthenticated) return <Navigate to={ROUTES.OVERVIEW} replace />;
 
   return (
     <div className="jobpilot-landing" ref={root} onClick={(event) => {
@@ -66,7 +67,7 @@ export default function Landing() {
       target.setAttribute('tabindex', '-1');
       target.focus({ preventScroll: true });
     }}>
-      <title>JobPilot AI — Your job search, intelligently organized</title>
+      <title>JobPilot AI — Your career. A coordinated effort.</title>
       <meta name="description" content="Discover relevant jobs, tailor your résumé, prepare applications, and track your search with an AI copilot. You review the work and decide when to apply." />
       <meta property="og:title" content="JobPilot AI — Your job search copilot" />
       <meta property="og:description" content="Less repetitive work. More focused applications. Discover, tailor, prepare, and track in one workspace." />
@@ -84,17 +85,16 @@ export default function Landing() {
       </header>
 
       <main id="main-content">
-        <section className="lp-hero">
+        <section className="lp-hero lp-agent-hero">
           <div className="lp-container lp-hero-content">
-            <div className="lp-eyebrow lp-hero-badge"><span className="lp-live-dot" /> AI-powered job search workspace</div>
-            <h1>Stop searching.<br />Start getting closer to<br /><span className="lp-headline-highlight">your next role<span className="lp-corner" /></span><span className="lp-period">.</span></h1>
-            <p className="lp-hero-copy">Discover relevant jobs, tailor your résumé, and prepare<br className="lp-desktop-break" /> your next application. One workspace. A clearer way forward.</p>
-            <div className="lp-cta-row"><Link className="lp-button" to={ROUTES.LOGIN}>Get started <ArrowUpRight size={17} /></Link><a className="lp-button lp-button-outline" href="#demo">Explore the platform <ArrowDown size={15} /></a></div>
-            <div className="lp-hero-note"><span><Check size={12} /> Magic-link sign in</span><span><Check size={12} /> Human-controlled decisions</span></div>
-            <HeroDemo />
-            <div className="lp-preview-caption"><span><span className="lp-tiny-square" /> A little less scattered. A lot more focused.</span><span>ILLUSTRATIVE PRODUCT PREVIEW / NO LIVE DATA</span></div>
+            <div className="lp-agent-hero-copy"><div className="lp-eyebrow lp-hero-badge"><span className="lp-live-dot" /> THE AGENTIC CAREER WORKSPACE</div>
+            <h1>Your next role.<br /><span className="lp-agent-emphasis">A coordinated<br />effort.</span></h1>
+            <p className="lp-hero-copy">Let AI connect the repetitive work: finding relevant roles, shaping your application, and preparing your next conversation. Keep your experience at the center—and every decision in your hands.</p>
+            <div className="lp-cta-row"><Link className="lp-button" to={ROUTES.LOGIN}>Build your career desk <ArrowUpRight size={17} /></Link><a className="lp-button lp-button-outline" href="#demo">See the workflow <ArrowDown size={15} /></a></div>
+            <div className="lp-hero-note"><span><Check size={13} /> Your facts, preserved</span><span><Check size={13} /> Your approval, required</span></div></div>
+            <div className="lp-agent-hero-diagram"><div className="lp-diagram-caption"><span>01 / THE WORK, CONNECTED</span><span>EXPLORE EACH STAGE ↘</span></div><WorkflowMap demo headingLevel={2}/><div className="lp-diagram-footnote">A capability preview. No background tasks or real applications run here.</div></div>
           </div>
-          <span className="lp-hero-coordinate" aria-hidden="true">JP_AI / WORKSPACE_01</span>
+          <div className="lp-agent-principles lp-container"><span><b>01</b> Discover with intent.</span><span><b>02</b> Prepare with context.</span><span><b>03</b> Act with control.</span><span>YOUR CAREER. YOUR CALL.</span></div>
         </section>
 
         <section id="integrations" className="lp-sources"><div className="lp-container">
@@ -105,7 +105,7 @@ export default function Landing() {
 
         <section id="demo" className="lp-light lp-section"><div className="lp-container" data-reveal>
           <span className="lp-eyebrow">[ 01 // The intelligence engine ]</span>
-          <div className="lp-section-heading"><h2>From job discovery to<br />application readiness.</h2><p>A scattered search becomes a focused workflow.<br />Take a look under the hood.</p></div>
+          <div className="lp-section-heading"><h2>Different tasks.<br />One connected workflow.</h2><p>Discovery, matching and preparation work together.<br />You can inspect the work and choose the next move.</p></div>
           <WorkflowDemo />
         </div></section>
 

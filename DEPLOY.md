@@ -1,128 +1,104 @@
-# Deploying JobPilot on Render (free tier)
+# JobPilot production release
 
-This puts the API and web app online so the nightly scan and morning digest run while
-your laptop is off. About 30 minutes, once.
+Updated 7 November 2026. **No final push or deployment has been performed.**
+Review [release evidence](RELEASE_READINESS.md) and [setup steps](PRODUCTION_SETUP.md).
 
-You need accounts on: **GitHub** (code), **Render** (hosting), **Supabase** (already set
-up), **Resend** (digest email), and **cron-job.org** (wakes the server at night). All free.
+## Architecture and hosting
 
----
+React static frontend ? FastAPI Docker API ? Supabase PostgreSQL/Auth/Storage.
+API ? PostgreSQL queue ? continuously running Docker worker. The worker handles
+generation, discovery scheduling, research, ranking experiments and mailbox jobs.
+PostgreSQL leases/checkpoints fence stale workers; Redis is not required.
 
-## 1. Supabase
+API and worker must use the **same reviewed revision, database and durable mode**.
+Submission stays manual; email sends require approval of their current revision.
+Chroma is an in-process, disposable cache rebuilt from the owner's canonical r?sum?.
+Do not expose a Chroma HTTP service.
 
-1. In the SQL editor, run every migration in `backend/supabase/migrations/` that you
-   haven't yet, oldest first:
-   `20261001_base_schema` (fresh-project baseline; review before applying to existing databases),
-   `20261006_application_materials`, `20261010_answer_bank`, `20261010_cold_emails_rls`,
-   `20261011_job_discovery`, `20261012_more_job_boards`, `20261013_referrals`,
-   `20261014_autopilot`, `20261023_security_guards`. The new baseline is for fresh-project provisioning; review its compatibility before using it on an existing schema. See [Sprint 1 status](SPRINT_1_STATUS.md) for the migration bundle and SQL smoke check.
-2. **Project Settings → API**: copy the **service_role** key. The server needs it to run
-   the schedule and serve the extension. Keep it secret: it bypasses row-level security.
-   It only ever goes into Render's environment, never into the web app.
+`render.yaml` now defines frontend, API and worker with auto-deployment disabled.
+API health checks use `/ready`, including worker health. Backend plans are paid,
+continuously running instances; review current capacity/cost before provisioning.
+The old sleeping free-server/wake-up-cron strategy is superseded. Nothing was provisioned.
 
-## 2. Resend (morning digest)
+## Database rollout
 
-1. Sign up at [resend.com](https://resend.com) **with the email address you want the
-   digest sent to**. On the free plan, mail from `onboarding@resend.dev` can only go to
-   that address, which is all a personal digest needs.
-2. **API Keys → Create API key** (sending access). Copy it.
+Main DB: **JobPilotAI** (`vgpkzekcfnogvvykfzoo`). Sprints 1?6 are already applied.
+Hosted/local timestamps differ: use [the rollout mapping](DATABASE_ROLLOUT_STATUS.md).
+**Do not replay old migrations or blindly run `db push`.**
 
-## 3. Push the code to GitHub
+New additive release migration, **not applied to either hosted project**:
 
-Render deploys from your GitHub repo (`DhrumilPrajapati03/JobPilot-AI`). Commit and push
-the current work. Check that `backend/.env` isn't included (it's git-ignored).
+`backend/supabase/migrations/20261107152821_release_recommendations_research.sql`
 
-Local `.env` files and the generated resume-search database are excluded from version
-control. On Render, configure the frontend's Supabase URL and anon key through the
-environment variables below; keep the service-role key and provider API keys on the API.
+It adds private feedback/impressions, research, templates, quotas and strict session
+validation. It does not rewrite saved application materials. After approval:
+verify provider backup/recovery, compare actual schema/history, rehearse in isolation,
+apply the exact reviewed SQL through the Supabase migration tool, record the returned
+version and run SQL suites plus security/performance advisors. Review Auth settings.
+CLI v3 is local-first; inspect installed help before using older remote commands.
 
-## 4. Render
+Local, synthetic verification from the repository root:
 
-1. **New → Blueprint**, pick the repo. Render reads `render.yaml` and creates
-   `jobpilot-api` (Docker) and `jobpilot-web` (static site).
-2. Fill in the values it asks for:
-
-   | Service | Variable | Value |
-   |---|---|---|
-   | api | `SUPABASE_URL`, `SUPABASE_KEY`, `SUPABASE_JWT_SECRET` | same as `backend/.env` |
-   | api | `SUPABASE_SERVICE_KEY` | from step 1 |
-   | api | `GROQ_API_KEY` | same as `backend/.env` |
-   | api | `RESEND_API_KEY` | from step 2 |
-   | api | `FRONTEND_URL` | `https://jobpilot-web.onrender.com` (your web URL) |
-   | web | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | same as `frontend/.env` |
-   | web | `VITE_API_BASE_URL` | `https://jobpilot-api.onrender.com` (your API URL) |
-   | web | `VITE_WS_BASE_URL` | `wss://jobpilot-api.onrender.com` |
-
-   `CRON_SECRET` is generated for you; copy it from the API's **Environment** tab for step 6.
-3. The exact URLs appear once the services exist. If they differ from the defaults, update
-   `FRONTEND_URL` and the `VITE_*` values. Then redeploy the web app: `VITE_*` values are
-   baked in at build time.
-4. Check `https://<your-api>.onrender.com/health` returns `{"status":"healthy",...}`.
-
-## 5. Supabase Auth URLs
-
-**Authentication → URL Configuration**: set **Site URL** to your web URL and add it to
-**Redirect URLs**, so sign-in returns to the deployed app rather than localhost.
-
-## 6. Wake-up cron (cron-job.org)
-
-Render's free web services sleep after 15 minutes without traffic, which stops the
-in-process scheduler. A cron call wakes the server and runs the nightly schedule.
-
-Create a job at [cron-job.org](https://cron-job.org):
-
-- **URL:** `https://<your-api>.onrender.com/api/v1/autopilot/tick`
-- **Method:** POST, with request header `X-Cron-Secret: <CRON_SECRET>`
-- **Schedule:** every 10 minutes from about **3 hours before** your digest time to
-  **1 hour after**. For a 7:00 digest in India, that's 04:00 to 08:00 IST.
-
-Why only those hours: the free tier includes 750 instance hours a month. Keeping one
-service awake all month uses almost exactly that, so a night window leaves plenty spare.
-During the day the server wakes when you open the app; the first request takes about a
-minute.
-
-The scan runs two hours before your digest. Auto-drafts follow it, and the digest goes
-out at your digest hour, waiting up to an hour for drafts still running.
-
-## 7. In the app
-
-1. Open the web app → **Settings**:
-   - **Morning digest:** turn it on, pick the hour and your time zone, **Send me one now**
-     to test it.
-   - **Overnight schedule:** all three rows should be green.
-2. **Profile → Preferences:** set target roles, and turn on **Auto-draft** if you want
-   drafts ready each morning (default: up to 3 a night at 80%+ fit).
-3. **Job feed:** follow companies and the remote boards.
-
-## 8. Chrome extension
-
-1. `chrome://extensions` → Developer mode → **Load unpacked** → the `extension` folder.
-2. On the deployed web app, **Settings → Chrome extension → Connect extension**.
-3. Each morning, open the **Apply queue** (or the links in the digest email) →
-   **Open & fill** → check the amber fields → click the site's Submit → **I submitted it**
-   in the JobPilot panel.
-
-The extension uses exact localhost and example Render origins. Set your actual API/web
-origins in both `extension/policy.js` and `extension/manifest.json`, then reload it.
-
----
-
-## Good to know on the free tier
-
-- **Cold starts:** a sleeping service takes about a minute to wake up.
-- **Memory:** 512 MB. The local embedding model fits, but if Render reports
-  out-of-memory restarts, set `EMBEDDINGS_PROVIDER=openai` (needs an OpenAI key).
-- **Disk is temporary:** the resume search index (`data/chroma`) resets on each deploy.
-  Tailoring still works, because the full base resume is always used. Re-save your base
-  resume on the Profile page to rebuild the index.
-- **PDFs:** the Docker image includes WeasyPrint's system libraries, so resume PDFs
-  render on the server. The extension uploads them, which never worked on Windows.
-
-## Test the image locally (optional)
-
-With Docker Desktop running:
-
-```sh
-docker build -t jobpilot-api backend
-docker run --env-file backend/.env -p 8000:8000 jobpilot-api
+```powershell
+backend/.venv-release/Scripts/python.exe backend/scripts/check_database.py --worker-recovery
 ```
+
+This creates/removes one network-isolated PostgreSQL 17 container, applies all 19
+migrations, runs RLS/RPC suites, kills/resumes a real Worker with synthetic stages,
+and restores a synthetic archive into another DB. No hosted/private data is exported.
+Hosted Auth/Storage and real backup acceptance remain separate gates.
+
+## Environment
+
+Keep credentials in secure provider settings, outside Git/chat/URLs.
+
+| API **and worker** | Required setting |
+| --- | --- |
+| Database | Identical `SUPABASE_URL`, public `SUPABASE_KEY`, private `SUPABASE_SERVICE_KEY` |
+| Generation | `LLM_PROVIDER=groq`, valid `GROQ_API_KEY`; deliberate model overrides |
+| Runtime | `APP_ENV=production`, `DEBUG=false`, `EXECUTION_MODE=durable`, `USAGE_LIMITS_ENABLED=true` |
+| Origins | `FRONTEND_URL`: exact HTTPS frontend origins, comma-separated |
+| Shared secrets | Random `SECRET_KEY`, `CRON_SECRET`, `OBSERVABILITY_TOKEN`, each ?32 characters |
+| Limits | Initially 25 application runs and 100 chat turns per user/day; review usage |
+| Mail | Keep mailbox/send flags false until real acceptance passes |
+
+The blueprint generates shared random secrets in its environment group.
+Render does not support `sync:false` prompts inside groups, so database/provider/origin
+prompts are repeated on API and worker: **enter identical values on both**.
+Legacy HS256 tokens also need `SUPABASE_JWT_SECRET` on the API; ES256/RS256 use JWKS.
+Production validates issuer, required claims and active session before private access.
+
+| Frontend build | Value |
+| --- | --- |
+| `VITE_RELEASE_MODE` | `true` |
+| `VITE_SUPABASE_URL` | Same JobPilotAI URL as both backend processes |
+| `VITE_SUPABASE_ANON_KEY` | That project's public publishable/anon key |
+| `VITE_API_BASE_URL` | `https://<api-host>` |
+| `VITE_WS_BASE_URL` | `wss://<api-host>` |
+
+Rebuild frontend after changes. Builds reject insecure release URLs and Supabase
+server keys. CSP uses configured origins; static hosting sets security/cache headers.
+
+## Build, release and rollback
+
+```powershell
+docker build -t jobpilot-release:review backend
+backend/.venv-release/Scripts/python.exe backend/scripts/check_image.py jobpilot-release:review
+```
+
+The image locks dependencies, includes PDF libraries/fonts and checksum-verified MiniLM,
+and runs as UID 10001. No local env/venv/data/tests enter it. Inference never downloads.
+
+After release approval, start worker first, then API/frontend at the same revision.
+A worker must announce a recent poll/active lease before readiness passes. Test HTTPS
+Auth callbacks, CORS, SSE/WebSocket reconnects, two accounts and exact-origin extension.
+
+Require `.github/workflows/release-checks.yml` in GitHub branch protection (external
+setting). CI checks application/extension/browser flows, audits, SQL, worker recovery,
+synthetic restore and image smoke. Record the approved commit and previous revision.
+
+Rollback: disable sends/new work, pause scheduling and drain/inspect the queue; roll
+API/worker back together, then frontend. Drain new research/recommendation kinds
+before returning to older workers. Keep additive schema/data; never drop tables
+as code rollback. Database restore requires a verified backup and deliberate approval.
+**Final push and deployment wait for user review.**

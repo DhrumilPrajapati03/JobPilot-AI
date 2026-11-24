@@ -27,6 +27,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { ReferralPanel } from '../components/applications/ReferralPanel';
 import { ExecutionEvidence } from '../components/applications/ExecutionEvidence';
+import {ResearchPanel} from '../components/applications/ResearchPanel';
 import { useReferrals } from '../hooks/use-network';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -475,6 +476,7 @@ export default function ApplicationDetail({ applicationId, initialTab, embedded 
                 ['email', 'Cold email', Mail],
                 ['dm', 'LinkedIn', MessageSquare],
                 ['referral', 'Referral', Users],
+                ['research', 'Research', Building2],
                 ['jd', 'Job details', CalendarClock],
               ].map(([value, label, Icon]) => {
                 const TabIcon = Icon as typeof FileText;
@@ -494,6 +496,7 @@ export default function ApplicationDetail({ applicationId, initialTab, embedded 
             <TabsContent value="resume">
               <ResumeTab application={application} tailored={tailored_resume} />
             </TabsContent>
+            <TabsContent value="research"><ResearchPanel key={application.id} applicationId={application.id}/></TabsContent>
             <TabsContent value="cover-letter">
               <CoverLetterPanel application={application} />
             </TabsContent>

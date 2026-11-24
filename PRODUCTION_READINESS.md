@@ -1,34 +1,41 @@
-# Production readiness follow-ups
+# Production readiness ? release candidate
 
-This is the durable reminder for work deliberately deferred while implementing the development sprints. Development completion is separate from production approval.
+Updated 7 November 2026. **Implementation is ready for release review; public launch
+still requires live acceptance.** No final push/deployment or live migration was
+performed for this release. [Setup steps](PRODUCTION_SETUP.md) ? [evidence](RELEASE_READINESS.md).
 
-## Before real mailbox connections or unattended outbound actions
+## Completed locally
 
-- Review the remaining live Auth leaked-password-protection warning. The app uses magic links, but the project accepted password sign-in for temporary Storage-test users; do not assume the password endpoint is disabled. Enable the appropriate protection or restrict unused password sign-in through Supabase Auth settings before real mailbox use. [Supabase guidance](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
-- Configure the application's Composio developer project and callback identity verifier, then verify real per-user OAuth and an explicitly approved test send. The chat plugin connection does not configure the application's backend. Composio and Hunter keys are currently absent locally; mailbox and send flags remain disabled. See [SPRINT_4_STATUS.md](SPRINT_4_STATUS.md).
+- Career Desk design, preserved routes, real workflow activity and safe auth errors.
+- Private recommendation feedback and opt-in impressions; experimental local ranking.
+- Cited research and source-bound review drafts; working private writing templates.
+- Production guards: durable worker, quotas, HTTPS/origins, JWT issuer/expiry/session.
+- Dependency patches, Router 7, lockfiles, frontend CSP and non-root Docker runtime.
+- Automated app/extension/browser, SQL/RLS, real worker crash recovery and synthetic
+  backup/restore checks. Exact verification and limitations are in the release record.
+- API and worker deploy definitions, disabled auto-deploy, pinned CI actions and rollback instructions.
 
-## Before public rollout
+## Gates still requiring verification, configuration or approval
 
-- Run real two-account browser flows, fresh-database provisioning/rerun tests, authenticated uploads, employer-form checks, and deployment CORS/SSE/WebSocket tests.
-- Recheck service-role ownership filtering, credential redaction, upload sandbox/resource limits, request abuse limits, and token revocation handling on long-lived streams.
-- Confirm backup/recovery, monitoring, error alerts, data retention, and supported dependency versions.
-- Roll out matching API/frontend changes together and reload the exact-origin extension configuration.
-- Verify running worker capacity, lease expiry/recovery, graceful shutdown, and provider idempotency behavior on the chosen host. Sleeping processes cannot execute queued work until a worker runs again.
-- Apply Sprint 3's identity/matching migration before enabling its API/UI. Verify confirmation and revocation through two real accounts, choose retention for historical confirmations, warm the local MiniLM model in the intended worker image, and evaluate matching against representative labeled employer data in addition to the synthetic regression set.
-- Apply Sprint 5's evidence and index migrations before using its extension/session or web report workflows. Reload extension 1.1.0 with exact deployed origins; complete real employer/custom-AJAX/multi-step/iframe/upload-rejection acceptance. Select retention/quotas/backups for frozen PDFs and audit events. See [SPRINT_5_STATUS.md](SPRINT_5_STATUS.md). Local configuration still needs matching development project credentials before development feature testing; the live database intentionally lacks Sprint 2–5 feature migrations.
-- Apply Sprint 6's product-metrics/worker-heartbeat migration before enabling its metrics or readiness endpoints. Configure a backend-only operations token and an external monitor/alert destination, and validate a production-shaped worker recovery scenario. See [SPRINT_6_STATUS.md](SPRINT_6_STATUS.md) and [OPERATIONS_RUNBOOK.md](OPERATIONS_RUNBOOK.md). Live still lacks Sprint 2–6 feature migrations.
-- Resolve the two remaining moderate npm findings affecting React Router 6.30.6 through a deliberate Router 7 migration/assessment and routing regression tests before public release. Compatible dependency fixes removed the previous high-severity findings; the audit is not yet clean.
+- [ ] Finish Linux image build/smoke: downloads timed out; no complete image is verified.
+- [ ] Approve/apply the new release migration after backup/history reconciliation.
+  Sprints 1?6 already exist on JobPilotAI; do not replay them.
+- [ ] Custom Auth SMTP/sender, redirects, two-account real sign-in/revocation,
+  unused password sign-in/leaked-password protection review.
+- [ ] Real provider generation/PDF acceptance on the chosen Linux host.
+- [ ] Backend Composio/Gmail/Hunter configuration and explicitly approved
+  recipient send/reply/reconciliation tests, or launch with these disabled.
+- [ ] Chosen-host resource/capacity measurements, HTTPS CORS/SSE/WebSocket checks,
+  real permitted employer forms and exact-origin extension acceptance.
+- [ ] External monitoring/alert delivery, retention/deletion policy and verified
+  provider backup restore. Synthetic local restore is not a JobPilotAI recovery test.
+- [ ] Public privacy/terms/contact content, full keyboard/screen-reader/zoom/device
+  review and both themes. Sampled contrast/fixture browser checks are not certification.
+- [ ] Required remote CI/branch protection and approval of exact release revision.
 
-## Recommendation for timing
+The clean backend audit has four reviewed Chroma server-path exceptions, expiring
+7 December 2026. The app runs Chroma only in-process. See [dependency review](DEPENDENCY_SECURITY.md).
+No unaccepted package findings passed the gate; do not describe this as zero vulnerabilities.
 
-The function-permission, search-path, and Storage-isolation preflight was completed on 28 October 2026. Finish the Auth settings review and provider acceptance checks before enabling real Gmail use. Complete the wider end-to-end and operational checks before public rollout. Development sprints can continue on `test-project` meanwhile.
-
-## Already verified on 27 October 2026
-
-The Sprint 1 security-guard migration was applied to `JobPilotAI` as `20261027041202_sprint_1_security_guards`. Checks found 15 restrictive public policies, one Storage guard, a private 10 MiB PDF/DOCX resume bucket, unchanged business-row counts, and successful owner/unrelated-identity read tests. The rollback-only two-account smoke test passed on `test-project`. These checks did not constitute full browser or production acceptance.
-
-## Verified on 28 October 2026
-
-`mailbox_security_preflight` was applied to both projects. Public/anonymous/authenticated execution of `rls_auto_enable()` was revoked without changing its trigger body or bindings. Both timestamp trigger functions now use `search_path=pg_catalog`. An authenticated, owner-folder-only Storage policy complements the existing restrictive guard.
-
-The real Storage API test on `JobPilotAI` passed owner upload/upsert/download, stranger read/sign/overwrite/delete denial, and private public-URL denial. Both temporary users and the tiny PDF fixture were removed. Existing business counts remained 11 applications, 10 tailored resumes, 30 email drafts, and 1,101 contacts. The live security advisor now reports only leaked-password protection; the development project has no security findings.
+Baseline v2 remains default. No independent labelled dataset/quality lift is established;
+BGE and CrossEncoder promotion, LambdaMART/bandits/clustering are not launch claims.

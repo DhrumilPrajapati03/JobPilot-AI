@@ -5,6 +5,7 @@ JD analysis, and the user's professional story.
 """
 
 from app.services.llm import get_default_llm
+from app.services.writing_evidence import messages
 
 
 class CoverLetterAgent:
@@ -22,7 +23,7 @@ class CoverLetterAgent:
         company_research: dict | None = None,
     ) -> str:
         """Generate a cover letter for a specific application."""
-        llm = self._get_llm()
+        self.used_fallback = False
 
         prompt = (
             "You are a professional cover letter writer. Draft a compelling, personalized cover letter "
@@ -43,9 +44,10 @@ class CoverLetterAgent:
         )
 
         try:
-            res = await llm.ainvoke(prompt)
+            llm = self._get_llm()
+            res = await llm.ainvoke(messages(prompt, user_profile, company_research if 'company_research' in locals() else None, kind='cover_letter'))
             return res.content
         except Exception as e:
-            print(f"Error generating cover letter: {str(e)}")
+            print(f"Cover letter fallback ({type(e).__name__})")
             self.used_fallback = True
             return f"Dear Hiring Team,\n\nI am writing to express my strong interest in the {jd_analysis.get('role')} role at {jd_analysis.get('company')}..."

@@ -12,7 +12,11 @@ import httpx
 from dataclasses import dataclass
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import jwt, JWTError
+import jwt
+from jwt import PyJWTError as JWTError
+import time
+import asyncio
+from uuid import UUID
 from app.config import settings
 
 # This tells FastAPI to expect an "Authorization: Bearer <token>" header
@@ -23,12 +27,15 @@ security = HTTPBearer()
 # Avoids fetching Supabase's public keys on every single request.
 # -----------------------------------------------------------------------
 _jwks_cache: dict | None = None
+_jwks_until = 0.0
+_jwks_url = ""
+_last_unknown_refresh = 0.0
 
 
 async def _fetch_jwks() -> dict:
     """Fetch the JSON Web Key Set from Supabase's well-known endpoint."""
-    global _jwks_cache
-    if _jwks_cache is not None:
+    global _jwks_cache, _jwks_until, _jwks_url
+    if _jwks_cache is not None and time.monotonic()<_jwks_until and _jwks_url==settings.SUPABASE_URL:
         return _jwks_cache
 
     jwks_url = f"{settings.SUPABASE_URL}/auth/v1/.well-known/jwks.json"
@@ -36,6 +43,8 @@ async def _fetch_jwks() -> dict:
         response = await client.get(jwks_url, timeout=10.0)
         response.raise_for_status()
         _jwks_cache = response.json()
+        _jwks_until = time.monotonic()+300
+        _jwks_url = settings.SUPABASE_URL
 
     return _jwks_cache
 
@@ -45,13 +54,16 @@ async def _get_jwk_for_kid(kid: str) -> dict:
 
     Invalidates cache and retries once on key-not-found (handles key rotation).
     """
-    global _jwks_cache
+    global _jwks_cache, _last_unknown_refresh
 
     jwks = await _fetch_jwks()
     key = next((k for k in jwks.get("keys", []) if k.get("kid") == kid), None)
 
     if key is None:
         # Key might have rotated — clear cache and try once more
+        if time.monotonic()-_last_unknown_refresh<10:
+            raise JWTError('Signing key not found')
+        _last_unknown_refresh=time.monotonic()
         _jwks_cache = None
         jwks = await _fetch_jwks()
         key = next((k for k in jwks.get("keys", []) if k.get("kid") == kid), None)
@@ -93,14 +105,15 @@ async def _verify_token(token: str) -> dict:
             # Fetch the matching public key from Supabase's JWKS endpoint
             if not kid:
                 raise JWTError("JWT header is missing 'kid' — cannot look up public key.")
-            verify_key = await _get_jwk_for_kid(kid)
+            verify_key = jwt.PyJWK.from_dict(await _get_jwk_for_kid(kid), algorithm=alg).key
 
         # --- Step 3: Decode and fully verify the token ---
         payload = jwt.decode(
             token,
             verify_key,
             algorithms=[alg],
-            options={"verify_aud": True},
+            options={"verify_aud": True, "require": ["exp", "sub", "aud"]},
+            issuer=f"{settings.SUPABASE_URL}/auth/v1" if settings.APP_ENV=="production" else None,
             audience="authenticated",
         )
 
@@ -110,6 +123,19 @@ async def _verify_token(token: str) -> dict:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Token payload is missing 'sub' claim.",
             )
+        if settings.APP_ENV=='production':
+            try:
+                uid=str(UUID(payload['sub']))
+                sid=str(UUID(payload.get('session_id','')))
+            except (ValueError,TypeError):
+                raise HTTPException(401,'Sign in again to create a current session.') from None
+            from app.services.supabase import get_supabase_admin_client
+            try:
+                active=await asyncio.to_thread(lambda:get_supabase_admin_client().rpc('jobpilot_session_active',{'p_user_id':uid,'p_session_id':sid}).execute().data)
+            except Exception:
+                raise HTTPException(503,'Session validation is temporarily unavailable.') from None
+            if active is not True:
+                raise HTTPException(401,'This session has ended. Sign in again.')
         return payload
 
     except HTTPException:
@@ -118,12 +144,12 @@ async def _verify_token(token: str) -> dict:
     except JWTError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid or expired credentials: {str(e)}",
+            detail="Invalid or expired credentials.",
         )
     except httpx.HTTPError as e:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Could not reach Supabase JWKS endpoint: {str(e)}",
+            detail="The sign-in service is temporarily unavailable.",
         )
 
 

@@ -55,7 +55,7 @@ class ResumeTailorAgent:
                             f"(Section: {match['metadata'].get('section_type')})"
                         )
                 except Exception as e:
-                    print(f"Warning: RAG search failed for skill '{skill}': {str(e)}")
+                    print(f"Warning: resume evidence search unavailable ({type(e).__name__})")
 
         rag_context_str = "\n".join(rag_context) if rag_context else "No extra context found."
 
@@ -101,7 +101,7 @@ class ResumeTailorAgent:
             # mode="json" turns datetimes into strings so the content can be stored as JSONB.
             tailored_dict = tailored_resume_obj.model_dump(mode="json", exclude_none=True)
         except Exception as e:
-            print(f"Error during LLM resume tailoring: {str(e)}")
+            print(f"Error during LLM resume tailoring: {type(e).__name__}")
             # Fall back to base resume if rewrite fails
             self.used_fallback = True
             tailored_dict = base_resume.copy()

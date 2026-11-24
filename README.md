@@ -2,6 +2,8 @@
 
 An AI assistant for finding relevant jobs, preparing tailored application materials, and tracking your job search. JobPilot includes a web app, a FastAPI backend, and a Chrome extension that fills application forms for you to review and submit.
 
+Release candidate: Career Desk UI, cited research, private templates, recommendation feedback, optional offline ranking, production guards and CI. See [release evidence](RELEASE_READINESS.md) and [setup](PRODUCTION_SETUP.md). Final push/deployment remain subject to review.
+
 Sprint 2 adds opt-in durable Supabase runs and a separate worker. See [setup, architecture and verification](SPRINT_2_STATUS.md), and keep the deferred [production readiness work](PRODUCTION_READINESS.md) as a release gate.
 
 Sprint 3 adds source-linked resume confirmations, structured eligibility, explainable semantic ranking, and conservative job deduplication. See [workflow, setup and evaluation results](SPRINT_3_STATUS.md).
@@ -89,7 +91,7 @@ Apply the migration files in filename order through the Supabase SQL editor. Con
 ```powershell
 cd backend
 python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m pip install -r requirements.lock
 Copy-Item .env.example .env
 ```
 
@@ -176,11 +178,15 @@ The extension requires the backend service-role key to be configured. It uses a 
 
 ## Checks
 
+Google and GitHub sign-in are available in the login UI alongside magic links.
+Enable their OAuth providers in Supabase using [SOCIAL_LOGIN_SETUP.md](SOCIAL_LOGIN_SETUP.md).
+No schema migration or provider secrets in frontend environment variables are needed.
+
 Backend tests, from `backend`:
 
 ```powershell
 $env:DEBUG="false"
-.\.venv\Scripts\python.exe -m pytest tests -q
+.\.venv\Scripts\python.exe tests/run_offline.py
 ```
 
 Frontend production build, from `frontend`:
@@ -189,17 +195,17 @@ Frontend production build, from `frontend`:
 npm.cmd run build
 ```
 
-The latest local verification passed **192 backend tests**, four frontend account-isolation tests (`npm.cmd test`), four extension security tests (`node --test extension/tests/security.test.cjs` from the repository root), and the frontend production build. Tests use mocked services and do not establish that live AI, email, hosting, or database provisioning is configured correctly. See [Sprint 1 status](SPRINT_1_STATUS.md) for deployment changes and outstanding acceptance checks.
+Current release verification is recorded in [RELEASE_READINESS.md](RELEASE_READINESS.md). Follow [PRODUCTION_SETUP.md](PRODUCTION_SETUP.md) for the remaining credentials and live acceptance. Local tests use synthetic provider/Auth boundaries and do not establish production deployment.
 
 ## Current limitations
 
-- Template library management is placeholder UI.
-- Recruiter enrichment and cold email sending/history endpoints are not implemented. Outreach drafts are available; morning digest delivery is a separate Resend integration.
+- Writing templates, research and recommendation feedback require the new release migration; it has not yet been applied to hosted projects.
+- Gmail/Hunter endpoints are implemented but need backend credentials and supervised live acceptance. Sending is disabled by default; digest uses separate Resend configuration.
 - India eligibility is inferred conservatively from published locations and descriptions. Missing or inaccurate employer data can hide suitable roles or require additional review. The feed rule also applies to existing listings and automatic drafts; manually pasted jobs are a separate preparation flow.
 - Server PDF export needs WeasyPrint's native libraries. Tectonic is optional; rendering falls back to HTML/WeasyPrint. If neither renderer is available, use the resume preview's browser export. The backend Docker image installs the native PDF dependencies.
-- Scheduled scans need a running backend. Hosts that sleep need an external cron calling the protected tick endpoint.
-- A fresh-project database baseline and SQL smoke test are included. Live provisioning and hosted RLS/storage acceptance checks still need to be run; see [Sprint 1 status](SPRINT_1_STATUS.md).
+- Production scans/jobs need the continuously running durable worker, using the same database/revision as the API. A sleeping service cannot process the queue.
+- Fresh migrations/RLS, worker recovery and synthetic restore are tested locally. See [database rollout](DATABASE_ROLLOUT_STATUS.md) for earlier hosted RLS/Storage checks and remaining real release acceptance.
 
 ## Deployment
 
-See [DEPLOY.md](DEPLOY.md) for the Render setup using [render.yaml](render.yaml), Supabase migrations, digest configuration, and external cron. Deployment configuration is included; successful production deployment has not been verified by the local build and test checks.
+See [DEPLOY.md](DEPLOY.md) for the Render setup using [render.yaml](render.yaml), Supabase migrations, the durable worker, optional integrations, and rollback. Deployment configuration is included; successful production deployment has not been verified by the local build and test checks.

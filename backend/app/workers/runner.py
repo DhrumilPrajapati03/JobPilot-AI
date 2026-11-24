@@ -83,6 +83,12 @@ class Worker:
         db, uid = self.store.client, ctx.run["user_id"]
         email = autopilot.account_email(db, uid)
         kind = ctx.run["kind"]
+        if kind == 'recommendation':
+            from app.recommendation.ranking import execute
+            return await execute(ctx)
+        if kind == 'company_research':
+            from app.services.company_research import execute
+            return await execute(ctx)
         if kind in {"mail_send", "mail_sync"}:
             from app.services import mailbox
             return await (mailbox.execute_send(ctx) if kind == "mail_send" else mailbox.execute_sync(ctx))
@@ -118,6 +124,8 @@ class Worker:
 
 
 async def main(once=False):
+    from app.services.production import validate_production
+    validate_production()
     if not durable_enabled():
         raise SystemExit("Set EXECUTION_MODE=durable before starting the background worker.")
     if not autopilot.server_ready():

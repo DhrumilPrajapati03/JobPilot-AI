@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
+import {useAuthStore} from '../stores/auth-store';
 
 // Define TS Interfaces corresponding to FastAPI Pydantic Models
 export interface WorkPreferences {
@@ -91,11 +92,12 @@ export function useProfile() {
 }
 
 export function useUpdateProfile() {
+  const owner=useAuthStore(s=>s.user?.id);
   const queryClient = useQueryClient();
   
   return useMutation({
     mutationFn: (data: Partial<UserProfile>) => 
-      api.post<UserProfile>('/profile/update', data),
+      api.post<UserProfile>('/profile/update', data,{expectedUserId:owner}),
     onSuccess: () => {
       // Invalidate the 'profile' query cache so the browser refetches fresh data
       queryClient.invalidateQueries({ queryKey: ['profile'] });
@@ -117,11 +119,12 @@ export function useResume() {
 }
 
 export function useUpdateResume() {
+  const owner=useAuthStore(s=>s.user?.id);
   const queryClient = useQueryClient();
   
   return useMutation({
     mutationFn: (data: Resume) => 
-      api.post<Resume>('/resume/base', data),
+      api.post<Resume>('/resume/base', data,{expectedUserId:owner}),
     onSuccess: () => {
       // Invalidate 'resume' so any list previews are updated
       queryClient.invalidateQueries({ queryKey: ['resume'] });

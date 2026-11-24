@@ -17,4 +17,15 @@ backend/data/
 
 # Project-local development tooling
 /.tool-cache/
+/.superdesign/
+backend/.venv-release/
 /backend/supabase/.temp/
+/spike/composio_calendar/
+/data/
+*.sqlite3
+backend/20
+__pycache__/
+*.pyc
+spike/**/client_secret*.json
+spike/**/token*.json
+spike/**/.env

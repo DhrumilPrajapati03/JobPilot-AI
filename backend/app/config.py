@@ -83,6 +83,13 @@ class Settings(BaseSettings):
     RUN_LEASE_SECONDS: int = Field(default=120, ge=30, le=1800)
     RUN_POLL_SECONDS: float = Field(default=2.0, ge=0.1, le=60)
     MATCHING_SEMANTIC: bool = True  # Cached local MiniLM only; never downloads during a scan.
+    RERANKER_PATH: str = ''  # Optional preinstalled CrossEncoder; never downloads at request time.
+    MINILM_CACHE_PATH: str = ''
+    CHROMA_PATH: str = 'data/chroma'
+    USAGE_LIMITS_ENABLED: bool = False
+    APPLICATION_DAILY_LIMIT: int = Field(default=25, ge=1, le=1000)
+    CHAT_DAILY_LIMIT: int = Field(default=100, ge=1, le=5000)
+    APP_ENV: Literal['development', 'test', 'production'] = 'development'
 
     # App Config
     FRONTEND_URL: str = "http://localhost:5173"  # comma-separated for several origins; the first is used in emails

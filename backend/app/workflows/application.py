@@ -65,7 +65,8 @@ async def run_application(ctx, email: str):
         r = db.table("resumes").select("*").eq("user_id", uid).eq("version", "base").execute().data
         if not r:
             raise PermanentRunError("Save a base resume on the Profile page before generating an application.")
-        return {"profile": p[0] if p else {}, "resume": r[0]}
+        from app.services.writing_evidence import templates_for
+        return {"profile": {**(p[0] if p else {}),'_writing_templates':templates_for(db,uid)}, "resume": r[0]}
 
     def analysis():
         parsed = ctx.checkpoints["jd_parsing"]
@@ -91,7 +92,8 @@ async def run_application(ctx, email: str):
 
     async def write(kind):
         writer = {"cover": agents.CoverLetterAgent, "emails": agents.EmailWriterAgent, "dms": agents.DMWriterAgent}[kind]()
-        p = ctx.checkpoints["profile_loading"]["profile"]
+        from app.services.writing_evidence import with_resume
+        p = with_resume(ctx.checkpoints["profile_loading"]["profile"], ctx.checkpoints["profile_loading"]["resume"])
         result = await (writer.generate(analysis(), p) if kind == "cover" else writer.generate(analysis(), agents.DEFAULT_CONTACT, p))
         return {"content": result, "warning": "A basic outreach template was used; rewrite before sending." if writer.used_fallback else ""}
 

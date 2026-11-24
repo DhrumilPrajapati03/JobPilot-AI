@@ -1,0 +1,123 @@
+ M .gitignore
+ M DEPLOY.md
+ M OPERATIONS_RUNBOOK.md
+ M PRODUCTION_READINESS.md
+ M README.md
+ M backend/.dockerignore
+ M backend/.env.example
+ M backend/Dockerfile
+ M backend/app/agents/assistant.py
+ M backend/app/agents/cover_letter.py
+ M backend/app/agents/dm_writer.py
+ M backend/app/agents/email_writer.py
+ M backend/app/agents/jd_parser.py
+ M backend/app/agents/orchestrator.py
+ M backend/app/agents/research.py
+ M backend/app/agents/resume_tailor.py
+ M backend/app/api/v1/agent.py
+ M backend/app/api/v1/applications.py
+ M backend/app/api/v1/operations.py
+ M backend/app/api/v1/resume.py
+ M backend/app/api/v1/router.py
+ M backend/app/api/v1/runs.py
+ M backend/app/config.py
+ M backend/app/main.py
+ M backend/app/models/resume.py
+ M backend/app/resume_engine/renderer.py
+ M backend/app/resume_engine/templates/html/standard.html.j2
+ M backend/app/resume_engine/validator.py
+ M backend/app/services/auth.py
+ M backend/app/services/autopilot.py
+ M backend/app/services/discovery.py
+ M backend/app/services/form_answers.py
+ M backend/app/services/llm.py
+ M backend/app/services/matching_semantics.py
+ M backend/app/services/parser.py
+ M backend/app/services/referrals.py
+ M backend/app/services/request_limits.py
+ M backend/app/services/run_stream.py
+ M backend/app/services/runs.py
+ M backend/app/services/vector_store.py
+ M backend/app/services/websocket.py
+ M backend/app/workers/runner.py
+ M backend/app/workflows/application.py
+ M backend/requirements.txt
+ M backend/tests/fixtures/browser_server.py
+ M backend/tests/run_offline.py
+ M backend/tests/test_security_foundation.py
+ M frontend/e2e/product-workflow.spec.cjs
+ M frontend/package-lock.json
+ M frontend/package.json
+ M frontend/src/App.tsx
+ M frontend/src/components/agent/Conversation.tsx
+ M frontend/src/components/agent/ToolCards.tsx
+ M frontend/src/components/auth/LoginForm.tsx
+ M frontend/src/components/layout/AppShell.tsx
+ M frontend/src/components/layout/Sidebar.tsx
+ M frontend/src/hooks/use-answers.ts
+ M frontend/src/hooks/use-applications.ts
+ M frontend/src/hooks/use-auth.ts
+ M frontend/src/hooks/use-network.ts
+ M frontend/src/hooks/use-profile.ts
+ M frontend/src/index.css
+ M frontend/src/lib/api.ts
+ M frontend/src/lib/constants.ts
+ M frontend/src/lib/run-poll.ts
+ M frontend/src/lib/supabase.ts
+ M frontend/src/pages/ApplicationDetail.tsx
+ M frontend/src/pages/Chat.tsx
+ M frontend/src/pages/JobFeed.tsx
+ M frontend/src/pages/Landing.css
+ M frontend/src/pages/Landing.tsx
+ M frontend/src/pages/Login.tsx
+ M frontend/src/pages/Templates.tsx
+ M frontend/src/pages/lazy.ts
+ M frontend/src/stores/auth-store.ts
+ M frontend/tests/account-isolation.test.mjs
+ M frontend/vite.config.ts
+ M render.yaml
+?? .github/
+?? DATABASE_ROLLOUT_STATUS.md
+?? DEPENDENCY_SECURITY.md
+?? DESIGN.md
+?? DESIGN_RESEARCH.md
+?? FINAL_IMPLEMENTATION_AND_PRODUCTION_PLAN.md
+?? PRODUCTION_SETUP.md
+?? RELEASE_READINESS.md
+?? SOCIAL_LOGIN_SETUP.md
+?? backend/app/api/v1/recommendations.py
+?? backend/app/api/v1/research.py
+?? backend/app/api/v1/templates.py
+?? backend/app/recommendation/
+?? backend/app/services/company_research.py
+?? backend/app/services/production.py
+?? backend/app/services/usage.py
+?? backend/app/services/writing_evidence.py
+?? backend/requirements-ml.txt
+?? backend/requirements.lock
+?? backend/scripts/check_audit.py
+?? backend/scripts/check_database.py
+?? backend/scripts/check_image.py
+?? backend/scripts/check_worker_recovery.py
+?? backend/scripts/evaluate_recommendations.py
+?? backend/scripts/prepare_models.py
+?? backend/supabase/migrations/20261107152821_release_recommendations_research.sql
+?? backend/supabase/tests/release_recommendations_research.sql
+?? backend/tests/test_release_features.py
+?? backend/tests/test_release_security.py
+?? backend/tests/test_resume_import.py
+?? data/
+?? docs/
+?? frontend/e2e/career-desk.spec.cjs
+?? frontend/e2e/social-auth.spec.cjs
+?? frontend/src/components/agent/RunActivity.tsx
+?? frontend/src/components/applications/ResearchPanel.tsx
+?? frontend/src/components/jobs/
+?? frontend/src/components/ui/brand.tsx
+?? frontend/src/components/ui/workflow-map.tsx
+?? frontend/src/lib/account-context.ts
+?? frontend/src/lib/auth-errors.ts
+?? frontend/src/lib/auth-redirect.ts
+?? frontend/src/pages/Overview.tsx
+?? frontend/src/styles/
+?? frontend/tests/social-auth.test.mjs

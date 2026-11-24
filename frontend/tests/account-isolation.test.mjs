@@ -12,6 +12,7 @@ const built = await build({
     export { sendChatMessage } from './src/agent/client';
     export { queryClient } from './src/lib/query-client';
     export { supabase } from './src/lib/supabase';
+    export { default as api } from './src/lib/api';
   `, resolveDir: process.cwd() },
   bundle: true, write: false, format: 'cjs', platform: 'node',
   define: { 'process.env.NODE_ENV': '"test"', 'import.meta.env.VITE_API_BASE_URL': '"http://localhost:8000"',
@@ -101,4 +102,23 @@ test('successful sign out immediately clears visible private state and cache', a
   assert.equal(app.useAuthStore.getState().user, null);
   assert.equal(app.useChatStore.getState().activeThread().messages.length, 0);
   assert.equal(app.queryClient.getQueryData(['profile']), undefined);
+});
+
+test('a template mutation cannot acquire a different account token while awaiting auth', async () => {
+  const { app } = harness();
+  let resolve;
+  app.supabase.auth.getSession = () => new Promise(r => { resolve = r; });
+  app.useAuthStore.getState().setSession(session('alice'));
+  const saving = app.api.put('/templates/email', {content:'Alice private draft',expected_updated_at:null});
+  await new Promise(setImmediate);
+  app.useAuthStore.getState().setSession(session('bob'));
+  resolve({data:{session:session('bob')}});
+  await assert.rejects(saving, /Account changed/);
+});
+
+test('a template mutation retains its form owner even if execution starts after an account switch',async()=>{
+  const {app}=harness();
+  app.useAuthStore.getState().setSession(session('bob'));
+  app.supabase.auth.getSession=async()=>({data:{session:session('bob')}});
+  await assert.rejects(app.api.put('/templates/email',{content:'Alice draft'},{expectedUserId:'alice'}),/Account changed/);
 });

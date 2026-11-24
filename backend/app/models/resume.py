@@ -44,7 +44,20 @@ class ResumeCertification(BaseModel):
     year: str = ""
 
 
-class Resume(BaseModel):
+class ResumeContent(BaseModel):
+    """Extracted professional content; database ownership/metadata stay server-owned."""
+
+    name: str = ""
+    headline: str = ""
+    summary: str = ""
+    experience: list[ResumeExperience] = Field(default_factory=list)
+    skills: ResumeSkills = Field(default_factory=ResumeSkills)
+    projects: list[ResumeProject] = Field(default_factory=list)
+    education: list[ResumeEducation] = Field(default_factory=list)
+    certifications: list[ResumeCertification] = Field(default_factory=list)
+
+
+class Resume(ResumeContent):
     """Full resume content model (Layer 2 of the 3-layer architecture).
 
     This JSON structure is what the LLM edits. It never touches
@@ -68,14 +81,6 @@ class Resume(BaseModel):
     """
     id: str | None = None
     user_id: str | None = None
-    name: str = ""
-    headline: str = ""
-    summary: str = ""
-    experience: list[ResumeExperience] = Field(default_factory=list)
-    skills: ResumeSkills = Field(default_factory=ResumeSkills)
-    projects: list[ResumeProject] = Field(default_factory=list)
-    education: list[ResumeEducation] = Field(default_factory=list)
-    certifications: list[ResumeCertification] = Field(default_factory=list)
     version: str = "base"
     created_at: datetime | None = None
     updated_at: datetime | None = None

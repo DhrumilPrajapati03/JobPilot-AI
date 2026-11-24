@@ -78,7 +78,7 @@ async def _referral_check(run_id: str, supabase, user_id: str, application: dict
         }, on_conflict="application_id,contact_id").execute()
         drafted = f" Drafted a referral request to {best.get('full_name')} for you to review."
     except Exception as e:
-        print(f"Warning: referral draft failed: {e}")
+        print(f"Warning: referral draft failed: {type(e).__name__}")
         drafted = ""
     people = f"{len(ranked)} person" if len(ranked) == 1 else f"{len(ranked)} people"
     await _emit(
@@ -210,6 +210,9 @@ async def run_agent_pipeline(
     # low tokens-per-minute limits (e.g. Groq's free tier) and forces template fallbacks.
     writers = {"cover letter": CoverLetterAgent(), "emails": EmailWriterAgent(), "LinkedIn messages": DMWriterAgent()}
     try:
+        from app.services.writing_evidence import with_resume, templates_for
+        profile = with_resume(profile, base_resume)
+        profile['_writing_templates'] = templates_for(supabase,user_id)
         cover_letter_text = await writers["cover letter"].generate(jd_analysis_dict, profile)
         emails = await writers["emails"].generate(jd_analysis_dict, DEFAULT_CONTACT, profile)
         dms = await writers["LinkedIn messages"].generate(jd_analysis_dict, DEFAULT_CONTACT, profile)
@@ -281,7 +284,7 @@ async def run_agent_pipeline(
                 try:
                     supabase.table(table).delete().eq(column, application_id).execute()
                 except Exception as cleanup_error:
-                    print(f"Warning: cleanup of {table} failed: {cleanup_error}")
+                    print(f"Warning: cleanup of {table} failed: {type(cleanup_error).__name__}")
         await _emit(run_id, "database_saving", "error", f"Failed to save application data: {_error_text(e)}")
         return
     await _emit(run_id, "database_saving", "done", "Application saved to tracker")
@@ -304,5 +307,5 @@ async def run_agent_pipeline(
         from app.services.autopilot import prepare_application_form
         await prepare_application_form(supabase, user_id, application_id, user_email)
     except Exception as e:
-        print(f"Warning: preparing the application form failed: {e}")
+        print(f"Warning: preparing the application form failed: {type(e).__name__}")
     return application_id

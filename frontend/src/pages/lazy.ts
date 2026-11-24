@@ -2,6 +2,7 @@
 import { lazy } from 'react';
 
 export const Chat = lazy(() => import('./Chat'));
+export const Overview = lazy(() => import('./Overview'));
 export const Applications = lazy(() => import('./Applications'));
 export const JobFeed = lazy(() => import('./JobFeed'));
 export const Network = lazy(() => import('./Network'));

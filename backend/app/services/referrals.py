@@ -318,5 +318,5 @@ async def draft_referral_message(contact: dict, application: dict, profile: dict
             raise ValueError("empty or templated message")
         return message[:MESSAGE_LIMIT], False
     except Exception as e:
-        print(f"Referral message fell back to a template: {e}")
+        print(f"Referral message fell back to a template: {type(e).__name__}")
         return fallback_message(contact, application, sender), True

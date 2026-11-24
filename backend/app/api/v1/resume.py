@@ -6,6 +6,7 @@ Handles base resume uploads, structured updates, and storage.
 import re
 import uuid
 from fastapi import APIRouter, Depends, File, UploadFile, HTTPException, Response, status
+from starlette.concurrency import run_in_threadpool
 from app.services.auth import get_current_user, CurrentUser
 from app.services.supabase import get_supabase_client
 from app.services.parser import extract_text_from_pdf, extract_text_from_docx, parse_resume_text
@@ -161,7 +162,7 @@ async def save_base_resume(
             saved_resume = Resume(**response.data[0])
             embed_resume(current_user.id, saved_resume)
         except Exception as embedding_error:
-            print(f"Warning: Failed to update vector database: {str(embedding_error)}")
+            print(f"Warning: Failed to update vector database: {type(embedding_error).__name__}")
         return response.data[0]
     except HTTPException:
         raise
@@ -193,12 +194,13 @@ async def upload_resume(
         )
 
     try:
-        parsed_resume = parse_resume_text(raw_text)
+        parsed_resume = await run_in_threadpool(parse_resume_text, raw_text)
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Failed to structure resume content: {str(e)}"
-        )
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="The AI service could not structure your resume. Try importing it again shortly, "
+                   "or enter your resume in the profile tabs."
+        ) from e
 
     supabase = get_supabase_client(user_jwt=current_user.token)
     storage_path = ""
@@ -211,7 +213,7 @@ async def upload_resume(
             file_options={"content-type": content_type}
         )
     except Exception as e:
-        print(f"Warning: Storage upload failed: {str(e)}")
+        print(f"Warning: Storage upload failed: {type(e).__name__}")
         storage_path = ""
 
     try:
@@ -234,10 +236,10 @@ async def upload_resume(
             saved_resume = Resume(**save_response.data[0])
             embed_resume(current_user.id, saved_resume)
         except Exception as embedding_error:
-            print(f"Warning: Failed to update vector database: {str(embedding_error)}")
+            print(f"Warning: Failed to update vector database: {type(embedding_error).__name__}")
         return save_response.data[0]
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Parsed successfully, but failed to save in database: {str(e)}"
-        )
+            detail="Your resume was parsed but could not be saved. Please try again."
+        ) from e

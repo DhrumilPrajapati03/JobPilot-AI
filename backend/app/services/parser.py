@@ -6,7 +6,7 @@ Handles text extraction from file bytes (PDF/DOCX) and structuring via LLMs.
 import docx
 import pypdf
 from io import BytesIO
-from app.models.resume import Resume
+from app.models.resume import Resume, ResumeContent
 from app.services.llm import get_default_llm, with_structured
 
 
@@ -39,8 +39,7 @@ def parse_resume_text(text: str) -> Resume:
     """
     llm = get_default_llm(task="light")
     
-    # Force the LLM to output structural JSON matching the Resume Pydantic model
-    structured_llm = with_structured(llm, Resume)
+    structured_llm = with_structured(llm, ResumeContent)
     
     prompt = (
         "You are an expert resume parsing assistant. Analyze the raw resume text provided "
@@ -53,5 +52,9 @@ def parse_resume_text(text: str) -> Resume:
     )
     
     # The return value is a fully populated and validated Resume Pydantic object
-    parsed_resume = structured_llm.invoke(prompt)
-    return parsed_resume
+    parsed = structured_llm.invoke(prompt)
+    content = ResumeContent.model_validate(parsed.model_dump() if hasattr(parsed, "model_dump") else parsed)
+    if not (content.headline.strip() or content.summary.strip() or content.experience or
+            content.skills.primary or content.skills.secondary or content.projects or content.education):
+        raise ValueError("No usable professional content was extracted")
+    return Resume.model_validate(content.model_dump())

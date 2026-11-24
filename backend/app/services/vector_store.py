@@ -1,11 +1,17 @@
 import os
 import chromadb
+import threading
+from collections import OrderedDict
+from app.config import settings
+from app.services.identity import digest, source_content
 from app.models.resume import Resume
 from app.services.llm import EMBEDDING_COLLECTIONS, get_embeddings
 
 # 1. Initialize the persistent local Chroma DB client
 # This creates a folder "data/chroma" inside your backend directory to persist data
-CHROMA_PATH = os.path.join(os.getcwd(), "data", "chroma")
+CHROMA_PATH = settings.CHROMA_PATH
+_indexed = OrderedDict()
+_index_lock = threading.RLock()
 chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
 
 # Get or create our vector collection
@@ -31,6 +37,12 @@ collection = chroma_client.get_or_create_collection(
 
 
 def embed_resume(user_id: str, resume: Resume) -> None:
+    # An upload and worker cache rebuild must not interleave delete/add operations.
+    with _index_lock:
+        _embed_resume(user_id,resume)
+
+
+def _embed_resume(user_id: str, resume: Resume) -> None:
     """Chunks, embeds, and saves a user's resume sections into ChromaDB.
     
     Before saving, it purges any old chunks for this user to avoid duplicates.
@@ -40,7 +52,7 @@ def embed_resume(user_id: str, resume: Resume) -> None:
     try:
         collection.delete(where={"user_id": user_id})
     except Exception as e:
-        print(f"No existing embeddings to delete for user {user_id}: {str(e)}")
+        print(f"Embedding cleanup unavailable ({type(e).__name__})")
 
     # Step B: Parse the Pydantic Resume model into individual text documents
     documents = []
@@ -102,7 +114,12 @@ def embed_resume(user_id: str, resume: Resume) -> None:
             metadatas=metadatas,
             ids=ids
         )
-        print(f"Successfully embedded {len(documents)} sections for user {user_id}")
+        print(f"Embedded {len(documents)} résumé sections")
+    with _index_lock:
+        _indexed[user_id] = digest(source_content(resume.model_dump()))
+        _indexed.move_to_end(user_id)
+        while len(_indexed)>256:
+            _indexed.popitem(last=False)
 
 
 def search_relevant(query: str, user_id: str, top_k: int = 5) -> list[dict]:
@@ -110,6 +127,18 @@ def search_relevant(query: str, user_id: str, top_k: int = 5) -> list[dict]:
     
     Filters search results specifically for the requesting user.
     """
+    if settings.APP_ENV == 'production':
+        # API and worker caches are independent and disposable. Supabase is canonical.
+        from app.services.supabase import get_supabase_admin_client
+        rows=get_supabase_admin_client().table('resumes').select('*').eq('user_id',user_id).eq('version','base').execute().data
+        with _index_lock:
+            if not rows:
+                collection.delete(where={'user_id':user_id})
+                _indexed.pop(user_id,None)
+                return []
+            source=digest(source_content(rows[0]))
+            if _indexed.get(user_id)!=source:
+                embed_resume(user_id,Resume.model_validate(rows[0]))
     results = collection.query(
         query_texts=[query],
         n_results=top_k,

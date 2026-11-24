@@ -75,7 +75,7 @@ class ConnectionManager:
             try:
                 await websocket.send_json(message)
             except Exception as e:
-                print(f"Error sending WebSocket update for run {run_id}: {str(e)}")
+                print(f"Error sending WebSocket update for run {run_id}: {type(e).__name__}")
                 self.disconnect(run_id, websocket)
 
     def _prune(self):

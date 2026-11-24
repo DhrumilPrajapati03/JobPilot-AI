@@ -137,7 +137,7 @@ export function ActivityGroup({ parts }: { parts: ToolPart[] }) {
   const isOpen = running || expanded;
 
   return (
-    <div className="rounded-lg border bg-card/60">
+    <div className="agent-activity rounded-lg border bg-card/60" data-state={running?'working':failed?'failed':'complete'}>
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}

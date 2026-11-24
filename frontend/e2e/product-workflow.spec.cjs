@@ -1,6 +1,6 @@
 const {test,expect}=require('@playwright/test');
 const ALICE='11111111-1111-4111-8111-111111111111',BOB='22222222-2222-4222-8222-222222222222';
-const jwt=uid=>Buffer.from(JSON.stringify({alg:'HS256',typ:'JWT'})).toString('base64url')+'.'+Buffer.from(JSON.stringify({sub:uid,email:uid===ALICE?'alice@example.invalid':'bob@example.invalid',exp:Math.floor(Date.now()/1000)+3600})).toString('base64url')+'.synthetic-signature';
+const jwt=uid=>Buffer.from(JSON.stringify({alg:'HS256',typ:'JWT'})).toString('base64url')+'.'+Buffer.from(JSON.stringify({sub:uid,email:uid===ALICE?'alice@example.invalid':'bob@example.invalid',exp:Math.floor(Date.now()/1000)+3600})).toString('base64url')+'.c3ludGhldGlj';
 async function signedIn(context,uid) {
   const user={id:uid,email:uid===ALICE?'alice@example.invalid':'bob@example.invalid',aud:'authenticated',role:'authenticated',app_metadata:{},user_metadata:{},created_at:'2026-10-29T00:00:00Z'};
   await context.addInitScript(({user,access_token})=>localStorage.setItem('sb-e2e-auth-token',JSON.stringify({access_token,refresh_token:'synthetic-refresh',expires_at:Math.floor(Date.now()/1000)+3600,expires_in:3600,token_type:'bearer',user})),{user,access_token:jwt(uid)});

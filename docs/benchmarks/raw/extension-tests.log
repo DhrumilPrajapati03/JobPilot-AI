@@ -1,0 +1,15 @@
+✔ an unrelated Render origin or iframe cannot replace the connection (8.0114ms)
+✔ approved top-level app can connect; API origin must be exact (3.2829ms)
+✔ form content scripts cannot read raw credentials (3.2464ms)
+✔ credentialed requests cannot leave the configured API or extension route allowlist (4.7739ms)
+✔ sessions bind to sender URL, tab, frame and current account; document scope cannot be forged (8.8396ms)
+✔ lost event acknowledgement replays the same key and preserves attempt across navigation (5.1345ms)
+✔ an in-flight response from an old account is discarded after reconnection (3.7599ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 120.4916

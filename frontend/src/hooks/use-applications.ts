@@ -144,12 +144,14 @@ export function useReportSubmission() {
 }
 
 export function useGenerateApplication() {
+  const owner=useAuthStore(s=>s.user?.id);
   const attempt = useRef<{ payload: string; key: string } | null>(null);
   return useMutation<GenerateApplicationResponse, Error, { jd_url?: string; jd_text?: string }>({
     mutationFn: async (data) => {
       const payload = JSON.stringify([useAuthStore.getState().user?.id, data]);
       if (attempt.current?.payload !== payload) attempt.current = { payload, key: crypto.randomUUID() };
       const response = await api.post<GenerateApplicationResponse>('/applications/generate', data, {
+        expectedUserId:owner,
         headers: { 'Idempotency-Key': attempt.current.key },
       });
       attempt.current = null;

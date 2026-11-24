@@ -101,5 +101,5 @@ class JDParserAgent:
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Failed to analyze job description: {str(e)}"
-            )
+                detail="The AI service could not analyze this job description. Try again shortly."
+            ) from e

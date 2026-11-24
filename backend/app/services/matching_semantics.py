@@ -1,6 +1,7 @@
 """CPU MiniLM similarity using an already installed model. No inference API calls."""
 import math
 import threading
+from pathlib import Path
 from functools import lru_cache
 
 from app.config import settings
@@ -13,6 +14,7 @@ def local_model():
     try:
         from chromadb.utils.embedding_functions import ONNXMiniLM_L6_V2
         class OfflineMiniLM(ONNXMiniLM_L6_V2):
+            DOWNLOAD_PATH = Path(settings.MINILM_CACHE_PATH) if settings.MINILM_CACHE_PATH else ONNXMiniLM_L6_V2.DOWNLOAD_PATH
             def _download_model_if_not_exists(self):
                 folder = self.DOWNLOAD_PATH / self.EXTRACTED_FOLDER_NAME
                 if not all((folder / name).is_file() for name in (

@@ -1,40 +1,76 @@
-# Render Blueprint for JobPilot: the API (Docker web service) and the web app (static site).
-# In Render: New → Blueprint → pick this repo. Fill in the secret values when prompted.
-# Full walkthrough: DEPLOY.md
+# Reviewed releases only. API and worker share one revision and environment.
+envVarGroups:
+  - name: jobpilot-backend
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: EXECUTION_MODE
+        value: durable
+      - key: USAGE_LIMITS_ENABLED
+        value: "true"
+      - key: LLM_PROVIDER
+        value: groq
+      - key: EMBEDDINGS_PROVIDER
+        value: local
+      - key: MATCHING_SEMANTIC
+        value: "true"
+      - key: DISCOVERY_AUTO_SCAN
+        value: "true"
+      - key: MAILBOX_ENABLED
+        value: "false"
+      - key: MAIL_SEND_ENABLED
+        value: "false"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: CRON_SECRET
+        generateValue: true
+      - key: OBSERVABILITY_TOKEN
+        generateValue: true
 
 services:
   - type: web
     name: jobpilot-api
     runtime: docker
-    plan: free
+    plan: standard
     rootDir: backend
     dockerfilePath: ./Dockerfile
-    healthCheckPath: /health
-    autoDeploy: true
+    healthCheckPath: /ready
+    autoDeploy: false
     envVars:
+      - fromGroup: jobpilot-backend
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_KEY
         sync: false
       - key: SUPABASE_SERVICE_KEY
         sync: false
-      - key: SUPABASE_JWT_SECRET
+      - key: GROQ_API_KEY
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+
+  - type: worker
+    name: jobpilot-worker
+    runtime: docker
+    plan: standard
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    dockerCommand: python -m app.workers.runner
+    autoDeploy: false
+    envVars:
+      - fromGroup: jobpilot-backend
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
         sync: false
       - key: GROQ_API_KEY
         sync: false
-      - key: LLM_PROVIDER
-        value: groq
-      - key: EMBEDDINGS_PROVIDER
-        value: local
-      - key: RESEND_API_KEY
-        sync: false
-      - key: CRON_SECRET
-        generateValue: true
-      # The web app's URL, e.g. https://jobpilot-web.onrender.com (comma-separate several).
       - key: FRONTEND_URL
         sync: false
-      - key: DEBUG
-        value: "false"
 
   - type: web
     name: jobpilot-web
@@ -42,17 +78,34 @@ services:
     rootDir: frontend
     buildCommand: npm ci && npm run build
     staticPublishPath: dist
-    autoDeploy: true
+    autoDeploy: false
     routes:
       - type: rewrite
         source: /*
         destination: /index.html
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+      - path: /index.html
+        name: Cache-Control
+        value: no-cache
     envVars:
+      - key: VITE_RELEASE_MODE
+        value: "true"
       - key: VITE_SUPABASE_URL
         sync: false
       - key: VITE_SUPABASE_ANON_KEY
         sync: false
-      # The API's URL, e.g. https://jobpilot-api.onrender.com, and the same with wss:// for live progress.
       - key: VITE_API_BASE_URL
         sync: false
       - key: VITE_WS_BASE_URL

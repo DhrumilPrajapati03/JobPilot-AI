@@ -4,6 +4,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './constants';
+import { legacySessionFromUrl } from './auth-redirect';
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   console.error(
@@ -12,6 +13,13 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 }
 
 // Create a singleton instance of the client
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    flowType: 'pkce',
+    detectSessionInUrl: typeof window === 'undefined' || !legacySessionFromUrl(window.location.href),
+    persistSession: true,
+    autoRefreshToken: true,
+  },
+});
 
 export default supabase;

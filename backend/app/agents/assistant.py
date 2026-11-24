@@ -658,11 +658,15 @@ async def execute_tool(name: str, args: dict, user: CurrentUser) -> dict:
     if not executor:
         return {"error": f"Unknown tool '{name}'."}
     try:
+        if settings.APP_ENV=='production':
+            from app.services.auth import _verify_token
+            if (await _verify_token(user.token)).get('sub')!=user.id:
+                raise HTTPException(401,'Sign in again before continuing.')
         return await executor(user, args or {})
     except HTTPException as e:
         return {"error": str(e.detail)}
     except Exception as e:  # tool failures are reported to the model, not raised
-        return {"error": f"{type(e).__name__}: {e}"}
+        return {"error": "This action is temporarily unavailable. Try again later."}
 
 
 # --- Agent loop -------------------------------------------------------------------
@@ -722,7 +726,7 @@ async def run_assistant(
     try:
         model = (llm or get_agent_llm()).bind_tools(TOOL_SCHEMAS)
     except Exception as e:
-        yield {"type": "error", "message": f"The assistant is unavailable: {e}"}
+        yield {"type": "error", "message": "The assistant is temporarily unavailable. Try again later."}
         yield {"type": "done"}
         return
 
@@ -768,5 +772,5 @@ async def run_assistant(
     except ModelsExhausted as e:
         yield {"type": "error", "message": str(e).split(" Last error:")[0]}
     except Exception as e:
-        yield {"type": "error", "message": f"{type(e).__name__}: {e}"}
+        yield {"type": "error", "message": "The assistant could not finish this request. Please try again."}
     yield {"type": "done"}

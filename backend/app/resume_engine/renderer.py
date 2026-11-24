@@ -72,7 +72,7 @@ async def render_resume_pdf(content: ResumeContentJSON) -> tuple[bytes, Renderer
         try:
             return await _render_latex(content), RendererType.LATEX
         except Exception as e:
-            print(f"⚠️ Warning: Tectonic compile failed ({str(e)}). Falling back to HTML/WeasyPrint.")
+            print(f"⚠️ Warning: Tectonic compile failed ({type(e).__name__}). Falling back to HTML/WeasyPrint.")
             return await _render_html(content), RendererType.HTML
     else:
         return await _render_html(content), RendererType.HTML

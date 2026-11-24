@@ -9,7 +9,7 @@ import httpx
 import pytest
 from fastapi import HTTPException, UploadFile
 from fastapi.testclient import TestClient
-from jose import jwt
+import jwt
 from starlette.websockets import WebSocketDisconnect
 
 from app.main import app

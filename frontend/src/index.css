@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
+@import "./styles/career-desk.css";
 
 /* ============================================================
    JobPilot — design tokens
@@ -7,28 +8,28 @@
    explicitly; `data-theme` on <html> overrides the OS preference.
    ============================================================ */
 :root {
-  --background: #faf9f7;
-  --foreground: #1f1e1d;
+  --background: #f6f6f2;
+  --foreground: #202722;
   --card: #ffffff;
-  --card-foreground: #1f1e1d;
+  --card-foreground: #202722;
   --popover: #ffffff;
-  --popover-foreground: #1f1e1d;
-  --primary: #1f1e1d;
+  --popover-foreground: #202722;
+  --primary: #225dcc;
   --primary-foreground: #ffffff;
-  --secondary: #f1efeb;
-  --secondary-foreground: #1f1e1d;
-  --muted: #f4f2ee;
-  --muted-foreground: #6b6966;
-  --accent: #0f7b6c;
+  --secondary: #eaf0e9;
+  --secondary-foreground: #202722;
+  --muted: #eef1eb;
+  --muted-foreground: #5b6a63;
+  --accent: #225dcc;
   --accent-foreground: #ffffff;
   --warning: #b45309;
   --warning-foreground: #ffffff;
   --destructive: #c4321f;
   --destructive-foreground: #ffffff;
-  --border: #e7e4de;
-  --input: #dedad3;
-  --ring: #0f7b6c;
-  --sidebar: #f3f1ed;
+  --border: #dbe2d9;
+  --input: #7c8e83;
+  --ring: #225dcc;
+  --sidebar: #151d1c;
 
   /* Status: chart marks (validated categorical set) + pill text/fill */
   --status-saved: #2a78d6;
@@ -42,33 +43,33 @@
   --status-interviewing-fg: #4a3aa7;
   --status-offer-fg: #8a5a00;
   --status-rejected-fg: #b0336a;
-  --status-archived-fg: #6b6966;
+  --status-archived-fg: #5b6a63;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --background: #1a1a19;
-    --foreground: #ecebe8;
-    --card: #222221;
-    --card-foreground: #ecebe8;
-    --popover: #262624;
-    --popover-foreground: #ecebe8;
-    --primary: #ecebe8;
-    --primary-foreground: #1a1a19;
-    --secondary: #2b2b29;
-    --secondary-foreground: #ecebe8;
-    --muted: #262624;
-    --muted-foreground: #a3a19c;
-    --accent: #3fb8a5;
-    --accent-foreground: #0b1f1c;
-    --warning: #f0a54a;
+    --background: #101716;
+    --foreground: #edf2ee;
+    --card: #18211e;
+    --card-foreground: #edf2ee;
+    --popover: #202b26;
+    --popover-foreground: #edf2ee;
+    --primary: #86bdff;
+    --primary-foreground: #0c1d35;
+    --secondary: #28352e;
+    --secondary-foreground: #edf2ee;
+    --muted: #202b26;
+    --muted-foreground: #a8bab0;
+    --accent: #86bdff;
+    --accent-foreground: #0c1d35;
+    --warning: #ffc47d;
     --warning-foreground: #1f1300;
-    --destructive: #f07762;
+    --destructive: #ff9e92;
     --destructive-foreground: #1f0905;
-    --border: #353533;
-    --input: #3d3d3a;
-    --ring: #3fb8a5;
-    --sidebar: #1f1f1e;
+    --border: #33463b;
+    --input: #6e8575;
+    --ring: #86bdff;
+    --sidebar: #101916;
 
     --status-saved: #3987e5;
     --status-applied: #199e70;
@@ -81,33 +82,33 @@
     --status-interviewing-fg: #bbb3f5;
     --status-offer-fg: #eec064;
     --status-rejected-fg: #ef9dbb;
-    --status-archived-fg: #a3a19c;
+    --status-archived-fg: #a8bab0;
   }
 }
 
 :root[data-theme='dark'] {
-  --background: #1a1a19;
-  --foreground: #ecebe8;
-  --card: #222221;
-  --card-foreground: #ecebe8;
-  --popover: #262624;
-  --popover-foreground: #ecebe8;
-  --primary: #ecebe8;
-  --primary-foreground: #1a1a19;
-  --secondary: #2b2b29;
-  --secondary-foreground: #ecebe8;
-  --muted: #262624;
-  --muted-foreground: #a3a19c;
-  --accent: #3fb8a5;
-  --accent-foreground: #0b1f1c;
-  --warning: #f0a54a;
+  --background: #101716;
+  --foreground: #edf2ee;
+  --card: #18211e;
+  --card-foreground: #edf2ee;
+  --popover: #202b26;
+  --popover-foreground: #edf2ee;
+  --primary: #86bdff;
+  --primary-foreground: #0c1d35;
+  --secondary: #28352e;
+  --secondary-foreground: #edf2ee;
+  --muted: #202b26;
+  --muted-foreground: #a8bab0;
+  --accent: #86bdff;
+  --accent-foreground: #0c1d35;
+  --warning: #ffc47d;
   --warning-foreground: #1f1300;
-  --destructive: #f07762;
+  --destructive: #ff9e92;
   --destructive-foreground: #1f0905;
-  --border: #353533;
-  --input: #3d3d3a;
-  --ring: #3fb8a5;
-  --sidebar: #1f1f1e;
+  --border: #33463b;
+  --input: #6e8575;
+  --ring: #86bdff;
+  --sidebar: #101916;
 
   --status-saved: #3987e5;
   --status-applied: #199e70;
@@ -120,7 +121,7 @@
   --status-interviewing-fg: #bbb3f5;
   --status-offer-fg: #eec064;
   --status-rejected-fg: #ef9dbb;
-  --status-archived-fg: #a3a19c;
+  --status-archived-fg: #a8bab0;
 }
 
 @theme inline {
@@ -187,6 +188,34 @@
   }
 }
 
+/* Shared brand and workspace foundation. */
+.brand { display:inline-flex;align-items:center;gap:10px;font-size:20px;font-weight:650;letter-spacing:-.04em;white-space:nowrap;color:var(--foreground); }
+.brand-mark { display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:var(--primary);color:var(--primary-foreground);box-shadow:0 3px 10px color-mix(in srgb,var(--primary) 14%,transparent); }
+.brand-ai { font-size:11px;letter-spacing:.04em;font-weight:500;color:var(--muted-foreground); }
+.sidebar-brand { display:flex;align-items:center;min-height:80px;padding:18px 24px;order:0; }
+.sidebar > div:nth-child(2) { order:1; }
+.sidebar > div:nth-child(2) > button { min-height:42px;background:var(--primary);color:var(--primary-foreground);padding-inline:14px; }
+.sidebar-workspace { order:2;margin-top:16px; }
+.sidebar-history { order:3;flex:1;border-top:1px solid var(--border);margin-top:12px; }
+.sidebar > div:last-child { order:4; }
+.sidebar-link { border:1px solid transparent;min-height:39px;margin-bottom:3px; }
+.sidebar-link[aria-current=page] { background:color-mix(in srgb,var(--primary) 13%,var(--sidebar));color:var(--accent);border-color:color-mix(in srgb,var(--primary) 18%,transparent); }
+.workspace-context { display:flex;align-items:center;gap:12px;padding:15px 32px;border-bottom:1px solid var(--border);font-size:11px;color:var(--muted-foreground); }
+.workspace-context > :first-child { text-transform:uppercase;letter-spacing:.1em; }
+.workspace-context > :last-child { color:var(--foreground);font-weight:500; }
+.workspace-content { padding-top:32px; }
+.workspace-content h1,.profile-header h2,.settings-header h2,.analytics-header h2 { font-size:clamp(24px,2.2vw,31px);letter-spacing:-.045em;line-height:1.25; }
+.workspace-content > div > header { margin-bottom:24px; }
+.workspace-skip { position:fixed;left:12px;top:-80px;z-index:100;padding:12px 18px;border-radius:8px;background:var(--primary);color:var(--primary-foreground); }
+.workspace-skip:focus { top:12px; }
+.login-layout { display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,420px);gap:80px;width:min(1040px,100%);align-items:center; }
+.login-intro h1 { font-size:clamp(32px,4vw,52px);line-height:1.12;letter-spacing:-.055em;font-weight:600;margin:18px 0; }
+.login-intro > p:not(.eyebrow) { max-width:420px;line-height:1.9; }
+.login-card { border:1px solid var(--border);border-radius:20px;background:var(--card);padding:36px;box-shadow:0 16px 60px color-mix(in srgb,var(--foreground) 6%,transparent); }
+.login-lock { display:grid;place-items:center;width:48px;height:48px;border-radius:14px;background:color-mix(in srgb,var(--primary) 10%,var(--card));color:var(--accent);margin-bottom:22px; }
+.login-error { padding:12px 14px;border:1px solid color-mix(in srgb,var(--destructive) 30%,transparent);border-radius:8px;background:color-mix(in srgb,var(--destructive) 6%,transparent); }
+@media(max-width:767px) { .login-layout { grid-template-columns:1fr;gap:32px;max-width:440px; }.login-intro h1 { font-size:34px; }.login-intro > ul,.login-intro > a:last-child { display:none; }.login-intro .eyebrow { margin-top:28px; }.login-card { padding:24px; }.workspace-context { padding:12px 16px; }.workspace-content { padding-top:24px; } }
+
 /* Card elevation used by <Card> */
 .shadow-premium {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
@@ -224,7 +253,7 @@
 .sidebar {
   display: flex;
   flex-direction: column;
-  width: 264px;
+  width: 248px;
   flex-shrink: 0;
   background: var(--color-sidebar);
   border-right: 1px solid var(--color-border);
@@ -463,7 +492,7 @@
 }
 
 .resume-contact {
-  color: #0f7b6c;
+  color: #225dcc;
   font-size: 0.78rem;
   margin-top: 4px;
   white-space: pre-wrap;

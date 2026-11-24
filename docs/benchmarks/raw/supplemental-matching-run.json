@@ -1,0 +1,12 @@
+{
+  "command": [
+    "D:/Projects/JobPilot AI/backend/.venv/Scripts/python.exe",
+    "../docs/benchmarks/offline_entry.py",
+    "../docs/benchmarks/measure_offline.py"
+  ],
+  "cwd": "backend",
+  "started_utc": "2026-11-11T19:29:01.533680+00:00",
+  "wall_seconds": 20.536534200000006,
+  "exit_code": 0,
+  "scope": "offline/synthetic local check; not production latency"
+}

@@ -1,0 +1,12 @@
+{
+  "command": [
+    "node",
+    "--test",
+    "tests/security.test.cjs"
+  ],
+  "cwd": "extension",
+  "started_utc": "2026-11-11T19:27:06.938455+00:00",
+  "wall_seconds": 0.19129650000013498,
+  "exit_code": 0,
+  "scope": "offline/synthetic local check; not production latency"
+}

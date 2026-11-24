@@ -446,7 +446,7 @@ async def draft_posting(supabase, user_id: str, posting_id: str, run_id: str, *,
             source=p.get("ats") or "discovery", supabase=supabase,
         )
     except Exception as e:
-        print(f"Draft for posting {posting_id} failed: {e}")
+        print(f"Draft for posting {posting_id} failed: {type(e).__name__}")
     update = (
         {"status": "drafted", "application_id": application_id}
         if application_id

@@ -1,0 +1,12 @@
+{
+  "command": [
+    "node",
+    "node_modules/@playwright/test/cli.js",
+    "test"
+  ],
+  "cwd": "extension",
+  "started_utc": "2026-11-11T19:27:07.244609+00:00",
+  "wall_seconds": 22.689566399999876,
+  "exit_code": 0,
+  "scope": "offline/synthetic local check; not production latency"
+}

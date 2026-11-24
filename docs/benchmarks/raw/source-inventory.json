@@ -1,0 +1,6576 @@
+[
+  {
+    "path": "backend/app/__init__.py",
+    "lines": 1,
+    "definitions": []
+  },
+  {
+    "path": "backend/app/agents/__init__.py",
+    "lines": 5,
+    "definitions": []
+  },
+  {
+    "path": "backend/app/agents/assistant.py",
+    "lines": 776,
+    "definitions": [
+      {
+        "name": "system_prompt",
+        "line": 51,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_fn",
+        "line": 89,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_compact_app",
+        "line": 242,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_get_overview",
+        "line": 257,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_list_applications",
+        "line": 265,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_get_application",
+        "line": 274,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_get_base_resume",
+        "line": 300,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_get_skill_gaps",
+        "line": 319,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_get_job_preferences",
+        "line": 323,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_get_saved_answers",
+        "line": 329,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_create_application",
+        "line": 333,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_discovery_guard",
+        "line": 350,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_get_briefing",
+        "line": 359,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_get_job_feed",
+        "line": 370,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_contact_view",
+        "line": 385,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_find_referrals",
+        "line": 389,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_propose_referral_request",
+        "line": 413,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_scan_jobs",
+        "line": 439,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_draft_job",
+        "line": 462,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_proposal",
+        "line": 482,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_propose_status_change",
+        "line": 493,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_propose_email_draft",
+        "line": 510,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_propose_cover_letter",
+        "line": 529,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_resume_text",
+        "line": 546,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_preview",
+        "line": 558,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_propose_resume_edit",
+        "line": 567,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_open_view",
+        "line": 620,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "execute_tool",
+        "line": 656,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_model_view",
+        "line": 678,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "get_agent_llm",
+        "line": 686,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_is_rejected_tool_call",
+        "line": 692,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_text_of",
+        "line": 698,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "to_langchain_messages",
+        "line": 710,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "run_assistant",
+        "line": 720,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "build",
+        "line": 362,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "feed",
+        "line": 375,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "start",
+        "line": 470,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/agents/cover_letter.py",
+    "lines": 53,
+    "definitions": [
+      {
+        "name": "CoverLetterAgent",
+        "line": 11,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "_get_llm",
+        "line": 16,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "generate",
+        "line": 19,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/agents/dm_writer.py",
+    "lines": 70,
+    "definitions": [
+      {
+        "name": "DMWriterAgent",
+        "line": 11,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "_get_llm",
+        "line": 16,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "generate",
+        "line": 19,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/agents/email_writer.py",
+    "lines": 100,
+    "definitions": [
+      {
+        "name": "EmailWriterAgent",
+        "line": 11,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "_get_llm",
+        "line": 16,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "generate",
+        "line": 19,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/agents/jd_parser.py",
+    "lines": 105,
+    "definitions": [
+      {
+        "name": "sanitize_jd_text",
+        "line": 22,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "JDParserAgent",
+        "line": 28,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "_scrape_url",
+        "line": 35,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "parse",
+        "line": 65,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/agents/orchestrator.py",
+    "lines": 311,
+    "definitions": [
+      {
+        "name": "_jsonable",
+        "line": 36,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_error_text",
+        "line": 41,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_emit",
+        "line": 47,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_referral_check",
+        "line": 54,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "run_agent_pipeline",
+        "line": 90,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/agents/research.py",
+    "lines": 25,
+    "definitions": [
+      {
+        "name": "ResearchAgent",
+        "line": 8,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "research",
+        "line": 9,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/agents/resume_tailor.py",
+    "lines": 135,
+    "definitions": [
+      {
+        "name": "ResumeTailorAgent",
+        "line": 18,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "_get_best_llm",
+        "line": 27,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "tailor",
+        "line": 31,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/agents/tracker.py",
+    "lines": 28,
+    "definitions": [
+      {
+        "name": "TrackerAgent",
+        "line": 12,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "log_application",
+        "line": 22,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "update_status",
+        "line": 26,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/api/__init__.py",
+    "lines": 1,
+    "definitions": []
+  },
+  {
+    "path": "backend/app/api/v1/__init__.py",
+    "lines": 1,
+    "definitions": []
+  },
+  {
+    "path": "backend/app/api/v1/agent.py",
+    "lines": 64,
+    "definitions": [
+      {
+        "name": "ChatMessage",
+        "line": 16,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "ChatRequest",
+        "line": 21,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "chat",
+        "line": 26,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "events",
+        "line": 42,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/api/v1/analytics.py",
+    "lines": 206,
+    "definitions": [
+      {
+        "name": "product_outcomes",
+        "line": 20,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_parse_ts",
+        "line": 37,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_pct",
+        "line": 47,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "get_analytics_summary",
+        "line": 52,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_norm",
+        "line": 129,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "get_skill_gaps",
+        "line": 134,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "in_base",
+        "line": 184,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/api/v1/answers.py",
+    "lines": 84,
+    "definitions": [
+      {
+        "name": "Answer",
+        "line": 16,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "AnswerBatch",
+        "line": 23,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "_table_missing",
+        "line": 27,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_raise_for",
+        "line": 32,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "list_answers",
+        "line": 42,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "save_answers",
+        "line": 53,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "delete_answer",
+        "line": 67,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "answers_for_llm",
+        "line": 75,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/api/v1/applications.py",
+    "lines": 441,
+    "definitions": [
+      {
+        "name": "ReportSubmissionRequest",
+        "line": 31,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "report_submission",
+        "line": 36,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "execution_history",
+        "line": 45,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "JDParseRequest",
+        "line": 62,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "ApplicationGenerateRequest",
+        "line": 68,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "StatusUpdateRequest",
+        "line": 75,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "LinkedInDM",
+        "line": 80,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "ApplicationUpdateRequest",
+        "line": 85,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "ColdEmailUpdateRequest",
+        "line": 96,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "_now",
+        "line": 106,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_get_owned_application",
+        "line": 110,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "parse_jd",
+        "line": 128,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "generate_application",
+        "line": 149,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "list_applications",
+        "line": 197,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "get_application_details",
+        "line": 261,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "update_application_details",
+        "line": 311,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "update_application_status",
+        "line": 330,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "update_cold_email",
+        "line": 386,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "delete_application",
+        "line": 415,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_write",
+        "line": 359,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/api/v1/auth.py",
+    "lines": 85,
+    "definitions": [
+      {
+        "name": "LoginRequest",
+        "line": 14,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "login",
+        "line": 18,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "get_me",
+        "line": 39,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "logout",
+        "line": 78,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/api/v1/autopilot.py",
+    "lines": 144,
+    "definitions": [
+      {
+        "name": "_client",
+        "line": 20,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_prefs",
+        "line": 24,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_setup_error",
+        "line": 32,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "autopilot_status",
+        "line": 39,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "apply_queue",
+        "line": 60,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "prepare",
+        "line": 66,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "digest_preview",
+        "line": 75,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "digest_send",
+        "line": 83,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "cron_tick",
+        "line": 97,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "create_extension_token",
+        "line": 118,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "list_extension_tokens",
+        "line": 131,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "revoke_extension_token",
+        "line": 140,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/api/v1/contacts.py",
+    "lines": 32,
+    "definitions": [
+      {
+        "name": "ResearchRequest",
+        "line": 11,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "research_contacts",
+        "line": 19,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "find_contacts",
+        "line": 24,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "list_contacts",
+        "line": 28,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "domain",
+        "line": 16,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/api/v1/discovery.py",
+    "lines": 302,
+    "definitions": [
+      {
+        "name": "_board",
+        "line": 20,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "SourceCreate",
+        "line": 76,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "BoardRef",
+        "line": 81,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "BulkSourceCreate",
+        "line": 86,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "SourceUpdate",
+        "line": 90,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "PostingUpdate",
+        "line": 95,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "_guard",
+        "line": 100,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_client",
+        "line": 122,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_owned",
+        "line": 126,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "list_sources",
+        "line": 136,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "add_source",
+        "line": 148,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "add_sources",
+        "line": 174,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "update_source",
+        "line": 196,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "delete_source",
+        "line": 208,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "scan_now",
+        "line": 220,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "list_postings",
+        "line": 232,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "get_posting",
+        "line": 264,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "update_posting",
+        "line": 270,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "draft_posting",
+        "line": 282,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "get_briefing",
+        "line": 297,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "bucket",
+        "line": 244,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/api/v1/email.py",
+    "lines": 206,
+    "definitions": [
+      {
+        "name": "admin",
+        "line": 23,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "owned",
+        "line": 28,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "active_connection",
+        "line": 34,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "CompleteConnection",
+        "line": 40,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "DraftBody",
+        "line": 44,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "CreateDraft",
+        "line": 61,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "EditDraft",
+        "line": 66,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "Revision",
+        "line": 70,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "ReplyReview",
+        "line": 74,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "attachment",
+        "line": 78,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "connection_status",
+        "line": 93,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "start_connection",
+        "line": 101,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "complete_connection",
+        "line": 107,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "disconnect_connection",
+        "line": 118,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "create_message",
+        "line": 130,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "history",
+        "line": 139,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "edit_message",
+        "line": 152,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "approve",
+        "line": 160,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "send",
+        "line": 165,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "cancel",
+        "line": 172,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "deprecated_send",
+        "line": 177,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "sync",
+        "line": 182,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "download_attachment",
+        "line": 190,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "replies",
+        "line": 198,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "review_reply",
+        "line": 204,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "address",
+        "line": 52,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "subject_header",
+        "line": 56,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/api/v1/extension.py",
+    "lines": 224,
+    "definitions": [
+      {
+        "name": "ExtensionUser",
+        "line": 28,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "get_extension_user",
+        "line": 34,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "FieldIn",
+        "line": 53,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "FillRequest",
+        "line": 61,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "MatchRequest",
+        "line": 67,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "AppliedRequest",
+        "line": 72,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "SessionRequest",
+        "line": 78,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "EventRequest",
+        "line": 85,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "DocumentRequest",
+        "line": 92,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "SavedAnswer",
+        "line": 96,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "AnswersRequest",
+        "line": 101,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "_application",
+        "line": 105,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_key",
+        "line": 115,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "me",
+        "line": 124,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "queue",
+        "line": 130,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "match",
+        "line": 135,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "fill",
+        "line": 149,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "resume_pdf",
+        "line": 165,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "start_session",
+        "line": 182,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "record_event",
+        "line": 187,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "session_document",
+        "line": 195,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "mark_applied",
+        "line": 205,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "save_answers",
+        "line": 213,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/api/v1/network.py",
+    "lines": 271,
+    "definitions": [
+      {
+        "name": "ContactCreate",
+        "line": 23,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "ContactUpdate",
+        "line": 32,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "ReferralCreate",
+        "line": 41,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "ReferralUpdate",
+        "line": 47,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "_guard",
+        "line": 53,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_client",
+        "line": 69,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_owned",
+        "line": 73,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_all_contacts",
+        "line": 80,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "import_connections",
+        "line": 87,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "list_contacts",
+        "line": 117,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "add_contact",
+        "line": 134,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "update_contact",
+        "line": 143,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "delete_contact",
+        "line": 159,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "network_companies",
+        "line": 168,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_request_view",
+        "line": 198,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "referrals_for_application",
+        "line": 203,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "create_referral",
+        "line": 223,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_draft",
+        "line": 243,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "update_referral",
+        "line": 250,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "delete_referral",
+        "line": 266,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/api/v1/operations.py",
+    "lines": 57,
+    "definitions": [
+      {
+        "name": "check_readiness",
+        "line": 18,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "ready",
+        "line": 41,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "operational_metrics",
+        "line": 48,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/api/v1/profile.py",
+    "lines": 138,
+    "definitions": [
+      {
+        "name": "onboarding_status",
+        "line": 19,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "ConfirmFacts",
+        "line": 27,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "get_facts",
+        "line": 33,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "confirm_facts",
+        "line": 41,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "revoke_fact",
+        "line": 54,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "get_profile",
+        "line": 61,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "update_profile",
+        "line": 98,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/api/v1/recommendations.py",
+    "lines": 110,
+    "definitions": [
+      {
+        "name": "recommendation_status",
+        "line": 16,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "Snapshot",
+        "line": 20,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "Impression",
+        "line": 31,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "Feedback",
+        "line": 39,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "unavailable",
+        "line": 50,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "feedback",
+        "line": 57,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "update_feedback",
+        "line": 66,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "snapshot",
+        "line": 75,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "impression",
+        "line": 85,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "experiment",
+        "line": 99,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "unique",
+        "line": 25,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "validate_reason",
+        "line": 44,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/api/v1/research.py",
+    "lines": 60,
+    "definitions": [
+      {
+        "name": "ResearchRequest",
+        "line": 13,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "latest",
+        "line": 18,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "get_research",
+        "line": 23,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "start_research",
+        "line": 34,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "research_cover",
+        "line": 44,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/api/v1/resume.py",
+    "lines": 245,
+    "definitions": [
+      {
+        "name": "_latest_tailored_resume",
+        "line": 23,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "get_tailored_resume",
+        "line": 39,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "update_tailored_resume",
+        "line": 54,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "download_tailored_resume_pdf",
+        "line": 87,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "get_base_resume",
+        "line": 115,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "save_base_resume",
+        "line": 137,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "upload_resume",
+        "line": 177,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/api/v1/router.py",
+    "lines": 95,
+    "definitions": []
+  },
+  {
+    "path": "backend/app/api/v1/runs.py",
+    "lines": 61,
+    "definitions": [
+      {
+        "name": "recent_runs",
+        "line": 14,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "retry_run",
+        "line": 28,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "get_run",
+        "line": 43,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "get_events",
+        "line": 54,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/api/v1/templates.py",
+    "lines": 41,
+    "definitions": [
+      {
+        "name": "TemplateUpdate",
+        "line": 12,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "list_templates",
+        "line": 18,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "save_template",
+        "line": 26,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/config.py",
+    "lines": 103,
+    "definitions": [
+      {
+        "name": "Settings",
+        "line": 13,
+        "kind": "ClassDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/main.py",
+    "lines": 124,
+    "definitions": [
+      {
+        "name": "lifespan",
+        "line": 24,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "health_check",
+        "line": 74,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "agent_stream",
+        "line": 87,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/models/__init__.py",
+    "lines": 25,
+    "definitions": []
+  },
+  {
+    "path": "backend/app/models/application.py",
+    "lines": 75,
+    "definitions": [
+      {
+        "name": "ApplicationStatus",
+        "line": 13,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "JDAnalysis",
+        "line": 23,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "JobApplication",
+        "line": 40,
+        "kind": "ClassDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/models/contact.py",
+    "lines": 34,
+    "definitions": [
+      {
+        "name": "HRContact",
+        "line": 12,
+        "kind": "ClassDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/models/email.py",
+    "lines": 40,
+    "definitions": [
+      {
+        "name": "ColdEmail",
+        "line": 12,
+        "kind": "ClassDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/models/resume.py",
+    "lines": 112,
+    "definitions": [
+      {
+        "name": "ResumeExperience",
+        "line": 12,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "ResumeSkills",
+        "line": 20,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "ResumeProject",
+        "line": 26,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "ResumeEducation",
+        "line": 33,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "ResumeCertification",
+        "line": 40,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "ResumeContent",
+        "line": 47,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "Resume",
+        "line": 60,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "TailoredResume",
+        "line": 89,
+        "kind": "ClassDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/models/template.py",
+    "lines": 44,
+    "definitions": [
+      {
+        "name": "TemplateType",
+        "line": 13,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "Template",
+        "line": 20,
+        "kind": "ClassDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/models/user.py",
+    "lines": 69,
+    "definitions": [
+      {
+        "name": "WorkPreferences",
+        "line": 16,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "UserProfile",
+        "line": 47,
+        "kind": "ClassDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/recommendation/__init__.py",
+    "lines": 1,
+    "definitions": []
+  },
+  {
+    "path": "backend/app/recommendation/evaluation.py",
+    "lines": 19,
+    "definitions": [
+      {
+        "name": "metrics",
+        "line": 5,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "promotion_allowed",
+        "line": 15,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/recommendation/ranking.py",
+    "lines": 84,
+    "definitions": [
+      {
+        "name": "verify_manifest",
+        "line": 15,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "model",
+        "line": 30,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "rerank",
+        "line": 36,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "execute",
+        "line": 66,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "evaluate",
+        "line": 72,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/recommendation/service.py",
+    "lines": 50,
+    "definitions": [
+      {
+        "name": "create_snapshot",
+        "line": 5,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "set_feedback",
+        "line": 41,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/resume_engine/__init__.py",
+    "lines": 4,
+    "definitions": []
+  },
+  {
+    "path": "backend/app/resume_engine/builder.py",
+    "lines": 53,
+    "definitions": [
+      {
+        "name": "build_render_content",
+        "line": 6,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/resume_engine/renderer.py",
+    "lines": 131,
+    "definitions": [
+      {
+        "name": "_escape_latex",
+        "line": 37,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_deep_escape_latex",
+        "line": 50,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "render_resume_pdf",
+        "line": 61,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_render_latex",
+        "line": 81,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_render_html",
+        "line": 112,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/resume_engine/schemas.py",
+    "lines": 52,
+    "definitions": [
+      {
+        "name": "RendererType",
+        "line": 10,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "ExperienceItem",
+        "line": 14,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "ProjectItem",
+        "line": 21,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "EducationItem",
+        "line": 27,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "SkillSet",
+        "line": 33,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "ResumeContentJSON",
+        "line": 37,
+        "kind": "ClassDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/resume_engine/templates/html/standard.html.j2",
+    "lines": 121
+  },
+  {
+    "path": "backend/app/resume_engine/templates/latex/standard.tex.j2",
+    "lines": 85
+  },
+  {
+    "path": "backend/app/resume_engine/validator.py",
+    "lines": 149,
+    "definitions": [
+      {
+        "name": "validate_page_count",
+        "line": 10,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "validate_no_hallucinations",
+        "line": 20,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "calculate_ats_score",
+        "line": 82,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_normalise",
+        "line": 136,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_keyword_present",
+        "line": 144,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "check_numbers",
+        "line": 33,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/__init__.py",
+    "lines": 1,
+    "definitions": []
+  },
+  {
+    "path": "backend/app/services/application_execution.py",
+    "lines": 192,
+    "definitions": [
+      {
+        "name": "page_url",
+        "line": 27,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "page_key",
+        "line": 45,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "owned",
+        "line": 61,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "command",
+        "line": 68,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "session",
+        "line": 80,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "start",
+        "line": 87,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "Observation",
+        "line": 123,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "Preparation",
+        "line": 132,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "Attempt",
+        "line": 140,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "Confirmation",
+        "line": 145,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "append",
+        "line": 150,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "report",
+        "line": 176,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "session_exists",
+        "line": 191,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/auth.py",
+    "lines": 186,
+    "definitions": [
+      {
+        "name": "_fetch_jwks",
+        "line": 35,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_get_jwk_for_kid",
+        "line": 52,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_verify_token",
+        "line": 77,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "get_current_user_id",
+        "line": 156,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "CurrentUser",
+        "line": 165,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "get_current_user",
+        "line": 172,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/autopilot.py",
+    "lines": 321,
+    "definitions": [
+      {
+        "name": "_now",
+        "line": 37,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_missing_table",
+        "line": 41,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "apply_url",
+        "line": 48,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_posting_for",
+        "line": 60,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "application_apply_url",
+        "line": 76,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "load_answers",
+        "line": 92,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "applicant_context",
+        "line": 99,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_greenhouse_form",
+        "line": 108,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "save_prepared",
+        "line": 123,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "prepare_application_form",
+        "line": 140,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "build_queue",
+        "line": 162,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "hash_token",
+        "line": 199,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "new_token",
+        "line": 203,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "server_ready",
+        "line": 209,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "account_email",
+        "line": 213,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "local_now",
+        "line": 221,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "scan_hour",
+        "line": 229,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_save_state",
+        "line": 233,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "tick",
+        "line": 237,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_tick",
+        "line": 245,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "scheduler_loop",
+        "line": 307,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/company_research.py",
+    "lines": 29,
+    "definitions": [
+      {
+        "name": "owned",
+        "line": 7,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "execute",
+        "line": 14,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "collect",
+        "line": 20,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "save",
+        "line": 26,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/digest.py",
+    "lines": 206,
+    "definitions": [
+      {
+        "name": "DigestError",
+        "line": 18,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "app_url",
+        "line": 22,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_safe",
+        "line": 26,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "build_digest_data",
+        "line": 33,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "subject_for",
+        "line": 61,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_e",
+        "line": 78,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_section",
+        "line": 82,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_row",
+        "line": 90,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "render_digest",
+        "line": 101,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "email_configured",
+        "line": 177,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "send_email",
+        "line": 181,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "send_digest",
+        "line": 202,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/discovery.py",
+    "lines": 522,
+    "definitions": [
+      {
+        "name": "DiscoveryError",
+        "line": 56,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "_now",
+        "line": 60,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_parse_ts",
+        "line": 64,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "is_table_missing",
+        "line": 74,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_chunks",
+        "line": 79,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_spawn",
+        "line": 84,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "load_preferences",
+        "line": 91,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_load_location",
+        "line": 100,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_evaluate",
+        "line": 105,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_rescore_stored",
+        "line": 125,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_load_base_resume",
+        "line": 156,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_posting_row",
+        "line": 161,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "scan_user",
+        "line": 188,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_scan",
+        "line": 211,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "drafts_today",
+        "line": 356,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "start_auto_drafts",
+        "line": 363,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "begin_draft",
+        "line": 384,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_run_drafts",
+        "line": 408,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "start_manual_draft",
+        "line": 414,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "draft_posting",
+        "line": 422,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "server_scans_enabled",
+        "line": 459,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "compact_posting",
+        "line": 464,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "build_briefing",
+        "line": 471,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "worth_details",
+        "line": 240,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "fit",
+        "line": 483,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "keep",
+        "line": 241,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "fetch",
+        "line": 249,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/eligibility.py",
+    "lines": 70,
+    "definitions": [
+      {
+        "name": "seniority",
+        "line": 8,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "experience_requirement",
+        "line": 18,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "evaluate_eligibility",
+        "line": 33,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "add",
+        "line": 35,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/form_answers.py",
+    "lines": 395,
+    "definitions": [
+      {
+        "name": "FormField",
+        "line": 40,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "FieldAnswer",
+        "line": 49,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "ApplicantContext",
+        "line": 64,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "build_context",
+        "line": 83,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_words",
+        "line": 112,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_similarity",
+        "line": 116,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_saved",
+        "line": 123,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_best_saved",
+        "line": 132,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "match_option",
+        "line": 149,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_choice",
+        "line": 179,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_years_with",
+        "line": 192,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_rule_answer",
+        "line": 204,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_from_bank",
+        "line": 282,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_resume_brief",
+        "line": 294,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_ai_drafts",
+        "line": 305,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "answer_fields",
+        "line": 327,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "summarise",
+        "line": 356,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "greenhouse_fields",
+        "line": 373,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "to_dict",
+        "line": 59,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "give",
+        "line": 208,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/gmail_broker.py",
+    "lines": 106,
+    "definitions": [
+      {
+        "name": "BrokerError",
+        "line": 11,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "configured",
+        "line": 17,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "safe_id",
+        "line": 21,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "GmailBroker",
+        "line": 27,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 12,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "request",
+        "line": 28,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "link",
+        "line": 49,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "verify",
+        "line": 60,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "complete",
+        "line": 70,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "disconnect",
+        "line": 79,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "gmail",
+        "line": 83,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/identity.py",
+    "lines": 53,
+    "definitions": [
+      {
+        "name": "digest",
+        "line": 8,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "source_content",
+        "line": 12,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "extract_facts",
+        "line": 16,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "load_vault",
+        "line": 35,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "attach_confirmation",
+        "line": 50,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "add",
+        "line": 19,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/job_boards.py",
+    "lines": 416,
+    "definitions": [
+      {
+        "name": "BoardError",
+        "line": 56,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "Posting",
+        "line": 61,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "FetchOptions",
+        "line": 77,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "parse_board",
+        "line": 89,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_company_from_slug",
+        "line": 109,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_html_to_text",
+        "line": 116,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_iso_from_ms",
+        "line": 129,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_remote_from_text",
+        "line": 136,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_get_json",
+        "line": 141,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_greenhouse",
+        "line": 153,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_lever",
+        "line": 178,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_ashby",
+        "line": 205,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_smartrecruiters_text",
+        "line": 239,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_smartrecruiters",
+        "line": 249,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_cached",
+        "line": 303,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_ts_to_iso",
+        "line": 312,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_himalayas",
+        "line": 320,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_remotive",
+        "line": 363,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "fetch_board",
+        "line": 406,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "to_dict",
+        "line": 72,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "detail",
+        "line": 284,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "search",
+        "line": 324,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "search",
+        "line": 367,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/job_filters.py",
+    "lines": 96,
+    "definitions": [
+      {
+        "name": "india_eligibility_flag",
+        "line": 12,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_contains_phrase",
+        "line": 54,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "evaluate_skip_rules",
+        "line": 61,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/job_identity.py",
+    "lines": 45,
+    "definitions": [
+      {
+        "name": "norm",
+        "line": 7,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "canonical_url",
+        "line": 11,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "identity_keys",
+        "line": 27,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/job_matching.py",
+    "lines": 237,
+    "definitions": [
+      {
+        "name": "CandidateProfile",
+        "line": 83,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "Fit",
+        "line": 95,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "_norm",
+        "line": 103,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_stem",
+        "line": 110,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_title_words",
+        "line": 114,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "build_profile",
+        "line": 118,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_mentions",
+        "line": 143,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "title_match",
+        "line": 149,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "score_posting",
+        "line": 172,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "user_country",
+        "line": 209,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "region_flag",
+        "line": 215,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "location_flag",
+        "line": 230,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/llm.py",
+    "lines": 370,
+    "definitions": [
+      {
+        "name": "is_configured",
+        "line": 33,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "get_llm_client",
+        "line": 43,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "default_provider",
+        "line": 91,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "ModelsExhausted",
+        "line": 100,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "_is_unavailable",
+        "line": 109,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_retry_after",
+        "line": 118,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_friendly_wait",
+        "line": 127,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "ModelChain",
+        "line": 132,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "groq_models",
+        "line": 209,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "get_chat_llm",
+        "line": 219,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "get_default_llm",
+        "line": 228,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "with_structured",
+        "line": 236,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "ChromaDefaultEmbeddings",
+        "line": 268,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "HuggingFaceAPIEmbeddings",
+        "line": 289,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "FallbackEmbeddings",
+        "line": 316,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "get_embeddings",
+        "line": 356,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "get_embeddings_client",
+        "line": 368,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 139,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_derive",
+        "line": 142,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "bind_tools",
+        "line": 145,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "with_structured_output",
+        "line": 148,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_order",
+        "line": 151,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_note",
+        "line": 156,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_exhausted",
+        "line": 160,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "ainvoke",
+        "line": 167,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "invoke",
+        "line": 179,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "astream",
+        "line": 191,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 273,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "embed_documents",
+        "line": 278,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "embed_query",
+        "line": 285,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 291,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_call_api",
+        "line": 295,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "embed_documents",
+        "line": 309,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "embed_query",
+        "line": 312,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 320,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_fail_over",
+        "line": 327,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "embed_documents",
+        "line": 331,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "embed_query",
+        "line": 339,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "messages",
+        "line": 252,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/mailbox.py",
+    "lines": 220,
+    "definitions": [
+      {
+        "name": "valid_email",
+        "line": 23,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "public_message",
+        "line": 30,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "command",
+        "line": 38,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "mime_message",
+        "line": 49,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "header_map",
+        "line": 65,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "body_text",
+        "line": 69,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "classify_reply",
+        "line": 92,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "observed_replies",
+        "line": 104,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "result",
+        "line": 123,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "reconcile",
+        "line": 128,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "execute_send",
+        "line": 153,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "execute_sync",
+        "line": 189,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "schedule_sync",
+        "line": 215,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "walk",
+        "line": 71,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/matching_evaluation.py",
+    "lines": 28,
+    "definitions": [
+      {
+        "name": "evaluate_dataset",
+        "line": 7,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/matching_semantics.py",
+    "lines": 53,
+    "definitions": [
+      {
+        "name": "local_model",
+        "line": 13,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "vector",
+        "line": 32,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "similarity",
+        "line": 41,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "OfflineMiniLM",
+        "line": 16,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "_download_model_if_not_exists",
+        "line": 18,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/materials.py",
+    "lines": 146,
+    "definitions": [
+      {
+        "name": "unpack_notes",
+        "line": 27,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "pack_notes",
+        "line": 50,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "normalize_application",
+        "line": 62,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "is_missing_column_error",
+        "line": 77,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_to_packed_payload",
+        "line": 83,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "insert_application",
+        "line": 94,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "update_application",
+        "line": 107,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_write",
+        "line": 129,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/observability.py",
+    "lines": 107,
+    "definitions": [
+      {
+        "name": "Metrics",
+        "line": 15,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "safe_sentry_event",
+        "line": 52,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "setup_monitoring",
+        "line": 60,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "capture_error",
+        "line": 75,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "RequestMetricsMiddleware",
+        "line": 81,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 16,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "observe",
+        "line": 21,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "snapshot",
+        "line": 34,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 82,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__call__",
+        "line": 84,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "measured_send",
+        "line": 89,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/onboarding.py",
+    "lines": 25,
+    "definitions": [
+      {
+        "name": "status",
+        "line": 5,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/parser.py",
+    "lines": 60,
+    "definitions": [
+      {
+        "name": "extract_text_from_pdf",
+        "line": 13,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "extract_text_from_docx",
+        "line": 26,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "parse_resume_text",
+        "line": 35,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/pdf.py",
+    "lines": 34,
+    "definitions": [
+      {
+        "name": "render_html_resume",
+        "line": 10,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "generate_pdf_from_html",
+        "line": 24,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/production.py",
+    "lines": 31,
+    "definitions": [
+      {
+        "name": "validate_production",
+        "line": 6,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/recruiters.py",
+    "lines": 68,
+    "definitions": [
+      {
+        "name": "hunter",
+        "line": 14,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "domain_name",
+        "line": 26,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "research",
+        "line": 33,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/referrals.py",
+    "lines": 322,
+    "definitions": [
+      {
+        "name": "company_key",
+        "line": 50,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_aliases",
+        "line": 58,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_tokens",
+        "line": 66,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_contains",
+        "line": 70,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "companies_match",
+        "line": 76,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "NetworkIndex",
+        "line": 87,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "load_index",
+        "line": 118,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "contact_counts",
+        "line": 125,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "is_table_missing",
+        "line": 134,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "dedupe_key",
+        "line": 141,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_parse_date",
+        "line": 150,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "contact_row",
+        "line": 160,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "ImportError_",
+        "line": 183,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "_connections_from_zip",
+        "line": 190,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "parse_linkedin_connections",
+        "line": 206,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "RankedContact",
+        "line": 257,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "rank_contacts",
+        "line": 263,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "fallback_message",
+        "line": 287,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "draft_referral_message",
+        "line": 298,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 90,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "find",
+        "line": 101,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "count",
+        "line": 114,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/request_limits.py",
+    "lines": 49,
+    "definitions": [
+      {
+        "name": "UploadBodyLimitMiddleware",
+        "line": 7,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 13,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__call__",
+        "line": 16,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "bounded_receive",
+        "line": 41,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/run_stream.py",
+    "lines": 67,
+    "definitions": [
+      {
+        "name": "stream_run",
+        "line": 13,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/runs.py",
+    "lines": 116,
+    "definitions": [
+      {
+        "name": "LeaseLost",
+        "line": 27,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "PermanentRunError",
+        "line": 31,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "durable_enabled",
+        "line": 35,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "RunStore",
+        "line": 39,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "enqueue_for_user",
+        "line": 99,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "public_run",
+        "line": 112,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 40,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "rpc",
+        "line": 43,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "enqueue",
+        "line": 46,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "claim",
+        "line": 63,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "renew",
+        "line": 66,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "checkpoint",
+        "line": 69,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "emit",
+        "line": 72,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "finish",
+        "line": 75,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "get",
+        "line": 79,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "recent",
+        "line": 83,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "events",
+        "line": 86,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "replay_cursor",
+        "line": 93,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/safe_fetch.py",
+    "lines": 89,
+    "definitions": [
+      {
+        "name": "UnsafeURL",
+        "line": 18,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "public_target",
+        "line": 22,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "fetch_public_html",
+        "line": 48,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/supabase.py",
+    "lines": 62,
+    "definitions": [
+      {
+        "name": "get_supabase_client",
+        "line": 11,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "get_supabase_admin_client",
+        "line": 36,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "select_all",
+        "line": 50,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/uploads.py",
+    "lines": 32,
+    "definitions": [
+      {
+        "name": "read_resume",
+        "line": 10,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/usage.py",
+    "lines": 19,
+    "definitions": [
+      {
+        "name": "reserve",
+        "line": 8,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/vector_store.py",
+    "lines": 165,
+    "definitions": [
+      {
+        "name": "ChromaEmbeddingFunction",
+        "line": 22,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "embed_resume",
+        "line": 39,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_embed_resume",
+        "line": 45,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "search_relevant",
+        "line": 125,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__call__",
+        "line": 23,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "name",
+        "line": 26,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "embed_query",
+        "line": 29,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/websocket.py",
+    "lines": 90,
+    "definitions": [
+      {
+        "name": "ConnectionManager",
+        "line": 17,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 18,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "register",
+        "line": 24,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "connect",
+        "line": 31,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "disconnect",
+        "line": 55,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "is_finished",
+        "line": 64,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "send_update",
+        "line": 67,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_prune",
+        "line": 81,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/services/writing_evidence.py",
+    "lines": 33,
+    "definitions": [
+      {
+        "name": "with_resume",
+        "line": 7,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "templates_for",
+        "line": 11,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "messages",
+        "line": 21,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/workers/__init__.py",
+    "lines": 1,
+    "definitions": []
+  },
+  {
+    "path": "backend/app/workers/runner.py",
+    "lines": 181,
+    "definitions": [
+      {
+        "name": "Worker",
+        "line": 24,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "main",
+        "line": 126,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 25,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "run_once",
+        "line": 32,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "execute",
+        "line": 82,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "report_health",
+        "line": 139,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "heartbeat",
+        "line": 40,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "scan",
+        "line": 98,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "render",
+        "line": 110,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "deliver",
+        "line": 115,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/workflows/__init__.py",
+    "lines": 1,
+    "definitions": []
+  },
+  {
+    "path": "backend/app/workflows/application.py",
+    "lines": 168,
+    "definitions": [
+      {
+        "name": "GraphState",
+        "line": 20,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "run_application",
+        "line": 24,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "ensure_auto_current",
+        "line": 29,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "parse",
+        "line": 52,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "profile",
+        "line": 63,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "analysis",
+        "line": 71,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "tailor",
+        "line": 78,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "pdf",
+        "line": 84,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "write",
+        "line": 93,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "outreach_done",
+        "line": 100,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "persist",
+        "line": 104,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "referral",
+        "line": 117,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "prepare",
+        "line": 137,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "node",
+        "line": 160,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/app/workflows/context.py",
+    "lines": 48,
+    "definitions": [
+      {
+        "name": "ExecutionContext",
+        "line": 8,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "__init__",
+        "line": 9,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "check",
+        "line": 15,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "emit",
+        "line": 19,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "save",
+        "line": 26,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "stage",
+        "line": 33,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/scripts/check_audit.py",
+    "lines": 23,
+    "definitions": [
+      {
+        "name": "main",
+        "line": 8,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/scripts/check_database.py",
+    "lines": 95,
+    "definitions": [
+      {
+        "name": "sql",
+        "line": 39,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "backup_restore",
+        "line": 47,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "main",
+        "line": 60,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/scripts/check_image.py",
+    "lines": 42,
+    "definitions": [
+      {
+        "name": "main",
+        "line": 34,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/scripts/check_storage_access.py",
+    "lines": 69,
+    "definitions": [
+      {
+        "name": "check",
+        "line": 17,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/scripts/check_worker_recovery.py",
+    "lines": 99,
+    "definitions": [
+      {
+        "name": "SQLStore",
+        "line": 19,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "child",
+        "line": 44,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "check",
+        "line": 63,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 20,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "query",
+        "line": 22,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "rpc",
+        "line": 27,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "claim",
+        "line": 37,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "renew",
+        "line": 38,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "checkpoint",
+        "line": 39,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "emit",
+        "line": 40,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "finish",
+        "line": 41,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "literal",
+        "line": 29,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "RecoveryWorker",
+        "line": 49,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "execute",
+        "line": 50,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "persist",
+        "line": 51,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/scripts/database_bundle.py",
+    "lines": 28,
+    "definitions": [
+      {
+        "name": "bundle",
+        "line": 11,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/scripts/evaluate_matching.py",
+    "lines": 25,
+    "definitions": []
+  },
+  {
+    "path": "backend/scripts/evaluate_recommendations.py",
+    "lines": 70,
+    "definitions": [
+      {
+        "name": "evaluate",
+        "line": 21,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "main",
+        "line": 31,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "cross",
+        "line": 52,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "bge",
+        "line": 61,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/scripts/prepare_models.py",
+    "lines": 35,
+    "definitions": [
+      {
+        "name": "main",
+        "line": 10,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/tests/fixtures/browser_server.py",
+    "lines": 113,
+    "definitions": [
+      {
+        "name": "verify",
+        "line": 50,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "user",
+        "line": 55,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "render",
+        "line": 71,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "parse",
+        "line": 73,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "tailor",
+        "line": 74,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "cover",
+        "line": 75,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "emails",
+        "line": 76,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "dms",
+        "line": 77,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "rpc",
+        "line": 81,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "fixture_pdf",
+        "line": 109,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/tests/run_offline.py",
+    "lines": 18,
+    "definitions": []
+  },
+  {
+    "path": "backend/tests/test_application_execution.py",
+    "lines": 206,
+    "definitions": [
+      {
+        "name": "evidence",
+        "line": 26,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "api_client",
+        "line": 49,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_url_identity_keeps_openings_and_rejects_host_spoofing",
+        "line": 59,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_unsafe_form_urls_rejected",
+        "line": 72,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_new_session_freezes_owned_resume_bytes",
+        "line": 76,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_replayed_session_does_not_render_new_resume",
+        "line": 89,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_pdf_failure_never_creates_partial_session",
+        "line": 97,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_cross_application_link_requires_explicit_confirmation",
+        "line": 105,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_summary_is_calculated_from_observations_without_answer_content",
+        "line": 113,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_pdf_hash_must_match_frozen_session",
+        "line": 126,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_foreign_session_and_changed_opening_cannot_record_events",
+        "line": 133,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_confirmation_rules_are_provider_bound_and_explicitly_unverified",
+        "line": 141,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_manual_report_is_owner_scoped_and_idempotently_identified",
+        "line": 151,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_session_download_is_private_and_owner_scoped",
+        "line": 160,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_api_rejects_raw_answer_storage_and_fabricated_confirmation_kind",
+        "line": 169,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_history_and_delete_preserve_owned_audit",
+        "line": 176,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_web_report_uses_an_owned_session_and_explicit_user_provenance",
+        "line": 185,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_ambiguous_or_partial_options_require_review",
+        "line": 198,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_sponsorship_does_not_bypass_legal_attestation_review",
+        "line": 202,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "rpc",
+        "line": 33,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "render",
+        "line": 43,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "forbidden",
+        "line": 91,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "broken",
+        "line": 99,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/tests/test_application_flow.py",
+    "lines": 289,
+    "definitions": [
+      {
+        "name": "FakeResult",
+        "line": 26,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "FakeQuery",
+        "line": 32,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "FakeSupabase",
+        "line": 130,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "db",
+        "line": 155,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "client",
+        "line": 195,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_full_application_flow",
+        "line": 208,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_pipeline_reports_missing_base_resume",
+        "line": 274,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_unknown_run_is_reported",
+        "line": 282,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_generate_requires_jd",
+        "line": 288,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 27,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 33,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "select",
+        "line": 39,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "insert",
+        "line": 43,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "update",
+        "line": 47,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "upsert",
+        "line": 51,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "delete",
+        "line": 57,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "eq",
+        "line": 61,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "in_",
+        "line": 65,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "order",
+        "line": 69,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "range",
+        "line": 73,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "limit",
+        "line": 77,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_check_columns",
+        "line": 81,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "execute",
+        "line": 86,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 131,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "table",
+        "line": 135,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "parse",
+        "line": 163,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "tailor",
+        "line": 169,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "no_pdf",
+        "line": 172,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "cover",
+        "line": 175,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "emails",
+        "line": 178,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "dms",
+        "line": 181,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "verify",
+        "line": 197,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/tests/test_assistant.py",
+    "lines": 207,
+    "definitions": [
+      {
+        "name": "ScriptedLLM",
+        "line": 15,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "tool_call",
+        "line": 32,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "text",
+        "line": 41,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "seed_application",
+        "line": 45,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "parse_sse",
+        "line": 58,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_assistant_reads_proposes_creates_and_opens_views",
+        "line": 62,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_tool_errors_are_reported_not_raised",
+        "line": 108,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_email_proposal_resolves_email_id",
+        "line": 116,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_removed_views_are_rejected",
+        "line": 129,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_open_view_rejects_made_up_application_ids",
+        "line": 134,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_resume_edit_proposal_flags_invented_numbers_and_skills",
+        "line": 140,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_invalid_application_id_is_404_not_500",
+        "line": 170,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_rejected_tool_call_is_retried_not_fatal",
+        "line": 174,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_tool_schemas_have_no_enums",
+        "line": 195,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_user",
+        "line": 202,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_collect",
+        "line": 206,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 18,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "bind_tools",
+        "line": 22,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "astream",
+        "line": 25,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "final_turn",
+        "line": 65,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "rejected",
+        "line": 176,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "corrected",
+        "line": 183,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/tests/test_autopilot.py",
+    "lines": 251,
+    "definitions": [
+      {
+        "name": "_ctx",
+        "line": 24,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "StubLLM",
+        "line": 37,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "test_profile_bank_and_safety_rules",
+        "line": 48,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_option_matching",
+        "line": 77,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_open_questions_get_flagged_ai_drafts",
+        "line": 84,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_greenhouse_fields_parse_questions_and_eeo",
+        "line": 94,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_apply_urls",
+        "line": 109,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "ap",
+        "line": 119,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_prepare_and_queue",
+        "line": 143,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_digest_preview_and_send",
+        "line": 156,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_nightly_tick_scans_then_sends_once",
+        "line": 175,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_cron_tick_needs_the_secret",
+        "line": 201,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_extension_flow",
+        "line": 213,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 38,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "ainvoke",
+        "line": 41,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "gh_form",
+        "line": 135,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "fake_send",
+        "line": 167,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "fake_scan",
+        "line": 180,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "fake_digest",
+        "line": 184,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "fake_tick",
+        "line": 206,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "report",
+        "line": 216,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/tests/test_discovery.py",
+    "lines": 289,
+    "definitions": [
+      {
+        "name": "_postings",
+        "line": 27,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "board",
+        "line": 38,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_prefs",
+        "line": 55,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_confirm_resume",
+        "line": 59,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_scan_and_finish",
+        "line": 64,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "_postings_by_external_id",
+        "line": 70,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_parse_board_urls",
+        "line": 83,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_parse_board_slug_needs_ats",
+        "line": 87,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_board_clients_normalise_each_ats",
+        "line": 93,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_add_source_scans_filters_and_flags",
+        "line": 134,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_rescans_dedupe_close_and_reopen",
+        "line": 157,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_unfollow_removes_postings",
+        "line": 171,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_scan_needs_a_base_resume",
+        "line": 177,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_missing_tables_explain_the_migration",
+        "line": 184,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_auto_draft_respects_threshold_and_daily_cap",
+        "line": 199,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_auto_draft_is_off_by_default",
+        "line": 221,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_failed_draft_returns_posting_to_feed",
+        "line": 226,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_manual_draft_and_dismiss",
+        "line": 240,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_briefing",
+        "line": 261,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_assistant_job_tools",
+        "line": 281,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "fake_fetch",
+        "line": 42,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "handler",
+        "line": 113,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "run",
+        "line": 117,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "table",
+        "line": 187,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "failing_pipeline",
+        "line": 231,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "pending",
+        "line": 245,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/tests/test_durable_execution.py",
+    "lines": 228,
+    "definitions": [
+      {
+        "name": "MemoryStore",
+        "line": 24,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "test_graph_recovers_after_commit_without_rewriting_or_duplicate_application",
+        "line": 69,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_digest_retry_keeps_recipient_body_and_provider_key",
+        "line": 100,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_old_digest_stops_before_provider_call",
+        "line": 126,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_lost_lease_does_not_execute_or_write",
+        "line": 140,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_cancelled_worker_leaves_lease_for_recovery",
+        "line": 153,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_owned_status_sanitizes_inputs_and_rejects_strangers",
+        "line": 164,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_websocket_replays_terminal_event_committed_between_reads",
+        "line": 179,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_run_payload_rejects_credentials_and_empty_idempotency_key",
+        "line": 199,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_deleted_generated_application_is_not_recreated",
+        "line": 205,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_durable_intake_queues_verified_owner_without_in_process_work",
+        "line": 214,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 26,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "claim",
+        "line": 35,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "renew",
+        "line": 41,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "checkpoint",
+        "line": 44,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "emit",
+        "line": 50,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "finish",
+        "line": 53,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "rpc",
+        "line": 56,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "parse",
+        "line": 76,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "prepare",
+        "line": 80,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "send",
+        "line": 110,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "forbidden",
+        "line": 132,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "forbidden",
+        "line": 146,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "CancelledWorker",
+        "line": 155,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "get",
+        "line": 167,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "ReplayStore",
+        "line": 181,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "Socket",
+        "line": 188,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "IntakeStore",
+        "line": 216,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "execute",
+        "line": 156,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "get",
+        "line": 182,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "replay_cursor",
+        "line": 183,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "events",
+        "line": 184,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 189,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "send_json",
+        "line": 190,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "close",
+        "line": 191,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "enqueue",
+        "line": 217,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/tests/test_gmail_outreach.py",
+    "lines": 237,
+    "definitions": [
+      {
+        "name": "enabled",
+        "line": 24,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "MailStore",
+        "line": 29,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "Provider",
+        "line": 56,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "test_worker_recovery_after_gmail_acceptance_never_sends_twice",
+        "line": 74,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_ambiguous_send_can_only_reconcile_not_resend",
+        "line": 84,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_missing_provider_receipt_remains_unknown_even_with_http_success",
+        "line": 93,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_known_rejection_is_not_marked_sent",
+        "line": 102,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_frozen_attachment_and_headers_are_encoded_in_the_approved_message",
+        "line": 108,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_foreign_or_shared_connections_cannot_reach_the_gmail_proxy",
+        "line": 121,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_proxy_explicitly_scopes_user_account_and_fixed_google_endpoint",
+        "line": 129,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_oauth_identity_verifier_is_used_instead_of_trusting_callback_account_ids",
+        "line": 143,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_broker_timeout_is_not_retried_and_does_not_expose_auth_material",
+        "line": 155,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_correlated_replies_exclude_outgoing_unrelated_and_quoted_text",
+        "line": 163,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_new_email_endpoints_require_owned_resources_and_reject_header_injection",
+        "line": 179,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_attachment_download_returns_the_saved_private_copy",
+        "line": 192,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_recruiter_research_excludes_guesses_and_unverified_addresses",
+        "line": 200,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_plain_public_projection_never_returns_pdf_bytes",
+        "line": 213,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_resume_attachment_is_built_from_owned_content_and_failure_does_not_silently_drop_it",
+        "line": 219,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_invalid_settings_do_not_print_secret_inputs",
+        "line": 234,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 30,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "rpc",
+        "line": 39,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 57,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "gmail",
+        "line": 58,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "MissingReceipt",
+        "line": 95,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "Broker",
+        "line": 122,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "Broker",
+        "line": 131,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "Broker",
+        "line": 145,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "handler",
+        "line": 157,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "item",
+        "line": 166,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "hunter",
+        "line": 202,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "render",
+        "line": 223,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "fail",
+        "line": 227,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "gmail",
+        "line": 96,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "request",
+        "line": 123,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "request",
+        "line": 132,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "request",
+        "line": 146,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/tests/test_india_eligibility.py",
+    "lines": 75,
+    "definitions": [
+      {
+        "name": "test_eligibility",
+        "line": 32,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_existing_ineligible_jobs_hidden_and_cannot_be_drafted",
+        "line": 36,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_missing_himalayas_scope_is_not_invented_as_worldwide",
+        "line": 63,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "fetch",
+        "line": 68,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/tests/test_matching_v2.py",
+    "lines": 193,
+    "definitions": [
+      {
+        "name": "test_confirmation_is_explicit_scoped_and_invalidated_by_content_change",
+        "line": 29,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_other_account_confirmation_does_not_confirm_my_facts",
+        "line": 44,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_resume_metadata_change_does_not_invalidate_confirmation",
+        "line": 53,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_requirement_extraction_retains_minimum_and_ignores_benefits",
+        "line": 65,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_unknown_authorization_requires_review_and_skill_similarity_cannot_override_it",
+        "line": 69,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_labeled_dataset_lexical_fallback_has_no_false_positive",
+        "line": 79,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_cached_semantic_model_adds_role_paraphrase_recall",
+        "line": 89,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_missing_semantic_model_is_explicit_and_does_not_call_a_provider",
+        "line": 100,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_dedup_tracks_same_url_without_merging_distinct_requisitions",
+        "line": 109,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_same_title_different_locations_and_requisition_ids_are_distinct",
+        "line": 118,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_jd_skill_is_not_resume_evidence_and_credentials_are_fixed",
+        "line": 126,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_tailor_rejects_whole_unsupported_output_instead_of_fixing_only_tags",
+        "line": 137,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_auto_drafting_waits_for_explicit_current_resume_confirmation",
+        "line": 151,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_auto_recovery_rechecks_confirmation_and_preferences_before_cached_nodes",
+        "line": 160,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_rescan_updates_existing_hiring_scope_without_resetting_posting_identity",
+        "line": 178,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "LLM",
+        "line": 140,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "fetch",
+        "line": 182,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "with_structured_output",
+        "line": 141,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "ainvoke",
+        "line": 142,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/tests/test_model_chain.py",
+    "lines": 101,
+    "definitions": [
+      {
+        "name": "Fake",
+        "line": 13,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "clear_cooldowns",
+        "line": 38,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_falls_back_on_rate_limit_and_remembers_cooldown",
+        "line": 42,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_other_errors_are_not_swallowed",
+        "line": 51,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_all_exhausted_gives_a_clear_message",
+        "line": 57,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_stream_falls_back_only_before_output_starts",
+        "line": 64,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_bound_tools_keep_the_chain",
+        "line": 77,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_light_tasks_start_with_the_small_model",
+        "line": 82,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_assistant_shows_a_friendly_message_when_models_are_exhausted",
+        "line": 90,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 14,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "ainvoke",
+        "line": 18,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "astream",
+        "line": 24,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "bind_tools",
+        "line": 33,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "collect",
+        "line": 65,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "run",
+        "line": 96,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/tests/test_more_boards.py",
+    "lines": 197,
+    "definitions": [
+      {
+        "name": "test_parse_new_boards",
+        "line": 22,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_zomato_style_careers_pages_get_a_clear_message",
+        "line": 26,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_run",
+        "line": 31,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_smartrecruiters_fetches_details_only_for_kept_postings",
+        "line": 38,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_remote_boards_search_by_role_and_cache",
+        "line": 64,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_remote_boards_need_target_roles",
+        "line": 93,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_region_flag_for_india",
+        "line": 106,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_user_country",
+        "line": 110,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_remote_board_postings_keep_their_company_and_region_rules",
+        "line": 115,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_stored_postings_are_rescored_when_preferences_change",
+        "line": 141,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_bulk_follow_suggested_boards",
+        "line": 160,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_same_job_on_two_boards_is_stored_once",
+        "line": 175,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_assistant_can_scan",
+        "line": 189,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "go",
+        "line": 32,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "handler",
+        "line": 48,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "handler",
+        "line": 68,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "remote_fetch",
+        "line": 118,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "fewer",
+        "line": 133,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "fetch",
+        "line": 176,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/tests/test_phase1.py",
+    "lines": 74,
+    "definitions": [
+      {
+        "name": "test_pipeline_flags_skip_rules_but_still_creates_application",
+        "line": 10,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_skill_gaps_separate_learnable_from_unsurfaced",
+        "line": 26,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_answer_bank_upserts_by_question_and_hides_sensitive_from_llm",
+        "line": 46,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_missing_answer_table_gives_actionable_error",
+        "line": 65,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "Broken",
+        "line": 68,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "table",
+        "line": 69,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/tests/test_pipeline_regressions.py",
+    "lines": 110,
+    "definitions": [
+      {
+        "name": "_StructuredLLM",
+        "line": 14,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "test_tailored_content_is_json_safe_without_row_metadata",
+        "line": 25,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_template_fallback_is_reported",
+        "line": 38,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_failed_save_removes_partial_application",
+        "line": 51,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_embeddings_stop_calling_a_failing_primary",
+        "line": 59,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_ats_score_normalises_dashes_parentheticals_and_job_terms",
+        "line": 84,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_tailoring_fallback_is_reported",
+        "line": 101,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 15,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "with_structured_output",
+        "line": 18,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "ainvoke",
+        "line": 21,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "failing_emails",
+        "line": 39,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "Primary",
+        "line": 62,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "Backup",
+        "line": 70,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "failing_tailor",
+        "line": 102,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "embed_documents",
+        "line": 63,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "embed_query",
+        "line": 67,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "embed_documents",
+        "line": 71,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "embed_query",
+        "line": 74,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/tests/test_product_validation.py",
+    "lines": 116,
+    "definitions": [
+      {
+        "name": "test_onboarding_requires_current_facts_and_roles_not_mailbox",
+        "line": 17,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_onboarding_does_not_read_another_users_resume_or_sources",
+        "line": 32,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_zero_denominators_are_unknown_not_zero_performance",
+        "line": 39,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_metrics_failure_is_visible_without_database_error_contents",
+        "line": 50,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_request_metrics_use_route_templates_not_queries_or_user_data",
+        "line": 57,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_sentry_allowlist_drops_all_request_and_exception_payloads",
+        "line": 74,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_private_ops_and_readiness_do_not_infer_an_idle_worker",
+        "line": 82,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_stage_duration_is_recorded_once_and_not_fabricated_on_recovery",
+        "line": 96,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_readiness_cache_bounds_database_probes_and_expires",
+        "line": 105,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "broken",
+        "line": 51,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "read",
+        "line": 60,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "operation",
+        "line": 98,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "execute",
+        "line": 112,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/tests/test_referrals.py",
+    "lines": 193,
+    "definitions": [
+      {
+        "name": "FakeLLM",
+        "line": 29,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "net",
+        "line": 40,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "_import",
+        "line": 47,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_parse_linkedin_export",
+        "line": 51,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_company_matching",
+        "line": 69,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_import_and_reimport",
+        "line": 73,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_manual_contact_and_companies",
+        "line": 90,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_referrals_for_an_application_rank_and_draft",
+        "line": 101,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_referral_message_falls_back_to_template",
+        "line": 127,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_pipeline_without_network_suggests_import",
+        "line": 138,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_assistant_referral_tools",
+        "line": 145,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_missing_tables_explain_the_migration",
+        "line": 162,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_import_accepts_the_linkedin_zip",
+        "line": 177,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 30,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "ainvoke",
+        "line": 33,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "table",
+        "line": 165,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/tests/test_release_features.py",
+    "lines": 133,
+    "definitions": [
+      {
+        "name": "seed",
+        "line": 16,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_feedback_does_not_change_posting_status_or_other_accounts",
+        "line": 24,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_display_snapshot_is_owned_versioned_idempotent_and_not_a_quality_label",
+        "line": 34,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_impressions_reject_short_exposure_without_writing",
+        "line": 48,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_research_owner_check_precedes_execution",
+        "line": 55,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_research_inline_install_fails_clearly_without_changing_materials",
+        "line": 62,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_research_preserves_citations_dates_and_partial_failure",
+        "line": 70,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_writer_receives_actual_resume_evidence_and_untrusted_source_boundaries",
+        "line": 84,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_reranker_never_changes_scores_or_promotes_unknown_eligibility",
+        "line": 96,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_missing_optional_model_uses_baseline_and_evaluation_cannot_promote_synthetic_data",
+        "line": 109,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_production_validation_fails_closed_without_printing_secret_values",
+        "line": 117,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_usage_limit_and_missing_database_fail_closed",
+        "line": 124,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "fetch",
+        "line": 71,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "LLM",
+        "line": 87,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "DB",
+        "line": 126,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "ainvoke",
+        "line": 88,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "rpc",
+        "line": 127,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/tests/test_release_security.py",
+    "lines": 117,
+    "definitions": [
+      {
+        "name": "test_production_sessions_reject_revocation_and_fail_closed",
+        "line": 16,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_jwks_verifies_signature_and_required_claims",
+        "line": 38,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_templates_are_owned_and_use_optimistic_concurrency",
+        "line": 52,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_recent_runs_hide_inputs_and_surface_uncertain_email_outcome",
+        "line": 67,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_chat_tool_rechecks_revoked_sessions_before_any_action",
+        "line": 78,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_chat_tool_never_exposes_provider_diagnostics",
+        "line": 92,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_progress_socket_stops_before_replay_when_session_revoked",
+        "line": 102,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "rpc",
+        "line": 20,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "lookup",
+        "line": 43,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "executor",
+        "line": 82,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "revoked",
+        "line": 83,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "broken",
+        "line": 95,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "revoked",
+        "line": 105,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "Store",
+        "line": 106,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "Socket",
+        "line": 110,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "get",
+        "line": 107,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "replay_cursor",
+        "line": 108,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "events",
+        "line": 109,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "close",
+        "line": 111,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/tests/test_resume_import.py",
+    "lines": 175,
+    "definitions": [
+      {
+        "name": "groq_factory",
+        "line": 30,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_groq_extraction_uses_json_not_tool_names",
+        "line": 71,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_json_mode_still_rejects_invalid_resume_schema",
+        "line": 86,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_groq_json_extraction_keeps_model_quota_fallback",
+        "line": 92,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_resume_parser_discards_generated_database_metadata",
+        "line": 102,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_failed_import_is_private_and_preserves_saved_resume",
+        "line": 113,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_provider_exception_is_not_returned_in_upload_response",
+        "line": 125,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_imported_resume_can_be_confirmed_and_used_in_job_feed",
+        "line": 138,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "create",
+        "line": 35,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "fail",
+        "line": 128,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "fetch",
+        "line": 157,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "respond",
+        "line": 38,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "backend/tests/test_security_foundation.py",
+    "lines": 197,
+    "definitions": [
+      {
+        "name": "security_client",
+        "line": 22,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "token",
+        "line": 29,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_ws_rejects_bad_credentials",
+        "line": 35,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_ws_expiry_ownership_and_replay",
+        "line": 43,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_ws_silent_connection_times_out",
+        "line": 63,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_unsupported_jwt_algorithm_is_rejected",
+        "line": 70,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_placeholder_reads_require_auth",
+        "line": 76,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_placeholder_send_requires_auth",
+        "line": 80,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_unsafe_schemes_credentials_ports",
+        "line": 85,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_dns_rejects_non_public_addresses",
+        "line": 91,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_public_page_pins_ip_and_validates_redirect",
+        "line": 101,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_mixed_dns_answers_are_rejected",
+        "line": 121,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_redirect_loop_is_bounded",
+        "line": 131,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_page_content_limits",
+        "line": 152,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_resume_upload_signatures_and_limits",
+        "line": 166,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_chunked_body_limit_runs_before_multipart_parser",
+        "line": 182,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_database_bundle_orders_baseline_before_incremental_migrations",
+        "line": 188,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "check",
+        "line": 92,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "check",
+        "line": 103,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "check",
+        "line": 122,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "target",
+        "line": 132,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "response",
+        "line": 137,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "target",
+        "line": 153,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "resolve",
+        "line": 93,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "resolve",
+        "line": 104,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "transport",
+        "line": 108,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "resolve",
+        "line": 123,
+        "kind": "AsyncFunctionDef"
+      }
+    ]
+  },
+  {
+    "path": "extension/README.md",
+    "lines": 56
+  },
+  {
+    "path": "extension/background.js",
+    "lines": 162
+  },
+  {
+    "path": "extension/content/connect.js",
+    "lines": 22
+  },
+  {
+    "path": "extension/content/fill.js",
+    "lines": 266
+  },
+  {
+    "path": "extension/content/form-engine.js",
+    "lines": 215
+  },
+  {
+    "path": "extension/manifest.json",
+    "lines": 36
+  },
+  {
+    "path": "extension/package-lock.json",
+    "lines": 58
+  },
+  {
+    "path": "extension/package.json",
+    "lines": 9
+  },
+  {
+    "path": "extension/playwright.config.cjs",
+    "lines": 5
+  },
+  {
+    "path": "extension/policy.js",
+    "lines": 20
+  },
+  {
+    "path": "extension/popup.css",
+    "lines": 16
+  },
+  {
+    "path": "extension/popup.html",
+    "lines": 28
+  },
+  {
+    "path": "extension/popup.js",
+    "lines": 60
+  },
+  {
+    "path": "extension/scripts/check-live-forms.cjs",
+    "lines": 34
+  },
+  {
+    "path": "extension/tests/browser/COMPATIBILITY.md",
+    "lines": 19
+  },
+  {
+    "path": "extension/tests/browser/extension.spec.cjs",
+    "lines": 77
+  },
+  {
+    "path": "extension/tests/browser/fixtures.cjs",
+    "lines": 10
+  },
+  {
+    "path": "extension/tests/browser/forms.spec.cjs",
+    "lines": 122
+  },
+  {
+    "path": "extension/tests/browser/live-form-observations.json",
+    "lines": 44
+  },
+  {
+    "path": "extension/tests/security.test.cjs",
+    "lines": 109
+  },
+  {
+    "path": "frontend/e2e/career-desk.spec.cjs",
+    "lines": 222
+  },
+  {
+    "path": "frontend/e2e/product-workflow.spec.cjs",
+    "lines": 81
+  },
+  {
+    "path": "frontend/e2e/social-auth.spec.cjs",
+    "lines": 95
+  },
+  {
+    "path": "frontend/src/App.tsx",
+    "lines": 61
+  },
+  {
+    "path": "frontend/src/agent/client.ts",
+    "lines": 129
+  },
+  {
+    "path": "frontend/src/agent/store.ts",
+    "lines": 251
+  },
+  {
+    "path": "frontend/src/components/agent/Briefing.tsx",
+    "lines": 179
+  },
+  {
+    "path": "frontend/src/components/agent/Conversation.tsx",
+    "lines": 212
+  },
+  {
+    "path": "frontend/src/components/agent/Markdown.tsx",
+    "lines": 137
+  },
+  {
+    "path": "frontend/src/components/agent/RunActivity.tsx",
+    "lines": 14
+  },
+  {
+    "path": "frontend/src/components/agent/ToolCards.tsx",
+    "lines": 600
+  },
+  {
+    "path": "frontend/src/components/agent/Workspace.tsx",
+    "lines": 129
+  },
+  {
+    "path": "frontend/src/components/applications/ExecutionEvidence.tsx",
+    "lines": 44
+  },
+  {
+    "path": "frontend/src/components/applications/OutreachPanels.tsx",
+    "lines": 295
+  },
+  {
+    "path": "frontend/src/components/applications/ProductMetrics.tsx",
+    "lines": 30
+  },
+  {
+    "path": "frontend/src/components/applications/ReferralPanel.tsx",
+    "lines": 196
+  },
+  {
+    "path": "frontend/src/components/applications/ResearchPanel.tsx",
+    "lines": 37
+  },
+  {
+    "path": "frontend/src/components/applications/ResumeDiff.tsx",
+    "lines": 215
+  },
+  {
+    "path": "frontend/src/components/applications/ResumePreview.tsx",
+    "lines": 246
+  },
+  {
+    "path": "frontend/src/components/applications/ResumeTab.tsx",
+    "lines": 174
+  },
+  {
+    "path": "frontend/src/components/applications/SkillGaps.tsx",
+    "lines": 117
+  },
+  {
+    "path": "frontend/src/components/applications/shared.tsx",
+    "lines": 128
+  },
+  {
+    "path": "frontend/src/components/auth/LoginForm.tsx",
+    "lines": 174
+  },
+  {
+    "path": "frontend/src/components/discovery/MatchExplanation.tsx",
+    "lines": 25
+  },
+  {
+    "path": "frontend/src/components/email/GmailConnection.tsx",
+    "lines": 42
+  },
+  {
+    "path": "frontend/src/components/email/MailOutreach.tsx",
+    "lines": 108
+  },
+  {
+    "path": "frontend/src/components/jobs/RankingExperiment.tsx",
+    "lines": 20
+  },
+  {
+    "path": "frontend/src/components/jobs/RecommendationFeedback.tsx",
+    "lines": 49
+  },
+  {
+    "path": "frontend/src/components/landing/LandingDemos.tsx",
+    "lines": 84
+  },
+  {
+    "path": "frontend/src/components/layout/AppShell.tsx",
+    "lines": 123
+  },
+  {
+    "path": "frontend/src/components/layout/Sidebar.tsx",
+    "lines": 181
+  },
+  {
+    "path": "frontend/src/components/profile/AnswerBankPanel.tsx",
+    "lines": 266
+  },
+  {
+    "path": "frontend/src/components/profile/FactsPanel.tsx",
+    "lines": 60
+  },
+  {
+    "path": "frontend/src/components/profile/OnboardingPanel.tsx",
+    "lines": 57
+  },
+  {
+    "path": "frontend/src/components/profile/PreferencesPanel.tsx",
+    "lines": 216
+  },
+  {
+    "path": "frontend/src/components/ui/badge.tsx",
+    "lines": 37
+  },
+  {
+    "path": "frontend/src/components/ui/brand.tsx",
+    "lines": 9
+  },
+  {
+    "path": "frontend/src/components/ui/button.tsx",
+    "lines": 54
+  },
+  {
+    "path": "frontend/src/components/ui/card.tsx",
+    "lines": 80
+  },
+  {
+    "path": "frontend/src/components/ui/input.tsx",
+    "lines": 23
+  },
+  {
+    "path": "frontend/src/components/ui/label.tsx",
+    "lines": 20
+  },
+  {
+    "path": "frontend/src/components/ui/separator.tsx",
+    "lines": 28
+  },
+  {
+    "path": "frontend/src/components/ui/tabs.tsx",
+    "lines": 52
+  },
+  {
+    "path": "frontend/src/components/ui/tag-input.tsx",
+    "lines": 68
+  },
+  {
+    "path": "frontend/src/components/ui/textarea.tsx",
+    "lines": 23
+  },
+  {
+    "path": "frontend/src/components/ui/workflow-map.tsx",
+    "lines": 28
+  },
+  {
+    "path": "frontend/src/hooks/use-agent-stream.ts",
+    "lines": 234
+  },
+  {
+    "path": "frontend/src/hooks/use-analytics.ts",
+    "lines": 48
+  },
+  {
+    "path": "frontend/src/hooks/use-answers.ts",
+    "lines": 38
+  },
+  {
+    "path": "frontend/src/hooks/use-applications.ts",
+    "lines": 257
+  },
+  {
+    "path": "frontend/src/hooks/use-auth.ts",
+    "lines": 39
+  },
+  {
+    "path": "frontend/src/hooks/use-autopilot.ts",
+    "lines": 171
+  },
+  {
+    "path": "frontend/src/hooks/use-discovery.ts",
+    "lines": 286
+  },
+  {
+    "path": "frontend/src/hooks/use-draft.ts",
+    "lines": 21
+  },
+  {
+    "path": "frontend/src/hooks/use-mailbox.ts",
+    "lines": 53
+  },
+  {
+    "path": "frontend/src/hooks/use-network.ts",
+    "lines": 137
+  },
+  {
+    "path": "frontend/src/hooks/use-profile.ts",
+    "lines": 136
+  },
+  {
+    "path": "frontend/src/index.css",
+    "lines": 620
+  },
+  {
+    "path": "frontend/src/lib/account-context.ts",
+    "lines": 7
+  },
+  {
+    "path": "frontend/src/lib/api.ts",
+    "lines": 133
+  },
+  {
+    "path": "frontend/src/lib/auth-errors.ts",
+    "lines": 22
+  },
+  {
+    "path": "frontend/src/lib/auth-redirect.ts",
+    "lines": 30
+  },
+  {
+    "path": "frontend/src/lib/constants.ts",
+    "lines": 102
+  },
+  {
+    "path": "frontend/src/lib/query-client.ts",
+    "lines": 15
+  },
+  {
+    "path": "frontend/src/lib/run-poll.ts",
+    "lines": 30
+  },
+  {
+    "path": "frontend/src/lib/storage.ts",
+    "lines": 28
+  },
+  {
+    "path": "frontend/src/lib/supabase.ts",
+    "lines": 25
+  },
+  {
+    "path": "frontend/src/lib/theme.ts",
+    "lines": 29
+  },
+  {
+    "path": "frontend/src/lib/utils.ts",
+    "lines": 6
+  },
+  {
+    "path": "frontend/src/main.tsx",
+    "lines": 20
+  },
+  {
+    "path": "frontend/src/pages/Analytics.tsx",
+    "lines": 166
+  },
+  {
+    "path": "frontend/src/pages/ApplicationDetail.tsx",
+    "lines": 608
+  },
+  {
+    "path": "frontend/src/pages/Applications.tsx",
+    "lines": 438
+  },
+  {
+    "path": "frontend/src/pages/ApplyQueue.tsx",
+    "lines": 186
+  },
+  {
+    "path": "frontend/src/pages/Chat.tsx",
+    "lines": 249
+  },
+  {
+    "path": "frontend/src/pages/JobFeed.tsx",
+    "lines": 581
+  },
+  {
+    "path": "frontend/src/pages/Landing.css",
+    "lines": 585
+  },
+  {
+    "path": "frontend/src/pages/Landing.tsx",
+    "lines": 141
+  },
+  {
+    "path": "frontend/src/pages/Login.tsx",
+    "lines": 38
+  },
+  {
+    "path": "frontend/src/pages/Network.tsx",
+    "lines": 262
+  },
+  {
+    "path": "frontend/src/pages/NewApplication.tsx",
+    "lines": 341
+  },
+  {
+    "path": "frontend/src/pages/Overview.tsx",
+    "lines": 40
+  },
+  {
+    "path": "frontend/src/pages/Profile.tsx",
+    "lines": 476
+  },
+  {
+    "path": "frontend/src/pages/Settings.tsx",
+    "lines": 323
+  },
+  {
+    "path": "frontend/src/pages/Templates.tsx",
+    "lines": 21
+  },
+  {
+    "path": "frontend/src/pages/lazy.ts",
+    "lines": 17
+  },
+  {
+    "path": "frontend/src/stores/auth-store.ts",
+    "lines": 204
+  },
+  {
+    "path": "frontend/src/stores/ui-store.ts",
+    "lines": 77
+  },
+  {
+    "path": "frontend/src/styles/career-desk.css",
+    "lines": 105
+  },
+  {
+    "path": "frontend/src/types/index.ts",
+    "lines": 242
+  },
+  {
+    "path": "frontend/src/vite-env.d.ts",
+    "lines": 1
+  },
+  {
+    "path": "frontend/tests/account-isolation.test.mjs",
+    "lines": 124
+  },
+  {
+    "path": "frontend/tests/application-evidence.test.mjs",
+    "lines": 22
+  },
+  {
+    "path": "frontend/tests/durable-runs.test.mjs",
+    "lines": 85
+  },
+  {
+    "path": "frontend/tests/gmail-outreach.test.mjs",
+    "lines": 65
+  },
+  {
+    "path": "frontend/tests/matching-v2.test.mjs",
+    "lines": 55
+  },
+  {
+    "path": "frontend/tests/product-validation.test.mjs",
+    "lines": 31
+  },
+  {
+    "path": "frontend/tests/social-auth.test.mjs",
+    "lines": 95
+  }
+]

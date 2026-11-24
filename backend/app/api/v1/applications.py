@@ -61,14 +61,14 @@ FOLLOW_UP_AFTER_DAYS = 5
 
 class JDParseRequest(BaseModel):
     """Request body for JD parsing."""
-    jd_url: str | None = None
-    jd_text: str | None = None
+    jd_url: str | None = Field(default=None, max_length=2048)
+    jd_text: str | None = Field(default=None, max_length=100000)
 
 
 class ApplicationGenerateRequest(BaseModel):
     """Request body to trigger full agent pipeline."""
-    jd_url: str | None = None
-    jd_text: str | None = None
+    jd_url: str | None = Field(default=None, max_length=2048)
+    jd_text: str | None = Field(default=None, max_length=100000)
     auto_research: bool = True
 
 

@@ -3,9 +3,11 @@
 // ============================================================
 
 import { API_URL } from './constants';
+import { accountContext } from './account-context';
 
 interface RequestOptions extends Omit<RequestInit, 'body'> {
   body?: unknown;
+  expectedUserId?: string;
 }
 
 class ApiClient {
@@ -15,17 +17,22 @@ class ApiClient {
     this.baseUrl = baseUrl;
   }
 
-  private async getAuthToken(): Promise<string | null> {
+  private async getAuthToken(expectedUserId?: string): Promise<string | null> {
+    const started = accountContext();
     const { supabase } = await import('./supabase');
     const { data: { session } } = await supabase.auth.getSession();
+    if ((expectedUserId && session?.user.id !== expectedUserId) || accountContext().revision !== started.revision ||
+        (started.account !== undefined && (session?.user.id ?? null) !== started.account)) {
+      throw new Error('Account changed. Reopen this page before continuing.');
+    }
     return session?.access_token ?? null;
   }
 
 
   private async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-    const { body, headers: customHeaders, ...rest } = options;
+    const { body, expectedUserId, headers: customHeaders, ...rest } = options;
 
-    const token = await this.getAuthToken();
+    const token = await this.getAuthToken(expectedUserId);
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -82,9 +89,11 @@ class ApiClient {
 
   /** POST a file as multipart form data (the browser sets the boundary header). */
   async upload<T>(endpoint: string, file: File, field = 'file', expectedUserId?: string): Promise<T> {
+    const started = accountContext();
     const {supabase} = await import('./supabase');
     const {data:{session}} = await supabase.auth.getSession();
-    if (expectedUserId && session?.user.id !== expectedUserId) throw new Error('Account changed. Reopen your profile.');
+    if ((expectedUserId && session?.user.id !== expectedUserId) || started.revision !== accountContext().revision ||
+        (started.account !== undefined && (session?.user.id ?? null) !== started.account)) throw new Error('Account changed. Reopen this page.');
     const token = session?.access_token;
     const form = new FormData();
     form.append(field, file);

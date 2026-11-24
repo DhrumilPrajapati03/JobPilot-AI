@@ -14,13 +14,13 @@ class UploadBodyLimitMiddleware:
         self.app = app
 
     async def __call__(self, scope, receive, send):
-        limit = self.LIMITS.get(scope.get("path", ""))
-        if scope["type"] != "http" or scope.get("method") != "POST" or not limit:
+        limit = self.LIMITS.get(scope.get("path", ""), 2 * 1024 * 1024)
+        if scope["type"] != "http" or scope.get("method") not in {"POST","PUT","PATCH"}:
             return await self.app(scope, receive, send)
         headers = dict(scope.get("headers", []))
         length = headers.get(b"content-length")
         if length and (not length.isdigit() or int(length) > limit):
-            return await JSONResponse({"detail": "Upload request exceeds the supported size."}, status_code=413)(scope, receive, send)
+            return await JSONResponse({"detail": "Request exceeds the supported size."}, status_code=413)(scope, receive, send)
         # A bounded spool handles chunked requests too, before multipart parsing.
         with tempfile.SpooledTemporaryFile(max_size=1024 * 1024) as spool:
             total = 0
@@ -31,7 +31,7 @@ class UploadBodyLimitMiddleware:
                 chunk = message.get("body", b"")
                 total += len(chunk)
                 if total > limit:
-                    return await JSONResponse({"detail": "Upload request exceeds the supported size."}, status_code=413)(scope, receive, send)
+                    return await JSONResponse({"detail": "Request exceeds the supported size."}, status_code=413)(scope, receive, send)
                 spool.write(chunk)
                 if not message.get("more_body", False):
                     break

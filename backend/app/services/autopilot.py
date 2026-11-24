@@ -299,7 +299,7 @@ async def _tick(admin) -> dict:
                     _save_state(admin, user_id, last_digest_on=today, last_digest_error=str(e))
                     report["errors"].append({"user_id": user_id, "error": str(e)})
         except Exception as e:  # one user's failure shouldn't stop everyone else's morning
-            print(f"Autopilot tick failed for {user_id}: {e}")
+            print(f"Autopilot tick failed ({type(e).__name__})")
             report["errors"].append({"user_id": user_id, "error": f"{type(e).__name__}: {e}"})
     return report
 
@@ -317,5 +317,5 @@ async def scheduler_loop():
         except asyncio.CancelledError:
             raise
         except Exception as e:
-            print(f"Autopilot scheduler error: {e}")
+            print(f"Autopilot scheduler error: {type(e).__name__}")
         await asyncio.sleep(TICK_SECONDS)

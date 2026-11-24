@@ -12,6 +12,8 @@ import {
   Settings,
   User,
   Users,
+  LayoutDashboard,
+  Sparkles,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -31,6 +33,7 @@ export const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 export const ROUTES = {
   LOGIN: '/login',
   CHAT: '/chat',
+  OVERVIEW: '/workspace',
   APPLICATIONS: '/applications',
   JOBS: '/jobs',
   APPLY_QUEUE: '/apply',
@@ -51,6 +54,8 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: NavItem[] = [
+  { label: 'Overview', path: ROUTES.OVERVIEW, icon: LayoutDashboard },
+  { label: 'Copilot', path: ROUTES.CHAT, icon: Sparkles },
   { label: 'Job feed', path: ROUTES.JOBS, icon: Radar },
   { label: 'Apply queue', path: ROUTES.APPLY_QUEUE, icon: Send },
   { label: 'Applications', path: ROUTES.APPLICATIONS, icon: FolderKanban },

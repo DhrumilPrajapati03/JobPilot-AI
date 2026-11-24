@@ -1,0 +1,22 @@
+
+Running 15 tests using 1 worker
+
+(node:25584) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 tests\browser\extension.spec.cjs:76:1 › unpacked extension: prepare, user submit, observed confirmation and explicit manual report (5.0s)
+  ok  2 tests\browser\extension.spec.cjs:77:1 › unpacked extension: submission observation survives a full same-origin navigation (3.7s)
+  ok  3 tests\browser\forms.spec.cjs:21:1 › Greenhouse pattern: exact options, PDF hash, legal review and no submit (1.3s)
+  ok  4 tests\browser\forms.spec.cjs:32:1 › Lever pattern: scoped radio and checkbox groups; existing answers preserved (596ms)
+  ok  5 tests\browser\forms.spec.cjs:41:1 › Ashby pattern: portal options are scoped and require exact selection (2.4s)
+  ok  6 tests\browser\forms.spec.cjs:50:1 › button ARIA combobox supports exact selection without submitting (793ms)
+  ok  7 tests\browser\forms.spec.cjs:55:1 › native validation exposes invalid email, number, pattern and readonly fields (573ms)
+  ok  8 tests\browser\forms.spec.cjs:62:1 › SmartRecruiters pattern: native multiselect and rejected file formats (883ms)
+  ok  9 tests\browser\forms.spec.cjs:69:1 › a pre-existing different PDF is preserved and flagged, not overwritten (585ms)
+  ok 10 tests\browser\forms.spec.cjs:76:1 › corrupt PDF never reaches the file control (537ms)
+  ok 11 tests\browser\forms.spec.cjs:82:1 › dynamic questions are discovered, and rerendered controls are not counted filled (502ms)
+  ok 12 tests\browser\forms.spec.cjs:92:1 › generic thank-you text is not submission evidence; provider selector is required (152ms)
+  ok 13 tests\browser\forms.spec.cjs:100:1 › a controlled input that replaces the answer is flagged instead of counted as filled (506ms)
+  ok 14 tests\browser\forms.spec.cjs:107:1 › a late attachment replacement fails the final hash audit (840ms)
+  ok 15 tests\browser\forms.spec.cjs:116:1 › ARIA radio groups select only an exact option in the right question (510ms)
+
+  15 passed (21.9s)

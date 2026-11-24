@@ -10,8 +10,24 @@ from app.services.runs import RunStore, public_run
 router = APIRouter()
 
 
+@router.get('')
+async def recent_runs(user: CurrentUser = Depends(get_current_user)):
+    from app.services.runs import durable_enabled
+    if not durable_enabled(): return {'mode':'inline','runs':[]}
+    try:
+        rows = await asyncio.to_thread(RunStore().recent,user.id)
+        # This summary never returns queued inputs, checkpoints, lease tokens or materials.
+        return {'mode':'durable','runs':[{**{k:r.get(k) for k in ('id','kind','status','stage','attempts','max_attempts','created_at','updated_at')},
+                                        'application_id':(r.get('result') or {}).get('application_id'),
+                                        'mail_outcome':(r.get('result') or {}).get('state') if r.get('kind')=='mail_send' else None} for r in rows]}
+    except Exception:
+        raise HTTPException(503,'Background activity is unavailable. Try again later.') from None
+
+
 @router.post("/{run_id}/retry")
 async def retry_run(run_id: UUID, user: CurrentUser = Depends(get_current_user)):
+    from app.services.usage import reserve
+    await asyncio.to_thread(reserve,user.id,'run_retries',20)
     try:
         row = await asyncio.to_thread(RunStore().rpc, "retry_agent_run", p_run_id=str(run_id), p_user_id=user.id)
     except Exception as exc:

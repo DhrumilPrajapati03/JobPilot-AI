@@ -4,12 +4,14 @@
 
 import { useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { LogOut, Monitor, Moon, PenSquare, Sun, Trash2 } from 'lucide-react';
-import { NAV_ITEMS, APP_NAME, ROUTES } from '../../lib/constants';
+import { LogOut, Monitor, Moon, PenSquare, Sun, Trash2, X } from 'lucide-react';
+import { NAV_ITEMS, ROUTES } from '../../lib/constants';
 import { useAuth } from '../../hooks/use-auth';
 import { useChatStore, type Thread } from '../../agent/store';
 import { getThemePreference, setThemePreference, type ThemePreference } from '../../lib/theme';
 import { cn } from '@/lib/utils';
+import {Brand} from '../ui/brand';
+import {useUIStore} from '../../stores/ui-store';
 
 const DAY = 86_400_000;
 
@@ -56,12 +58,9 @@ export function Sidebar() {
 
   return (
     <aside className="sidebar" aria-label="Sidebar">
-      <div className="flex h-12 shrink-0 items-center gap-2 px-4">
-        <span className="grid h-6 w-6 place-items-center rounded-md bg-primary text-[11px] font-bold text-primary-foreground">JP</span>
-        <span className="text-sm font-semibold tracking-tight">{APP_NAME}</span>
-      </div>
+      <div className="sidebar-brand-row"><LinkBrand /><button type="button" className="sidebar-close lg:hidden" aria-label="Close sidebar" onClick={()=>useUIStore.getState().setSidebarOpen(false)}><X size={19}/></button></div>
 
-      <div className="px-3 pt-1">
+      <div className="sidebar-new-chat px-3 pt-1">
         <button
           type="button"
           onClick={newChat}
@@ -73,7 +72,36 @@ export function Sidebar() {
         </button>
       </div>
 
-      <nav className="min-h-0 flex-1 overflow-y-auto px-3 py-2" aria-label="Chats">
+
+
+      <nav className="sidebar-workspace px-3 py-3" aria-label="Workspace">
+        <p className="px-2.5 pb-2 pt-1 text-[11px] font-medium text-muted-foreground">YOUR WORKSPACE</p>
+        <ul>
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            return (
+              <li key={item.path}>
+                <NavLink
+                  to={item.path}
+                  end
+                  aria-label={item.label}
+                  className={({ isActive }) =>
+                    cn(
+                      'sidebar-link flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm',
+                      isActive ? 'bg-secondary font-medium text-foreground' : 'text-muted-foreground hover:bg-secondary/70 hover:text-foreground',
+                    )
+                  }
+                >
+                  <Icon size={15} />
+                  {item.label}
+                </NavLink>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+
+      <nav className="sidebar-history min-h-0 overflow-y-auto px-3 py-2" aria-label="Chats">
         {groupThreads(threads).map((group) => (
           <div key={group.label} className="mb-3">
             <p className="px-2.5 pb-1 pt-2 text-[11px] font-medium text-muted-foreground">{group.label}</p>
@@ -117,32 +145,6 @@ export function Sidebar() {
         )}
       </nav>
 
-      <nav className="border-t px-3 py-2" aria-label="Workspace">
-        <p className="px-2.5 pb-1 pt-1 text-[11px] font-medium text-muted-foreground">Workspace</p>
-        <ul>
-          {NAV_ITEMS.map((item) => {
-            const Icon = item.icon;
-            return (
-              <li key={item.path}>
-                <NavLink
-                  to={item.path}
-                  end
-                  className={({ isActive }) =>
-                    cn(
-                      'flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm',
-                      isActive ? 'bg-secondary font-medium text-foreground' : 'text-muted-foreground hover:bg-secondary/70 hover:text-foreground',
-                    )
-                  }
-                >
-                  <Icon size={15} />
-                  {item.label}
-                </NavLink>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
-
       {user && (
         <div className="flex items-center gap-2.5 border-t px-4 py-3">
           <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-secondary text-sm font-semibold">
@@ -175,3 +177,5 @@ export function Sidebar() {
     </aside>
   );
 }
+
+function LinkBrand(){return <NavLink to={ROUTES.OVERVIEW} className="sidebar-brand" aria-label="JobPilot workspace"><Brand/></NavLink>;}

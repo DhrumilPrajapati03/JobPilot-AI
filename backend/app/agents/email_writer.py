@@ -5,6 +5,7 @@ a 2-part follow-up sequence.
 """
 
 from app.services.llm import get_default_llm
+from app.services.writing_evidence import messages
 
 
 class EmailWriterAgent:
@@ -17,7 +18,7 @@ class EmailWriterAgent:
 
     async def generate(self, jd_analysis: dict, hr_contact: dict, user_profile: dict) -> dict:
         """Generate a cold email sequence (initial + 2 follow-ups)."""
-        llm = self._get_llm()
+        self.used_fallback = False
 
         company = jd_analysis.get("company", "the company")
         role = jd_analysis.get("role", "the role")
@@ -45,7 +46,8 @@ class EmailWriterAgent:
         )
 
         try:
-            res = await llm.ainvoke(prompt)
+            llm = self._get_llm()
+            res = await llm.ainvoke(messages(prompt, user_profile, company_research if 'company_research' in locals() else None, kind='email'))
             sections = res.content.split("---")
             
             email_data = {}
@@ -74,13 +76,13 @@ class EmailWriterAgent:
                 if key not in email_data:
                     email_data[key] = {
                         "subject": f"Outreach for {role} at {company}",
-                        "body": f"{hr_salutation},\n\nI recently applied to the {role} position and wanted to connect..."
+                        "body": f"{hr_salutation},\n\nI am interested in the {role} position and would welcome a conversation."
                     }
                     
             return email_data
             
         except Exception as e:
-            print(f"Error generating emails: {str(e)}")
+            print(f"Email fallback ({type(e).__name__})")
             self.used_fallback = True
             return {
                 "initial": {

@@ -1,0 +1,219 @@
+{
+  "audit_date": "2026-11-12",
+  "timezone": "Asia/Calcutta",
+  "head": "eb8c6d09a5bdfa472af8ed8ae619e952339d963a",
+  "source_scope": "dirty working tree; see source-manifest.json",
+  "backend": {
+    "tests": 338,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "status": "PASS",
+    "seconds": 45.746,
+    "scope": "offline test suite with mocked external boundaries"
+  },
+  "frontend_node": {
+    "status": "PASS",
+    "tests": 35,
+    "scope": "offline"
+  },
+  "frontend_build": {
+    "status": "PASS",
+    "exit_code": 0,
+    "scope": "TypeScript/Vite build"
+  },
+  "frontend_browser": {
+    "status": "BLOCKED",
+    "individual_ok_results": 14,
+    "successful_suite_completion": false,
+    "interrupted_exit_code": 1,
+    "reason": "No terminal suite summary; stalled after 14 individual ok results and was interrupted. Shutdown/teardown is suspected; root cause not determined.",
+    "scope": "synthetic local server and intercepted provider boundaries"
+  },
+  "extension_node": {
+    "status": "PASS",
+    "tests": 7,
+    "scope": "offline"
+  },
+  "extension_browser": {
+    "status": "PASS",
+    "tests": 15,
+    "scope": "local Chromium fixtures"
+  },
+  "matching": {
+    "status": "MEASURED_SYNTHETIC",
+    "cases": 37,
+    "independent_real_postings": 0,
+    "arms": {
+      "lexical": {
+        "n": 37,
+        "tp": 12,
+        "fp": 0,
+        "fn": 2,
+        "tn": 23,
+        "precision": 1.0,
+        "recall": 0.8571428571428571,
+        "f1": 0.9230769230769231,
+        "relevance_accuracy": 0.9459459459459459,
+        "eligibility_accuracy": 1.0,
+        "eligibility_confusion": [
+          {
+            "expected": "eligible",
+            "predicted": "eligible",
+            "count": 17
+          },
+          {
+            "expected": "ineligible",
+            "predicted": "ineligible",
+            "count": 13
+          },
+          {
+            "expected": "review",
+            "predicted": "review",
+            "count": 7
+          }
+        ],
+        "semantic_cases": 0,
+        "exact_historical_report_match": true,
+        "failing_ids": [
+          "semantic-research-title",
+          "semantic-developer-title"
+        ],
+        "batch_ms": [
+          245.86180000005697,
+          226.54519999969125,
+          197.35309999987294,
+          215.24200000021665,
+          218.652099999872,
+          232.37529999960316,
+          221.56429999995453,
+          215.24950000002718,
+          245.82469999995737,
+          227.09060000033787,
+          212.09319999979925
+        ],
+        "cold_batch_ms": 245.86180000005697,
+        "warm_batch_median_ms": 220.10819999991327,
+        "warm_batch_p95_ms": 245.82469999995737
+      },
+      "semantic": {
+        "n": 37,
+        "tp": 13,
+        "fp": 0,
+        "fn": 1,
+        "tn": 23,
+        "precision": 1.0,
+        "recall": 0.9285714285714286,
+        "f1": 0.9629629629629629,
+        "relevance_accuracy": 0.972972972972973,
+        "eligibility_accuracy": 1.0,
+        "eligibility_confusion": [
+          {
+            "expected": "eligible",
+            "predicted": "eligible",
+            "count": 17
+          },
+          {
+            "expected": "ineligible",
+            "predicted": "ineligible",
+            "count": 13
+          },
+          {
+            "expected": "review",
+            "predicted": "review",
+            "count": 7
+          }
+        ],
+        "semantic_cases": 37,
+        "exact_historical_report_match": true,
+        "failing_ids": [
+          "semantic-research-title"
+        ],
+        "batch_ms": [
+          2785.5054999999993,
+          246.02999999979147,
+          218.67999999994936,
+          225.7492000003367,
+          217.79369999967457,
+          220.80079999977897,
+          241.58970000007685,
+          234.3548000003466,
+          223.2464999997319,
+          229.85800000014933,
+          234.8904999998922
+        ],
+        "cold_batch_ms": 2785.5054999999993,
+        "warm_batch_median_ms": 227.80360000024302,
+        "warm_batch_p95_ms": 246.02999999979147
+      }
+    }
+  },
+  "coverage": {
+    "backend": "NOT MEASURED: coverage/pytest-cov absent",
+    "frontend": "NOT MEASURED: native report has zero attributable source rows; aggregate rejected",
+    "extension": "NOT MEASURED"
+  },
+  "database": {
+    "status": "BLOCKED",
+    "command": "docker image inspect postgres:17 --format '{{.Id}}'",
+    "exit_code": 1,
+    "reason": "Docker engine named pipe not found; Docker config access warning also present; no SQL suites executed"
+  },
+  "unmeasured": {
+    "independent_posting_accuracy": {
+      "value": null,
+      "status": "NOT MEASURED",
+      "reason": "No independently adjudicated real-posting corpus"
+    },
+    "precision_at_5": {
+      "value": null,
+      "status": "NOT MEASURED",
+      "reason": "No ranked independently labeled dataset"
+    },
+    "recall_at_5": {
+      "value": null,
+      "status": "NOT MEASURED",
+      "reason": "No ranked independently labeled retrieval universe"
+    },
+    "ndcg_at_10_or_mrr": {
+      "value": null,
+      "status": "NOT MEASURED",
+      "reason": "No ranked independently labeled dataset"
+    },
+    "generated_resume_factual_consistency": {
+      "value": null,
+      "status": "NOT MEASURED",
+      "reason": "No approved provider generations with claim-level human labels"
+    },
+    "unsupported_claim_rate": {
+      "value": null,
+      "status": "NOT MEASURED",
+      "reason": "Only three constructed validator probes; no representative generation sample"
+    },
+    "workflow_completion_rate": {
+      "value": null,
+      "status": "NOT MEASURED",
+      "reason": "Test assertions are not a task-level evaluation denominator"
+    },
+    "workflow_recovery_rate": {
+      "value": null,
+      "status": "NOT MEASURED",
+      "reason": "Fake-store recovery tests are not an independent task-rate experiment"
+    },
+    "median_and_p95_end_to_end_latency": {
+      "value": null,
+      "status": "NOT MEASURED",
+      "reason": "Only local scoring batch timings measured"
+    },
+    "llm_tokens_and_average_api_cost": {
+      "value": null,
+      "status": "NOT MEASURED",
+      "reason": "No provider calls or token ledger"
+    },
+    "manual_vs_ai_preparation_time": {
+      "value": null,
+      "status": "NOT MEASURED",
+      "reason": "No comparable human timing study"
+    }
+  }
+}
