@@ -133,7 +133,7 @@ def test_link_then_login_with_google_and_github(owner, client, monkeypatch):
     for name in ("google", "github"):
         response, start = round_trip(client, name, intent="link")
         assert response.headers["location"].endswith(f"/settings?linked={name}"), response.headers["location"]
-    assert "code_challenge" in start.headers["location"] and seen["google_verifier"]
+    assert "code_challenge" not in start.headers["location"] and seen["google_verifier"]  # start is the GitHub one
     linked = client.get("/auth/identities").json()["identities"]
     assert [i["provider"] for i in linked] == ["github", "google"]
     client.cookies.clear()

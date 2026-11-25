@@ -7,8 +7,8 @@
 * First run: sign in with the bearer token, then link Google/GitHub from Settings
   (intent=link). After that either provider signs in.
 * `state` is random, stored hashed in oauth_state for 10 minutes, single use, and bound to
-  the browser by a short-lived HttpOnly cookie. Google uses PKCE (S256) and a nonce
-  checked inside the verified ID token.
+  the browser by a short-lived HttpOnly cookie. Google also uses PKCE (S256) and a nonce
+  checked inside the verified ID token; GitHub uses the client secret and state only.
 """
 from __future__ import annotations
 
@@ -89,9 +89,10 @@ def start(provider: str, intent: str, user_id: str | None) -> tuple[str, str]:
                  "response_type": "code", "scope": "openid email profile", "state": state, "nonce": nonce,
                  "code_challenge": _challenge(verifier), "code_challenge_method": "S256", "prompt": "select_account"}
         return f"{GOOGLE_AUTHORIZE}?{urlencode(query)}", state
+    # No PKCE for GitHub: its authorize page returned HTTP 500 with code_challenge. The flow
+    # stays protected by the client secret and the single-use state bound to this browser.
     query = {"client_id": settings.GITHUB_OAUTH_CLIENT_ID, "redirect_uri": callback_url("github"),
-             "scope": "read:user", "state": state, "allow_signup": "false",
-             "code_challenge": _challenge(verifier), "code_challenge_method": "S256"}
+             "scope": "read:user", "state": state, "allow_signup": "false"}
     return f"{GITHUB_AUTHORIZE}?{urlencode(query)}", state
 
 
@@ -136,7 +137,7 @@ def _google_identity(code: str, verifier: str, nonce: str, client: httpx.Client)
 def _github_identity(code: str, verifier: str, client: httpx.Client) -> ProviderIdentity:
     response = client.post(GITHUB_TOKEN, headers={"Accept": "application/json"}, data={
         "code": code, "client_id": settings.GITHUB_OAUTH_CLIENT_ID, "client_secret": settings.GITHUB_OAUTH_CLIENT_SECRET,
-        "redirect_uri": callback_url("github"), "code_verifier": verifier})
+        "redirect_uri": callback_url("github")})
     token = response.json().get("access_token") if response.status_code == 200 else None
     if not token:
         raise LoginError("provider_error")
