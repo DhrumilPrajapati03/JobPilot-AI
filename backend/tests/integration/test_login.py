@@ -63,7 +63,7 @@ def provider(monkeypatch, *, google_sub="g-1", github_id=101, email="owner@examp
             form = parse_qs(request.content.decode())
             seen["google_verifier"] = form["code_verifier"][0]
             claims = {"iss": "https://accounts.google.com", "aud": "google-client", "sub": google_sub, "email": email,
-                      "email_verified": True, "iat": int(time.time()), "exp": int(time.time()) + 300,
+                      "email_verified": True, "iat": int(time.time()) + 5, "exp": int(time.time()) + 300,  # Google's clock runs ahead
                       "nonce": seen.get("nonce", "")}
             return httpx.Response(200, json={"id_token": jwt.encode(claims, KEY, algorithm="RS256")})
         if request.url.host == "github.com":
@@ -133,7 +133,7 @@ def test_link_then_login_with_google_and_github(owner, client, monkeypatch):
     for name in ("google", "github"):
         response, start = round_trip(client, name, intent="link")
         assert response.headers["location"].endswith(f"/settings?linked={name}"), response.headers["location"]
-    assert "code_challenge" in start.headers["location"] and seen["google_verifier"]
+    assert "code_challenge" not in start.headers["location"] and seen["google_verifier"]  # start is the GitHub one
     linked = client.get("/auth/identities").json()["identities"]
     assert [i["provider"] for i in linked] == ["github", "google"]
     client.cookies.clear()

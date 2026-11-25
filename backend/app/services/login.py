@@ -7,13 +7,14 @@
 * First run: sign in with the bearer token, then link Google/GitHub from Settings
   (intent=link). After that either provider signs in.
 * `state` is random, stored hashed in oauth_state for 10 minutes, single use, and bound to
-  the browser by a short-lived HttpOnly cookie. Google uses PKCE (S256) and a nonce
-  checked inside the verified ID token.
+  the browser by a short-lived HttpOnly cookie. Google also uses PKCE (S256) and a nonce
+  checked inside the verified ID token; GitHub uses the client secret and state only.
 """
 from __future__ import annotations
 
 import base64
 import hashlib
+import logging
 import secrets
 from dataclasses import dataclass
 from urllib.parse import urlencode
@@ -38,6 +39,7 @@ GITHUB_USER = "https://api.github.com/user"
 TIMEOUT = httpx.Timeout(15.0)
 
 _jwks: jwt.PyJWKClient | None = None
+log = logging.getLogger(__name__)
 
 
 class LoginError(Exception):
@@ -89,9 +91,10 @@ def start(provider: str, intent: str, user_id: str | None) -> tuple[str, str]:
                  "response_type": "code", "scope": "openid email profile", "state": state, "nonce": nonce,
                  "code_challenge": _challenge(verifier), "code_challenge_method": "S256", "prompt": "select_account"}
         return f"{GOOGLE_AUTHORIZE}?{urlencode(query)}", state
+    # No PKCE for GitHub: its authorize page returned HTTP 500 with code_challenge. The flow
+    # stays protected by the client secret and the single-use state bound to this browser.
     query = {"client_id": settings.GITHUB_OAUTH_CLIENT_ID, "redirect_uri": callback_url("github"),
-             "scope": "read:user", "state": state, "allow_signup": "false",
-             "code_challenge": _challenge(verifier), "code_challenge_method": "S256"}
+             "scope": "read:user", "state": state, "allow_signup": "false"}
     return f"{GITHUB_AUTHORIZE}?{urlencode(query)}", state
 
 
@@ -123,9 +126,12 @@ def _google_identity(code: str, verifier: str, nonce: str, client: httpx.Client)
     id_token = response.json()["id_token"]
     try:
         key = _google_keys().get_signing_key_from_jwt(id_token)
+        # Leeway: Docker/WSL clocks drift a second or more behind Google's, and a token
+        # "issued in the future" would otherwise be rejected (iat check).
         claims = jwt.decode(id_token, key.key, algorithms=["RS256"], audience=settings.GOOGLE_LOGIN_CLIENT_ID,
-                            options={"require": ["sub", "iss", "aud", "exp", "iat"]})
-    except jwt.PyJWTError:
+                            leeway=60, options={"require": ["sub", "iss", "aud", "exp", "iat"]})
+    except jwt.PyJWTError as exc:
+        log.warning("Google ID token rejected (%s)", type(exc).__name__)
         raise LoginError("provider_error") from None
     if claims.get("iss") not in GOOGLE_ISSUERS or not secrets.compare_digest(str(claims.get("nonce", "")), nonce):
         raise LoginError("provider_error")
@@ -136,7 +142,7 @@ def _google_identity(code: str, verifier: str, nonce: str, client: httpx.Client)
 def _github_identity(code: str, verifier: str, client: httpx.Client) -> ProviderIdentity:
     response = client.post(GITHUB_TOKEN, headers={"Accept": "application/json"}, data={
         "code": code, "client_id": settings.GITHUB_OAUTH_CLIENT_ID, "client_secret": settings.GITHUB_OAUTH_CLIENT_SECRET,
-        "redirect_uri": callback_url("github"), "code_verifier": verifier})
+        "redirect_uri": callback_url("github")})
     token = response.json().get("access_token") if response.status_code == 200 else None
     if not token:
         raise LoginError("provider_error")
