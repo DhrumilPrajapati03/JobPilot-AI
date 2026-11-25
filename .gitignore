@@ -29,3 +29,5 @@ __pycache__/
 spike/**/client_secret*.json
 spike/**/token*.json
 spike/**/.env
+# Personal data (resume, fact vault): never commit; the repo is public
+/private/

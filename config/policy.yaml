@@ -1,0 +1,51 @@
+# JobDots policy: what each expert may do, how often, and when it must ask.
+# Enforced in code by the policy engine and Courier (plan sections 2.3 and 2.4).
+# Agents read it but can never change or relax it; custom agents inherit it.
+# Values approved by Dhrumil on 25 Nov 2026 as the starting point. Raise caps gradually.
+
+version: 1
+
+# true pauses every Courier executor (email, LinkedIn queue, calendar, form submit).
+kill_switch: false
+
+# Mode per action kind. An action kind missing from this list is rejected.
+#   act               do it, log it
+#   act_with_preview  do it, show the result before anything leaves
+#   ask_first         propose; runs only after approval
+#   hand_off          stop and hand to Dhrumil (CAPTCHA, 2FA, legal)
+#   never             blocked, whatever an agent or prompt asks
+action_modes:
+  read_public_web: act
+  save_artifact: act
+  compile_resume: act
+  fill_form: act_with_preview
+  send_email: ask_first
+  send_linkedin_invite: ask_first
+  send_linkedin_dm: ask_first
+  submit_application: ask_first
+  referral_request: ask_first
+  create_calendar_event: ask_first
+  captcha_or_2fa: hand_off
+  password_entry: hand_off
+  legal_attestation: hand_off
+  bulk_send: never
+  fake_identity: never
+  scrape_behind_login: never
+
+# Hard limits. Counted per local calendar day/week (Asia/Kolkata).
+caps:
+  emails_per_day: 10
+  linkedin_invites_per_day: 10
+  linkedin_invites_per_week: 40
+  linkedin_dms_per_day: 10
+  max_people_per_company: 3
+  min_hours_accept_to_dm: 24
+  no_contact_if_touched_within_days: 14
+  quiet_hours: "22:00-08:00"
+  timezone: Asia/Kolkata
+
+# Auto-approval is earned per action kind, never globally, and always stays under caps.
+autonomy:
+  send_email:
+    auto_after_clean_approvals: 15   # approvals in a row with no edits
+    daily_cap: 5                     # auto-approved sends per day, within emails_per_day
