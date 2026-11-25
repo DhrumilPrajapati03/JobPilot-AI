@@ -16,6 +16,8 @@ import copy
 import json
 import re
 import time
+from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass, field
 from typing import Any, AsyncIterator
 
@@ -152,6 +154,29 @@ def _endpoint(provider: str) -> tuple[str, str]:
     raise ValueError(f"Unknown LLM provider: {provider}")
 
 
+# Token meter for budgets: the agent runtime opens one per step (usage_meter()), and every
+# completion inside adds its usage. Nothing is recorded when no meter is open.
+_usage: ContextVar[list | None] = ContextVar("llm_usage", default=None)
+
+
+@contextmanager
+def usage_meter():
+    """Collect {provider, model, tokens} for completions made inside this block."""
+    entries: list[dict] = []
+    token = _usage.set(entries)
+    try:
+        yield entries
+    finally:
+        _usage.reset(token)
+
+
+def _meter(response, provider: str, model: str) -> None:
+    entries = _usage.get()
+    usage = getattr(response, "usage", None)
+    if entries is not None and usage is not None:
+        entries.append({"provider": provider, "model": model, "tokens": int(getattr(usage, "total_tokens", 0) or 0)})
+
+
 class ChatModel:
     """One model on one OpenAI-compatible endpoint."""
 
@@ -209,10 +234,13 @@ class ChatModel:
         return AIMessage(content=_THINK.sub("", message.content or ""), tool_calls=calls)
 
     def invoke(self, value, config=None, **extra) -> AIMessage:
-        return self._message(self._client().chat.completions.create(**self._request(value, **extra)).choices[0])
+        response = self._client().chat.completions.create(**self._request(value, **extra))
+        _meter(response, self.provider, self.model)
+        return self._message(response.choices[0])
 
     async def ainvoke(self, value, config=None, **extra) -> AIMessage:
         response = await self._aclient().chat.completions.create(**self._request(value, **extra))
+        _meter(response, self.provider, self.model)
         return self._message(response.choices[0])
 
     async def astream(self, value, config=None, **extra) -> AsyncIterator[AIMessageChunk]:

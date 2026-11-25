@@ -20,6 +20,7 @@ INPUT_FIELDS = {
     "mail_sync": {"connection_id", "cycle", "after_id"},
     "company_research": {"application_id", "urls"},
     "backup": {"scheduled_on"},
+    "agent": {"agent", "case_id", "trigger", "scheduled_on", "urls"},
 }
 current_execution: ContextVar = ContextVar("current_execution", default=None)
 

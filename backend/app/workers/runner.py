@@ -83,6 +83,9 @@ class Worker:
         db, uid = self.store.client, ctx.run["user_id"]
         email = autopilot.account_email(db, uid)
         kind = ctx.run["kind"]
+        if kind == "agent":
+            from app.experts import runtime
+            return await runtime.execute(ctx)
         if kind == "backup":
             from app.services import backup
             async def run():
@@ -128,6 +131,17 @@ class Worker:
         raise PermanentRunError("Unsupported job kind")
 
 
+def bootstrap_experts() -> str:
+    """Sync built-in expert specs and default routines; returns the owner id."""
+    from app.db import get_db
+    from app.experts import routines, spec
+    from app.services.auth import owner_identity
+    owner_id = owner_identity()[0]
+    spec.sync_builtins(get_db())
+    routines.ensure_defaults(owner_id)
+    return owner_id
+
+
 async def main(once=False):
     from app.services.production import validate_production
     validate_production()
@@ -138,6 +152,7 @@ async def main(once=False):
     worker = Worker()
     setup_monitoring()
     last_schedule = 0.0
+    owner, first_tick = None, True
     stopped = threading.Event()
     for event in (signal.SIGINT, signal.SIGTERM):
         signal.signal(event, lambda *_: stopped.set())
@@ -158,16 +173,20 @@ async def main(once=False):
         while not stopped.is_set():
             try:
                 if not once and asyncio.get_running_loop().time() - last_schedule >= autopilot.TICK_SECONDS:
+                    # Scout's daily scan and the nightly backup are routines now; the
+                    # autopilot tick keeps the morning digest.
                     if settings.DISCOVERY_AUTO_SCAN:
-                        await autopilot.tick(worker.store.client)
+                        await autopilot.tick(worker.store.client, scans=False)
                     from app.services import mailbox
                     await mailbox.schedule_sync(worker.store.client)
                     try:
-                        from app.services import backup
-                        from app.services.auth import owner_identity
-                        await asyncio.to_thread(backup.schedule, worker.store, (await asyncio.to_thread(owner_identity))[0])
+                        from app.experts import routines
+                        if owner is None:
+                            owner = await asyncio.to_thread(bootstrap_experts)
+                        await routines.tick(worker.store, owner, waking=first_tick)
+                        first_tick = False
                     except Exception as exc:
-                        log.warning("Backup scheduling skipped (%s)", type(exc).__name__)
+                        log.warning("Routine scheduling skipped (%s)", type(exc).__name__)
                     last_schedule = asyncio.get_running_loop().time()
                 worked = await worker.run_once()
                 if once:

@@ -28,7 +28,15 @@ async def lifespan(app: FastAPI):
     from app.services.production import validate_production
     validate_production()
     setup_monitoring()
-    print("JobPilot AI API starting up...")
+    if settings.DATABASE_URL and settings.APP_ENV != "test":
+        try:
+            # Expert specs are data; keep agent_spec in step with app/experts/builtin.yaml.
+            from app.db import get_db
+            from app.experts.spec import sync_builtins
+            await asyncio.to_thread(sync_builtins, get_db())
+        except Exception as exc:
+            print(f"Expert specs not synced ({type(exc).__name__})")
+    print("JobDots API starting up...")
     scheduler = None
     if settings.EXECUTION_MODE == 'inline' and settings.DISCOVERY_AUTO_SCAN and autopilot.server_ready():
         scheduler = asyncio.create_task(autopilot.scheduler_loop())

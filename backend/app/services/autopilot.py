@@ -234,15 +234,17 @@ def _save_state(admin, user_id: str, **values):
     admin.table("autopilot_state").upsert({"user_id": user_id, **values, "updated_at": _now().isoformat()}, on_conflict="user_id").execute()
 
 
-async def tick(admin) -> dict:
-    """One pass of the daily schedule for every user. Safe to call as often as you like."""
+async def tick(admin, *, scans: bool = True) -> dict:
+    """One pass of the daily schedule for every user. Safe to call as often as you like.
+
+    scans=False when Scout's routine (app/experts/routines.py) owns the daily scan."""
     if _tick_lock.locked():
         return {"status": "already_running"}
     async with _tick_lock:
-        return await _tick(admin)
+        return await _tick(admin, scans)
 
 
-async def _tick(admin) -> dict:
+async def _tick(admin, scans: bool = True) -> dict:
     from app.services import digest, discovery
     from app.services import runs
 
@@ -271,7 +273,7 @@ async def _tick(admin) -> dict:
         try:
             if runs.durable_enabled():
                 store = runs.RunStore(admin)
-                if user_id in followers and state.get("last_scan_on") != today and now.hour >= scan_hour(prefs):
+                if scans and user_id in followers and state.get("last_scan_on") != today and now.hour >= scan_hour(prefs):
                     job = store.enqueue(user_id, "scan", {"auto_draft": True, "scheduled_on": today}, f"scheduled-scan:{today}")
                     report["scanned"].append({"user_id": user_id, "run_id": job["id"], "status": job["status"]})
                 if prefs.digest_enabled and state.get("last_digest_on") != today and now.hour >= prefs.digest_hour:
