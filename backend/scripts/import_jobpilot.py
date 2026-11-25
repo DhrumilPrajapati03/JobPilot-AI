@@ -18,6 +18,17 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+import os  # noqa: E402
+
+from dotenv import dotenv_values  # noqa: E402
+
+# On the host, read the root .env (Compose settings: owner, database password) too.
+for _key, _value in dotenv_values(Path(__file__).resolve().parents[2] / ".env").items():
+    os.environ.setdefault(_key, _value or "")
+if not os.environ.get("DATABASE_URL") and os.environ.get("POSTGRES_PASSWORD"):
+    os.environ["DATABASE_URL"] = (f"postgresql+psycopg://jobdots:{os.environ['POSTGRES_PASSWORD']}"
+                                  f"@127.0.0.1:{os.environ.get('POSTGRES_PORT') or '55432'}/jobdots")
+
 import psycopg  # noqa: E402
 
 from app.config import settings  # noqa: E402

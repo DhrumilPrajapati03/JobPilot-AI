@@ -11,6 +11,9 @@ import subprocess
 started=time.perf_counter()
 version=subprocess.run(['tectonic','--version'],capture_output=True,text=True,check=True)
 assert '0.15.0' in version.stdout+version.stderr, 'Tectonic 0.15.0 missing'
+for tool in ('pg_dump','pg_restore'):
+    out=subprocess.run([tool,'--version'],capture_output=True,text=True,check=True).stdout
+    assert ' 17.' in out, f'{tool} 17 missing (backups need it): {out}'
 # No network here, so local embeddings (Ollama) are unreachable: matching must degrade, not fail.
 from app.services.matching_semantics import similarity
 assert similarity('Python engineer building APIs','Build Python APIs','synthetic-image-check')==(None,'unavailable')
