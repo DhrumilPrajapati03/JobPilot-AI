@@ -18,8 +18,7 @@ backend/data/
 # Project-local development tooling
 /.tool-cache/
 /.superdesign/
-backend/.venv-release/
-/backend/supabase/.temp/
+.venv*/
 /spike/composio_calendar/
 /data/
 *.sqlite3

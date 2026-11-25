@@ -1,4 +1,4 @@
-"""Recovery invariants; SQL transaction/RLS assertions live in supabase/tests."""
+"""Recovery invariants; SQL transaction assertions live in tests/sql (scripts/check_database.py)."""
 import asyncio
 import copy
 import threading

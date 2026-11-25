@@ -2,7 +2,7 @@
 
 FastAPI application that powers the JobPilot AI autonomous career agent system.
 
-For Sprint 2 durable execution, apply the new migrations, set `EXECUTION_MODE=durable` on API and worker, and start `python -m app.workers.runner` alongside the API. `docker-compose.durable.yml` provides the two processes without Redis; the original Compose file remains the legacy configuration.
+Database: local Postgres + pgvector from `compose.yaml` at the repo root, schema managed by Alembic (`migrations/`, `alembic upgrade head`). See the root README, "Local stack". Durable execution: set `EXECUTION_MODE=durable` on API and worker, and start `python -m app.workers.runner` alongside the API.
 
 ## Setup Instructions
 

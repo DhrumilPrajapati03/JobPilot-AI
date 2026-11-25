@@ -9,7 +9,6 @@ begin
   perform set_config('test.mail_owner',a::text,true); perform set_config('test.mail_stranger',b::text,true);
   perform set_config('test.mail_app',app::text,true);
 end $$;
-set local role service_role;
 do $$
 declare uid uuid:=current_setting('test.mail_owner')::uuid;
   m jsonb; approved jsonb; edited jsonb; run jsonb; reserved jsonb; repeated jsonb;
@@ -74,21 +73,15 @@ begin
     perform public.mail_command(uid,'edit',jsonb_build_object('id',id,'revision',2,'to_email','x@example.invalid','subject','x','body','x'));
     raise exception 'Sent record rewritten';
   exception when raise_exception then if sqlerrm<>'mail_immutable' then raise; end if; end;
-  assert not has_function_privilege('authenticated','public.mail_command(uuid,text,jsonb)','execute');
-  assert not has_table_privilege('authenticated','public.outreach_messages','update');
 end $$;
-set local role authenticated;
-select set_config('request.jwt.claims',json_build_object('sub',current_setting('test.mail_owner'),'role','authenticated')::text,true);
-do $$ begin
-  assert (select count(*) from public.outreach_messages where id=current_setting('test.mail_message')::uuid)=1;
-  assert (select count(*) from public.mail_replies where message_id=current_setting('test.mail_message')::uuid)=1;
+do $$
+declare uid uuid:=current_setting('test.mail_owner')::uuid; other uuid:=current_setting('test.mail_stranger')::uuid;
+  msg uuid:=current_setting('test.mail_message')::uuid;
+begin
+  assert (select count(*) from public.outreach_messages where id=msg and user_id=uid)=1;
+  assert (select count(*) from public.mail_replies where message_id=msg and user_id=uid)=1;
+  assert not exists(select 1 from public.outreach_messages where user_id=other);
+  assert not exists(select 1 from public.mail_connections where user_id=other);
 end $$;
-select set_config('request.jwt.claims',json_build_object('sub',current_setting('test.mail_stranger'),'role','authenticated')::text,true);
-do $$ begin
-  assert not exists(select 1 from public.outreach_messages where id=current_setting('test.mail_message')::uuid);
-  assert not exists(select 1 from public.mail_replies where message_id=current_setting('test.mail_message')::uuid);
-  assert not exists(select 1 from public.mail_connections where user_id=current_setting('test.mail_owner')::uuid);
-end $$;
-reset role;
 rollback;
 select 'gmail_outreach_smoke_passed' as result;

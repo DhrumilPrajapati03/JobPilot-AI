@@ -32,7 +32,7 @@ class SQLStore:
             if isinstance(value,(int,float)):return str(value)
             return "'"+str(value).replace("'","''")+"'"
         args=','.join(k+'=>'+literal(v) for k,v in params.items())
-        return json.loads(self.query(f'set role service_role; select to_jsonb(public.{name}({args}))::text;'))
+        return json.loads(self.query(f'select to_jsonb(public.{name}({args}))::text;'))
 
     def claim(self,worker):return self.rpc('claim_agent_run',p_worker=worker,p_lease_seconds=30)
     def renew(self,run,token):return self.rpc('renew_agent_run',p_run_id=run,p_token=token,p_lease_seconds=30)
@@ -95,5 +95,5 @@ if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--container',required=True);parser.add_argument('--marker',required=True);parser.add_argument('--pause',action='store_true')
     args=parser.parse_args()
-    if not args.container.startswith('jobpilot-release-check-'):raise SystemExit('Requires the isolated release-check container')
+    if not args.container.startswith('jobdots-db-check-'):raise SystemExit('Requires the isolated database-check container')
     child(args.container,args.marker,args.pause)

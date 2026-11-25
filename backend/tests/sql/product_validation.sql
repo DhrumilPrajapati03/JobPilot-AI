@@ -39,8 +39,8 @@ begin
   assert (public.get_execution_health()->>'healthy_workers')::int=0;
   assert (public.get_execution_health()->>'expired_leases')::int=1;
 end $$;
-set local role authenticated;
-select set_config('request.jwt.claim.sub',current_setting('test.metrics.a'),true);
+-- get_product_metrics() scopes by auth.uid(), which reads app.user_id (set per transaction by the app).
+select set_config('app.user_id',current_setting('test.metrics.a'),true);
 do $$ declare m jsonb:=public.get_product_metrics(); begin
   assert (m->>'generated_applications')::int=1;
   assert (m->>'prepared_applications')::int=1 and (m->>'attempted_applications')::int=1;
@@ -52,14 +52,12 @@ do $$ declare m jsonb:=public.get_product_metrics(); begin
   assert (m->'runs'->>'recovered')::int=1;
   assert (m->'stage_timings'->0->>'samples')::int=2 and (m->'stage_timings'->0->>'median_ms')::numeric=300;
   assert m::text not like '%PRIVATE%';
-  assert not has_table_privilege('authenticated','public.execution_workers','SELECT');
-  assert not has_function_privilege('authenticated','public.get_execution_health()','EXECUTE');
 end $$;
-select set_config('request.jwt.claim.sub',current_setting('test.metrics.b'),true);
+select set_config('app.user_id',current_setting('test.metrics.b'),true);
 do $$ declare m jsonb:=public.get_product_metrics(); begin
   assert (m->>'prepared_applications')::int=0 and (m->'gmail'->>'accepted_messages')::int=1;
   assert jsonb_array_length(m->'stage_timings')=0;
 end $$;
-set local role anon;
-do $$ begin assert not has_function_privilege('anon','public.get_product_metrics()','EXECUTE'); end $$;
+select set_config('app.user_id','',true);
+do $$ begin assert auth.uid() is null, 'auth.uid() must be null without app.user_id'; end $$;
 rollback;

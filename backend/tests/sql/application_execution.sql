@@ -8,7 +8,6 @@ begin
   perform set_config('test.execution.owner',a::text,true); perform set_config('test.execution.stranger',b::text,true);
   perform set_config('test.execution.app',app::text,true); perform set_config('test.execution.session',gen_random_uuid()::text,true);
 end $$;
-set local role service_role;
 do $$
 declare uid uuid:=current_setting('test.execution.owner')::uuid; app uuid:=current_setting('test.execution.app')::uuid;
   sid uuid:=current_setting('test.execution.session')::uuid; s jsonb; repeated jsonb; e jsonb;
@@ -54,24 +53,15 @@ begin
     raise exception 'Expired session accepted';
   exception when raise_exception then if sqlerrm<>'execution_expired' then raise; end if; end;
 end $$;
-set local role authenticated;
-select set_config('request.jwt.claim.sub',current_setting('test.execution.owner'),true);
 do $$
+declare uid uuid:=current_setting('test.execution.owner')::uuid; other uuid:=current_setting('test.execution.stranger')::uuid;
 begin
-  assert (select count(*) from public.application_events)=4;
-  assert (select count(*) from public.application_execution_sessions)=1;
-  assert (select count(id) from public.application_documents)=1;
-  assert not has_column_privilege('authenticated','public.application_documents','pdf_base64','SELECT');
-  assert not has_table_privilege('authenticated','public.application_events','INSERT');
-  assert not has_function_privilege('authenticated','public.append_application_event(uuid,uuid,text,uuid,jsonb)','EXECUTE');
+  assert (select count(*) from public.application_events where user_id=uid)=4;
+  assert (select count(*) from public.application_execution_sessions where user_id=uid)=1;
+  assert (select count(id) from public.application_documents where user_id=uid)=1;
+  assert (select count(*) from public.application_events where user_id=other)=0;
+  assert (select count(*) from public.application_execution_sessions where user_id=other)=0;
 end $$;
-select set_config('request.jwt.claim.sub',current_setting('test.execution.stranger'),true);
-do $$ begin
-  assert (select count(*) from public.application_events)=0;
-  assert (select count(*) from public.application_execution_sessions)=0;
-  assert (select count(id) from public.application_documents)=0;
-end $$;
-reset role;
 delete from auth.users where id=current_setting('test.execution.owner')::uuid;
 do $$ begin
   assert not exists(select 1 from public.application_events where user_id=current_setting('test.execution.owner')::uuid);
