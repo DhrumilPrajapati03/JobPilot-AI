@@ -36,7 +36,7 @@ export default defineConfig(({mode,command})=>{
         // Long-lived vendor chunks cache across deploys.
         manualChunks: {
           react: ['react', 'react-dom', 'react-router-dom'],
-          data: ['@tanstack/react-query', '@supabase/supabase-js', 'zustand'],
+          data: ['@tanstack/react-query', 'zustand'],
         },
       },
     },

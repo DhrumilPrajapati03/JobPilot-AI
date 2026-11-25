@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
 import { resolveRun, type QueuedRun } from '../lib/run-poll';
 import { API_URL } from '../lib/constants';
-import { supabase } from '../lib/supabase';
+import { sessionFetch } from '../lib/session';
 import { useAuthStore } from '../stores/auth-store';
 
 export interface MailConnection { id: string; email: string; status: string; last_sync_at: string | null }
@@ -41,9 +41,8 @@ export function useRecruiterLeads(applicationId: string) {
 }
 export async function downloadMailAttachment(id: string) {
   const owner=useAuthStore.getState().user?.id;
-  const {data}=await supabase.auth.getSession();
-  if (!owner || useAuthStore.getState().user?.id!==owner) throw new Error('Account changed before the download');
-  const response=await fetch(`${API_URL}/email/messages/${id}/attachment`,{headers:{Authorization:`Bearer ${data.session?.access_token ?? ''}`}});
+  if (!owner) throw new Error('Account changed before the download');
+  const response=await sessionFetch(`${API_URL}/email/messages/${id}/attachment`);
   if (!response.ok) throw new Error('The saved PDF could not be downloaded');
   const blob=await response.blob();
   if (useAuthStore.getState().user?.id!==owner) throw new Error('Account changed during the download');

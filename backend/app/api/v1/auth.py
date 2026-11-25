@@ -5,7 +5,9 @@ Magic-link/OTP login (Supabase Auth) is gone; owner login replaces it (plan sect
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.db import get_db
-from app.services.auth import get_current_user, CurrentUser
+import asyncio
+
+from app.services.auth import get_current_user, CurrentUser, revoke_session
 
 router = APIRouter()
 
@@ -31,6 +33,7 @@ async def get_me(current_user: CurrentUser = Depends(get_current_user)):
 
         return {
             "user_id": current_user.id,
+            "email": current_user.email,
             "profile": profile
         }
     except HTTPException:
@@ -44,5 +47,7 @@ async def get_me(current_user: CurrentUser = Depends(get_current_user)):
 
 @router.post("/logout")
 async def logout(current_user: CurrentUser = Depends(get_current_user)):
-    """Sign the user out. Tokens are stateless here; the client discards its session."""
+    """Kept for old clients. Browser sessions end at POST /auth/logout, which revokes the cookie."""
+    if current_user.method == "session":
+        await asyncio.to_thread(revoke_session, current_user.token)
     return {"message": "Logged out successfully"}

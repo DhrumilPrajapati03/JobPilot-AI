@@ -31,6 +31,14 @@
   --ring: #225dcc;
   --sidebar: #151d1c;
 
+  /* Expert identity colours (the avatars carry the colour; chrome stays neutral). */
+  --team-1: #3f6fd8;
+  --team-2: #2f9e72;
+  --team-3: #d1883a;
+  --team-4: #8a5cc9;
+  --team-5: #d65c7a;
+  --team-eye: #1c2420;
+
   /* Status: chart marks (validated categorical set) + pill text/fill */
   --status-saved: #2a78d6;
   --status-applied: #1baf7a;
@@ -208,13 +216,7 @@
 .workspace-content > div > header { margin-bottom:24px; }
 .workspace-skip { position:fixed;left:12px;top:-80px;z-index:100;padding:12px 18px;border-radius:8px;background:var(--primary);color:var(--primary-foreground); }
 .workspace-skip:focus { top:12px; }
-.login-layout { display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,420px);gap:80px;width:min(1040px,100%);align-items:center; }
-.login-intro h1 { font-size:clamp(32px,4vw,52px);line-height:1.12;letter-spacing:-.055em;font-weight:600;margin:18px 0; }
-.login-intro > p:not(.eyebrow) { max-width:420px;line-height:1.9; }
-.login-card { border:1px solid var(--border);border-radius:20px;background:var(--card);padding:36px;box-shadow:0 16px 60px color-mix(in srgb,var(--foreground) 6%,transparent); }
-.login-lock { display:grid;place-items:center;width:48px;height:48px;border-radius:14px;background:color-mix(in srgb,var(--primary) 10%,var(--card));color:var(--accent);margin-bottom:22px; }
-.login-error { padding:12px 14px;border:1px solid color-mix(in srgb,var(--destructive) 30%,transparent);border-radius:8px;background:color-mix(in srgb,var(--destructive) 6%,transparent); }
-@media(max-width:767px) { .login-layout { grid-template-columns:1fr;gap:32px;max-width:440px; }.login-intro h1 { font-size:34px; }.login-intro > ul,.login-intro > a:last-child { display:none; }.login-intro .eyebrow { margin-top:28px; }.login-card { padding:24px; }.workspace-context { padding:12px 16px; }.workspace-content { padding-top:24px; } }
+@media(max-width:767px) { .workspace-context { padding:12px 16px; }.workspace-content { padding-top:24px; } }
 
 /* Card elevation used by <Card> */
 .shadow-premium {
@@ -399,68 +401,25 @@
   background: var(--color-background);
 }
 
-.login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.login-panel {
+  width: min(400px, 100%);
+  color: var(--color-foreground);
 }
-
-.login-field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.login-input-wrapper {
-  position: relative;
-}
-
-.login-input-icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--color-muted-foreground);
-  pointer-events: none;
-}
-
-.login-email-input {
-  height: 44px !important;
-  padding-left: 40px !important;
-}
-
-.login-submit-btn {
-  height: 44px !important;
-  gap: 8px;
-}
-
-.login-error {
-  color: var(--color-destructive);
-  font-size: 0.85rem;
-}
-
-.login-disclaimer {
-  color: var(--color-muted-foreground);
-  font-size: 0.75rem;
-  text-align: center;
-}
-
-.login-success {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  text-align: center;
-}
-
-.login-success-icon {
-  color: var(--color-accent);
-}
-
-.login-success p {
-  color: var(--color-muted-foreground);
-  line-height: 1.6;
-}
+.login-panel h1 { font-size: 28px; line-height: 1.2; letter-spacing: -.03em; font-weight: 600; margin: 28px 0 8px; }
+.login-lede { color: var(--color-muted-foreground); line-height: 1.6; margin-bottom: 28px; max-width: 34ch; }
+.login-team { display: flex; gap: 6px; list-style: none; padding: 0; margin: 0; }
+.login-team li { animation: login-breathe 5s ease-in-out infinite; transform-origin: 50% 90%; }
+@keyframes login-breathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.03, .97); } }
+@media (prefers-reduced-motion: reduce) { .login-team li { animation: none; } }
+.login-form { display: flex; flex-direction: column; gap: 10px; }
+.login-provider { height: 46px; justify-content: center; gap: 10px; font-weight: 500; }
+.login-token { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; padding-top: 18px; border-top: 1px solid var(--color-border); }
+.login-token-toggle { align-self: flex-start; margin-top: 6px; color: var(--color-muted-foreground); font-size: .875rem; text-decoration: underline; text-underline-offset: 3px; }
+.login-token-toggle:hover { color: var(--color-foreground); }
+.login-token-toggle:focus-visible { outline: 2px solid var(--color-ring); outline-offset: 3px; border-radius: 4px; }
+.login-note { color: var(--color-muted-foreground); font-size: .8125rem; line-height: 1.5; }
+.login-error { color: var(--color-destructive); font-size: .875rem; line-height: 1.5; padding: 10px 12px; border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--destructive) 30%, transparent); background: color-mix(in srgb, var(--destructive) 6%, transparent); }
 
 /* ============================================================
    Resume paper preview (always light: it is a document)
