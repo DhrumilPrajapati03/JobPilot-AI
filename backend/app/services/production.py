@@ -13,12 +13,11 @@ def validate_production(config=settings):
     database_url=urlsplit(config.DATABASE_URL)
     if database_url.scheme not in ('postgresql','postgresql+psycopg') or not database_url.hostname or not database_url.path.strip('/'):
         failures.append('DATABASE_URL must be a postgresql:// URL with a host and database name')
-    # Login still verifies Supabase-issued tokens until owner auth lands (plan section 4.1).
-    login_url=urlsplit(config.SUPABASE_URL)
-    if login_url.scheme!='https' or not login_url.netloc or login_url.username or login_url.password: failures.append('SUPABASE_URL must use a valid HTTPS origin')
-    for key in ('SECRET_KEY','OBSERVABILITY_TOKEN','CRON_SECRET'):
+    if not config.OWNER_EMAIL.strip(): failures.append('OWNER_EMAIL is required')
+    secrets=('SECRET_KEY','OBSERVABILITY_TOKEN','CRON_SECRET','OWNER_API_TOKEN')
+    for key in secrets:
         if len(getattr(config,key))<32 or 'change-me' in getattr(config,key): failures.append(key+' must be a unique random value of at least 32 characters')
-    if len({config.SECRET_KEY,config.OBSERVABILITY_TOKEN,config.CRON_SECRET})!=3: failures.append('Backend secrets must use separate random values')
+    if len({getattr(config,key) for key in secrets})!=len(secrets): failures.append('Backend secrets must use separate random values')
     origins=[v.strip().rstrip('/') for v in config.FRONTEND_URL.split(',') if v.strip()]
     if not origins or any(urlsplit(v).scheme!='https' or not urlsplit(v).netloc or urlsplit(v).username or urlsplit(v).password or urlsplit(v).path or urlsplit(v).query or urlsplit(v).fragment or '*' in v for v in origins):
         failures.append('FRONTEND_URL must contain exact HTTPS origins')

@@ -18,17 +18,21 @@ from app.services.request_limits import UploadBodyLimitMiddleware
 from app.services.websocket import manager
 
 
+OWNER_TOKEN = "owner-test-token-" + "x" * 32
+
+
 @pytest.fixture
 def security_client(monkeypatch):
-    monkeypatch.setattr(auth.settings, "SUPABASE_JWT_SECRET", "security-test-secret-long-enough")
+    monkeypatch.setattr(auth.settings, "OWNER_API_TOKEN", OWNER_TOKEN)
     monkeypatch.setattr(auth.settings, "DISCOVERY_AUTO_SCAN", False)
+    # The owner row normally comes from the database; this suite runs without one.
+    monkeypatch.setattr(auth, "owner_identity", lambda: ("alice", "alice@example.invalid"))
     with TestClient(app) as client:
         yield client
 
 
-def token(user="alice", expired=False):
-    return jwt.encode({"sub": user, "aud": "authenticated", "exp": int(time.time()) + (-60 if expired else 300)},
-                      auth.settings.SUPABASE_JWT_SECRET, algorithm="HS256")
+def token(valid=True):
+    return OWNER_TOKEN if valid else OWNER_TOKEN[:-1] + "y"
 
 
 @pytest.mark.parametrize("credentials", [{}, {"token": "invalid"}, {"token": 123}, []])
@@ -42,10 +46,12 @@ def test_ws_rejects_bad_credentials(security_client, credentials):
 
 def test_ws_expiry_ownership_and_replay(security_client):
     run = "security-owned-run"
+    foreign = "security-foreign-run"
     manager.register(run, "alice")
+    manager.register(foreign, "someone-else")
     asyncio.run(manager.send_update(run, {"step": "complete", "status": "success", "message": "private result"}))
-    for session, expected in [(token("bob"), 4403), (token(expired=True), 4401)]:
-        with security_client.websocket_connect(f"/ws/agent-stream/{run}") as ws:
+    for run_id, session, expected in [(foreign, token(), 4403), (run, token(valid=False), 4401)]:
+        with security_client.websocket_connect(f"/ws/agent-stream/{run_id}") as ws:
             ws.send_json({"token": session})
             with pytest.raises(WebSocketDisconnect) as exc:
                 ws.receive_json()
@@ -67,9 +73,14 @@ def test_ws_silent_connection_times_out(security_client):
         assert exc.value.code == 4401
 
 
-def test_unsupported_jwt_algorithm_is_rejected(security_client):
-    encoded = jwt.encode({'sub': 'alice', 'aud': 'authenticated'}, auth.settings.SUPABASE_JWT_SECRET, algorithm='HS384')
-    assert security_client.get('/api/v1/profile/', headers={'Authorization': f'Bearer {encoded}'}).status_code == 401
+def test_owner_token_is_required_and_compared_exactly(security_client, monkeypatch):
+    assert security_client.get('/api/v1/profile/').status_code == 401
+    for bad in (token(valid=False), OWNER_TOKEN + 'x', OWNER_TOKEN.upper()):
+        assert security_client.get('/api/v1/profile/', headers={'Authorization': f'Bearer {bad}'}).status_code == 401
+    assert security_client.get('/api/v1/profile/', headers={'Authorization': f'Basic {OWNER_TOKEN}'}).status_code == 401
+    # A missing or too-short server token never authenticates anyone.
+    monkeypatch.setattr(auth.settings, 'OWNER_API_TOKEN', 'short')
+    assert security_client.get('/api/v1/profile/', headers={'Authorization': 'Bearer short'}).status_code == 503
 
 
 @pytest.mark.parametrize("path", ["/api/v1/contacts/", "/api/v1/contacts/find?company_domain=example.com", "/api/v1/email/history"])

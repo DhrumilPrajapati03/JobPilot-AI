@@ -34,10 +34,11 @@ ENV MINILM_CACHE_PATH=/opt/jobpilot-models/minilm \
     TOKENIZERS_PARALLELISM=false \
     OMP_NUM_THREADS=2 \
     OPENBLAS_NUM_THREADS=2
+ENV FILE_STORAGE_DIR=/app/data/files
 RUN python scripts/prepare_models.py --minilm \
     && useradd --create-home --uid 10001 jobpilot \
-    && mkdir -p /tmp/jobpilot-chroma \
-    && chown -R jobpilot:jobpilot /tmp/jobpilot-chroma
+    && mkdir -p /tmp/jobpilot-chroma /app/data/files \
+    && chown -R jobpilot:jobpilot /tmp/jobpilot-chroma /app/data
 USER jobpilot
 
 # Render (and most hosts) pass the port in $PORT.

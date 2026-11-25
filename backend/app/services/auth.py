@@ -1,186 +1,125 @@
-"""Authentication services and dependencies.
+"""Owner authentication (plan section 4.1, Day 1 form).
 
-Extracts, validates, and decodes Supabase JWT tokens.
+JobDots has exactly one user, the owner. Until Google/GitHub login lands (Day 2),
+every request authenticates with the owner's bearer token:
 
-Supports both:
-- HS256 (legacy Supabase projects): verified using SUPABASE_JWT_SECRET
-- ES256 / RS256 (newer Supabase projects): verified using the public key
-  fetched from Supabase's JWKS endpoint at /auth/v1/.well-known/jwks.json
+    Authorization: Bearer <OWNER_API_TOKEN>
+
+The token stays afterwards as break-glass access. The owner row lives in the local
+auth.users table; it is created on first use from OWNER_EMAIL (and OWNER_ID, when
+set, so imported JobPilot rows keep their user id). The browser extension and
+the cron endpoint keep their own separate credentials.
 """
 
-import httpx
-from dataclasses import dataclass
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-import jwt
-from jwt import PyJWTError as JWTError
-import time
 import asyncio
-from uuid import UUID
+import hmac
+import threading
+from dataclasses import dataclass
+
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
 from app.config import settings
 
-# This tells FastAPI to expect an "Authorization: Bearer <token>" header
-security = HTTPBearer()
+# Expect "Authorization: Bearer <token>"; a missing header gives 401, not 403.
+security = HTTPBearer(auto_error=False)
 
-# -----------------------------------------------------------------------
-# JWKS cache (in-memory, per-process)
-# Avoids fetching Supabase's public keys on every single request.
-# -----------------------------------------------------------------------
-_jwks_cache: dict | None = None
-_jwks_until = 0.0
-_jwks_url = ""
-_last_unknown_refresh = 0.0
+MIN_TOKEN_LENGTH = 32
+
+_owner: tuple[str, str] | None = None
+_owner_lock = threading.Lock()
 
 
-async def _fetch_jwks() -> dict:
-    """Fetch the JSON Web Key Set from Supabase's well-known endpoint."""
-    global _jwks_cache, _jwks_until, _jwks_url
-    if _jwks_cache is not None and time.monotonic()<_jwks_until and _jwks_url==settings.SUPABASE_URL:
-        return _jwks_cache
+def _resolve_owner(db, email: str, pinned_id: str) -> str:
+    """Find or create the single owner row; the database holds one owner.
 
-    jwks_url = f"{settings.SUPABASE_URL}/auth/v1/.well-known/jwks.json"
-    async with httpx.AsyncClient() as client:
-        response = await client.get(jwks_url, timeout=10.0)
-        response.raise_for_status()
-        _jwks_cache = response.json()
-        _jwks_until = time.monotonic()+300
-        _jwks_url = settings.SUPABASE_URL
-
-    return _jwks_cache
-
-
-async def _get_jwk_for_kid(kid: str) -> dict:
-    """Return the JWK dict whose 'kid' matches the JWT header kid.
-
-    Invalidates cache and retries once on key-not-found (handles key rotation).
+    * OWNER_ID set: that row is the owner (created if missing; its email follows OWNER_EMAIL).
+    * no users yet: create the owner.
+    * exactly one user: it is the owner; its email follows OWNER_EMAIL, so changing the
+      address never orphans the data under a second "owner".
+    * several users (should not happen): only an exact email match is accepted.
     """
-    global _jwks_cache, _last_unknown_refresh
+    if pinned_id:
+        return db.fetch("""insert into auth.users(id, email) values (%s::uuid, %s)
+                           on conflict (id) do update set email = excluded.email returning id::text""",
+                        [pinned_id, email])[0][0]
+    users = db.fetch("select id::text, email from auth.users order by created_at limit 2")
+    if not users:
+        return db.fetch("insert into auth.users(email) values (%s) returning id::text", [email])[0][0]
+    if len(users) == 1:
+        if users[0][1] != email:
+            db.fetch("update auth.users set email = %s where id = %s::uuid", [email, users[0][0]])
+        return users[0][0]
+    match = db.fetch("select id::text from auth.users where email = %s", [email])
+    if not match:
+        raise RuntimeError("Several users exist and none matches OWNER_EMAIL; set OWNER_ID")
+    return match[0][0]
 
-    jwks = await _fetch_jwks()
-    key = next((k for k in jwks.get("keys", []) if k.get("kid") == kid), None)
 
-    if key is None:
-        # Key might have rotated — clear cache and try once more
-        if time.monotonic()-_last_unknown_refresh<10:
-            raise JWTError('Signing key not found')
-        _last_unknown_refresh=time.monotonic()
-        _jwks_cache = None
-        jwks = await _fetch_jwks()
-        key = next((k for k in jwks.get("keys", []) if k.get("kid") == kid), None)
+def owner_identity() -> tuple[str, str]:
+    """Return (owner_id, owner_email), creating the owner row on first use."""
+    global _owner
+    with _owner_lock:
+        if _owner is not None:
+            return _owner
+        email = settings.OWNER_EMAIL.strip().lower()
+        if not email:
+            raise RuntimeError("OWNER_EMAIL is not set")
+        from app.db import get_db
+        owner_id = _resolve_owner(get_db(), email, settings.OWNER_ID.strip().lower())
+        _owner = (owner_id, email)
+        return _owner
 
-    if key is None:
-        raise JWTError(f"No public key found in JWKS matching kid='{kid}'")
 
-    return key
+def reset_owner_cache() -> None:
+    global _owner
+    with _owner_lock:
+        _owner = None
+
+
+def _token_configured() -> bool:
+    return len(settings.OWNER_API_TOKEN) >= MIN_TOKEN_LENGTH
 
 
 async def _verify_token(token: str) -> dict:
-    """Verify a Supabase access token and return its payload.
+    """Check a bearer token and return the owner's claims: {"sub": owner_id, "email": ...}.
 
-    Algorithm-aware JWT verification:
-    1. Peeks at the JWT header to read the 'alg' and 'kid' fields.
-    2. For HS256: verifies using the raw SUPABASE_JWT_SECRET string.
-    3. For ES256 / RS256: fetches the matching public key from Supabase
-       JWKS and verifies the asymmetric signature.
-    4. Verifies that the audience claim is 'authenticated'.
-    5. Ensures the user's Supabase UUID ('sub' claim) is present.
-
-    Raises:
-        HTTPException 401: If the token is missing, invalid, or expired.
+    Raises 401 for a wrong token and 503 when owner auth is not configured or the
+    owner row cannot be loaded. Comparison is constant-time.
     """
+    if not _token_configured():
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Owner sign-in is not configured on the server.")
+    if not isinstance(token, str) or not hmac.compare_digest(token.encode(), settings.OWNER_API_TOKEN.encode()):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid or expired credentials.")
     try:
-        # --- Step 1: Peek at the header (no signature verification yet) ---
-        header = jwt.get_unverified_header(token)
-        alg = header.get("alg", "HS256")
-        if alg not in {"HS256", "ES256", "RS256"}:
-            raise JWTError("Unsupported signing algorithm")
-        kid = header.get("kid")
-
-        # --- Step 2: Pick the correct verification key ---
-        if alg == "HS256":
-            # Older Supabase projects: symmetric HMAC key (the JWT secret string)
-            verify_key = settings.SUPABASE_JWT_SECRET
-        else:
-            # Newer Supabase projects: asymmetric key (ES256 or RS256)
-            # Fetch the matching public key from Supabase's JWKS endpoint
-            if not kid:
-                raise JWTError("JWT header is missing 'kid' — cannot look up public key.")
-            verify_key = jwt.PyJWK.from_dict(await _get_jwk_for_kid(kid), algorithm=alg).key
-
-        # --- Step 3: Decode and fully verify the token ---
-        payload = jwt.decode(
-            token,
-            verify_key,
-            algorithms=[alg],
-            options={"verify_aud": True, "require": ["exp", "sub", "aud"]},
-            issuer=f"{settings.SUPABASE_URL}/auth/v1" if settings.APP_ENV=="production" else None,
-            audience="authenticated",
-        )
-
-        # --- Step 4: Ensure the user ID is present ---
-        if not payload.get("sub"):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Token payload is missing 'sub' claim.",
-            )
-        if settings.APP_ENV=='production':
-            try:
-                uid=str(UUID(payload['sub']))
-                sid=str(UUID(payload.get('session_id','')))
-            except (ValueError,TypeError):
-                raise HTTPException(401,'Sign in again to create a current session.') from None
-            from app.db import get_db
-            try:
-                active=await asyncio.to_thread(lambda:get_db().rpc('jobpilot_session_active',{'p_user_id':uid,'p_session_id':sid}).execute().data)
-            except Exception:
-                raise HTTPException(503,'Session validation is temporarily unavailable.') from None
-            if active is not True:
-                raise HTTPException(401,'This session has ended. Sign in again.')
-        return payload
-
-    except HTTPException:
-        # Re-raise our own HTTPExceptions without wrapping them
-        raise
-    except JWTError as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired credentials.",
-        )
-    except httpx.HTTPError as e:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="The sign-in service is temporarily unavailable.",
-        )
-
-
-async def get_current_user_id(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-) -> str:
-    """FastAPI dependency that returns the verified user's Supabase UUID."""
-    payload = await _verify_token(credentials.credentials)
-    return payload["sub"]
+        owner_id, email = await asyncio.to_thread(owner_identity)
+    except Exception:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Sign-in is temporarily unavailable.") from None
+    return {"sub": owner_id, "email": email}
 
 
 @dataclass
 class CurrentUser:
-    """Holds the verified user identity for use in endpoint handlers."""
+    """The verified owner, for endpoint handlers."""
     id: str
     token: str
     email: str = ""
 
 
-async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-) -> CurrentUser:
-    """FastAPI dependency that returns both user_id and raw token.
+def _bearer(credentials: HTTPAuthorizationCredentials | None) -> str:
+    if credentials is None or credentials.scheme.lower() != "bearer" or not credentials.credentials:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Sign in to continue.",
+                            headers={"WWW-Authenticate": "Bearer"})
+    return credentials.credentials
 
-    Use this (instead of get_current_user_id) in endpoints that make
-    Supabase database calls, so the user's JWT can be passed to the
-    Supabase client and RLS policies work correctly.
-    """
-    payload = await _verify_token(credentials.credentials)
-    return CurrentUser(
-        id=payload["sub"],
-        token=credentials.credentials,
-        email=payload.get("email") or "",
-    )
+
+async def get_current_user_id(credentials: HTTPAuthorizationCredentials | None = Depends(security)) -> str:
+    """FastAPI dependency: the verified owner's id."""
+    return (await _verify_token(_bearer(credentials)))["sub"]
+
+
+async def get_current_user(credentials: HTTPAuthorizationCredentials | None = Depends(security)) -> CurrentUser:
+    """FastAPI dependency: the verified owner (id, token, email)."""
+    token = _bearer(credentials)
+    claims = await _verify_token(token)
+    return CurrentUser(id=claims["sub"], token=token, email=claims["email"])

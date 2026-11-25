@@ -11,42 +11,39 @@ from app.services import auth
 from test_application_flow import db, client, USER_ID  # noqa: F401
 
 
+OWNER_TOKEN='owner-test-token-'+'z'*32
+
+
 @pytest.mark.asyncio
-@pytest.mark.parametrize('active,status', [(True,200),(False,401),('unavailable',503)])
-async def test_production_sessions_reject_revocation_and_fail_closed(monkeypatch,active,status):
-    monkeypatch.setattr(settings,'APP_ENV','production')
-    monkeypatch.setattr(settings,'SUPABASE_URL','https://example.supabase.co')
-    monkeypatch.setattr(settings,'SUPABASE_JWT_SECRET','test-only-random-key-with-more-than-32-characters')
-    def rpc(name,params):
-        assert name=='jobpilot_session_active' and params['p_session_id']
-        if active=='unavailable':raise RuntimeError('private database details')
-        return SimpleNamespace(execute=lambda:SimpleNamespace(data=active))
-    monkeypatch.setattr('app.db.get_db',lambda *a, **k:SimpleNamespace(rpc=rpc))
-    payload={'sub':str(uuid.uuid4()),'session_id':str(uuid.uuid4()),'aud':'authenticated','iss':settings.SUPABASE_URL+'/auth/v1','exp':time.time()+60}
-    token=jwt.encode(payload,settings.SUPABASE_JWT_SECRET,algorithm='HS256')
-    if status==200:assert (await auth._verify_token(token))['sub']==payload['sub']
-    else:
-        with pytest.raises(HTTPException) as error:await auth._verify_token(token)
-        assert error.value.status_code==status and 'private' not in error.value.detail
-    del payload['session_id']
-    with pytest.raises(HTTPException) as error:await auth._verify_token(jwt.encode(payload,settings.SUPABASE_JWT_SECRET,algorithm='HS256'))
+async def test_owner_token_maps_to_the_owner_and_fails_closed(monkeypatch):
+    owner=str(uuid.uuid4())
+    monkeypatch.setattr(settings,'OWNER_API_TOKEN',OWNER_TOKEN)
+    monkeypatch.setattr(auth,'owner_identity',lambda:(owner,'owner@example.invalid'))
+    assert await auth._verify_token(OWNER_TOKEN)=={'sub':owner,'email':'owner@example.invalid'}
+    with pytest.raises(HTTPException) as error:await auth._verify_token(OWNER_TOKEN[:-1])
     assert error.value.status_code==401
+    def broken():raise RuntimeError('private database details')
+    monkeypatch.setattr(auth,'owner_identity',broken)
+    with pytest.raises(HTTPException) as error:await auth._verify_token(OWNER_TOKEN)
+    assert error.value.status_code==503 and 'private' not in error.value.detail
+    monkeypatch.setattr(settings,'OWNER_API_TOKEN','')
+    with pytest.raises(HTTPException) as error:await auth._verify_token('')
+    assert error.value.status_code==503
 
 
-@pytest.mark.asyncio
-@pytest.mark.parametrize('algorithm',['ES256','RS256'])
-async def test_jwks_verifies_signature_and_required_claims(monkeypatch,algorithm):
-    monkeypatch.setattr(settings,'APP_ENV','test')
-    key=ec.generate_private_key(ec.SECP256R1()) if algorithm=='ES256' else rsa.generate_private_key(public_exponent=65537,key_size=2048)
-    encoder=jwt.algorithms.ECAlgorithm if algorithm=='ES256' else jwt.algorithms.RSAAlgorithm
-    jwk=json.loads(encoder.to_jwk(key.public_key()))
-    async def lookup(kid):assert kid=='test-key';return jwk
-    monkeypatch.setattr(auth,'_get_jwk_for_kid',lookup)
-    payload={'sub':str(uuid.uuid4()),'aud':'authenticated','exp':time.time()+60}
-    token=jwt.encode(payload,key,algorithm=algorithm,headers={'kid':'test-key'})
-    assert (await auth._verify_token(token))['sub']==payload['sub']
-    del payload['exp']
-    with pytest.raises(HTTPException):await auth._verify_token(jwt.encode(payload,key,algorithm=algorithm,headers={'kid':'test-key'}))
+def test_owner_identity_is_cached_and_normalised(monkeypatch):
+    pinned=str(uuid.uuid4());calls=[]
+    def fetch(query,params=None):calls.append(query);return [(params[0],)]
+    monkeypatch.setattr('app.db.get_db',lambda *a,**k:SimpleNamespace(fetch=fetch))
+    monkeypatch.setattr(settings,'OWNER_EMAIL',' Owner@Example.invalid ')
+    monkeypatch.setattr(settings,'OWNER_ID',pinned.upper())
+    auth.reset_owner_cache()
+    try:
+        assert auth.owner_identity()==(pinned,'owner@example.invalid')
+        assert auth.owner_identity()==(pinned,'owner@example.invalid') and len(calls)==1
+    finally:
+        auth.reset_owner_cache()
+
 
 
 def test_templates_are_owned_and_use_optimistic_concurrency(db,client,monkeypatch):
