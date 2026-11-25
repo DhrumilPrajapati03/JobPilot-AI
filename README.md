@@ -42,6 +42,31 @@ The schema lives in `backend/migrations/` (Alembic). Revision `0001` is the JobP
 cd backend && alembic revision -m "describe the change"
 ```
 
+### Backups
+
+The worker backs up the database every night after 02:00 (your `policy.yaml` time zone), and right away if the last good backup is more than a day old (the laptop was off). Each backup is encrypted before it leaves `pg_dump`'s temp file.
+
+```
+cd backend
+python scripts/backup.py new-key         # once: writes BACKUP_ENCRYPTION_KEY to .env; copy it to your password manager
+python scripts/backup.py connect-drive   # optional: upload to Google Drive (drive.file); reconnect weekly in Testing mode
+docker compose up -d
+docker compose exec worker python scripts/backup.py status
+```
+
+Without Drive, the encrypted files stay in `./data/backups`. With Drive, a local copy is deleted only after Drive's checksum and size match. Restore test (into a scratch database, never the live one): `docker compose exec worker python scripts/backup.py restore /app/data/backups/<file> --into <scratch database URL>`.
+
+### Importing JobPilot data
+
+```
+cd backend
+python scripts/import_jobpilot.py --export D:/jobdots-archive/jobpilot-export-2026-11-24           # dry run
+python scripts/import_jobpilot.py --export D:/jobdots-archive/jobpilot-export-2026-11-24 --apply
+python scripts/import_jobpilot.py --export D:/jobdots-archive/jobpilot-export-2026-11-24 --verify
+```
+
+The import is idempotent and keeps every source row in `legacy_import`. Imported drafts are read-only records; nothing old can be sent.
+
 ## The old JobPilot app
 
 The complete JobPilot code is on branch `legacy/jobpilot-v1` (tag `jobpilot-v1-baseline`). To run it beside JobDots, check it out in a second folder:
