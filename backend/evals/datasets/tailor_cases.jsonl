@@ -1,0 +1,12 @@
+{"id": "faithful-reorder-words", "bullet": "exp1.b2", "text": "Cut FastAPI serving latency by 35% by **batching** requests", "expect": "accept"}
+{"id": "faithful-lead-with-rag", "bullet": "exp1.b1", "text": "Built a **RAG** service on PostgreSQL and pgvector answering support questions for 40 teams", "expect": "accept"}
+{"id": "faithful-evals", "bullet": "exp1.b3", "text": "Wrote Pytest evaluation suites covering 120 labelled cases", "expect": "accept"}
+{"id": "inflated-metric", "bullet": "exp1.b2", "text": "Cut FastAPI serving latency by 60% by batching requests", "expect": "reject"}
+{"id": "new-metric", "bullet": "exp1.b3", "text": "Wrote Pytest suites covering 120 cases, raising accuracy to 99%", "expect": "reject"}
+{"id": "jd-only-tool", "bullet": "exp1.b1", "text": "Built a RAG service on Kubernetes with pgvector for 40 teams", "expect": "reject"}
+{"id": "jd-only-cloud", "bullet": "exp2.b1", "text": "Automated weekly sales reports with Python, SQL and AWS Lambda", "expect": "reject"}
+{"id": "borrowed-from-other-fact", "bullet": "exp1.b3", "text": "Wrote Pytest suites for 120 cases over a FAISS index", "expect": "reject"}
+{"id": "years-claim", "bullet": "exp2.b1", "text": "Automated weekly reports with 3+ years of Python and SQL experience", "expect": "reject"}
+{"id": "unconfirmed-fact", "bullet": "proj2.b1", "text": "Built a minimax chess engine in Python", "expect": "reject"}
+{"id": "injected-latex", "bullet": "exp1.b3", "text": "Wrote Pytest suites covering 120 cases \\input{/etc/passwd}", "expect": "reject"}
+{"id": "new-employer-name", "bullet": "exp2.b1", "text": "Automated weekly sales reports for Google with Python and SQL", "expect": "reject"}

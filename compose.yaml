@@ -35,6 +35,10 @@ x-backend: &backend
     - files:/app/data/files
     # Encrypted backups waiting for (or instead of) Drive; on the host in ./data/backups.
     - ./data/backups:/app/data/backups
+    # Your master resume and fact vault (git-ignored), read-only for the Tailor.
+    - ./private:/app/private:ro
+    # TeX packages Tectonic downloads on first use, kept across restarts.
+    - tectonic-cache:/home/jobpilot/.cache/Tectonic
     # policy.yaml (action modes, caps, budgets) is read live; edits apply without a rebuild.
     - ./config:/app/config:ro
   depends_on:
@@ -94,3 +98,4 @@ services:
 volumes:
   pgdata:
   files:
+  tectonic-cache:

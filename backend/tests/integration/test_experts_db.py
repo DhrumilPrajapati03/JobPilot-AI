@@ -72,7 +72,7 @@ def test_researcher_writes_a_cited_brief_and_wakes_supervisor(owner, monkeypatch
     assert queued(owner, "supervisor") == [(case["id"], "expert_done")]
 
 
-def test_supervisor_hands_off_once_then_waits_for_tailor(owner):
+def test_supervisor_hands_off_once_then_waits_for_outreach(owner):
     case = cases.create_case(owner, company="Beta", role="AI Engineer", jd_text="Beta builds agents.")
     asyncio.run(runtime.run_expert(ctx_for(owner, "supervisor", case["id"])))
     assert queued(owner, "researcher") == [(case["id"], "routed")]
@@ -80,12 +80,17 @@ def test_supervisor_hands_off_once_then_waits_for_tailor(owner):
     assert events[-1]["kind"] == "handoff" and "Researcher" in events[-1]["summary"]
     get_db().fetch("""insert into public.artifact (user_id, case_id, kind, content, created_by)
                       values (%s::uuid, %s::uuid, 'company_brief', '{}', 'researcher')""", [owner, case["id"]])
+    asyncio.run(runtime.run_expert(ctx_for(owner, "supervisor", case["id"])))
+    assert queued(owner, "tailor") == [(case["id"], "routed")]
+    assert cases.get_case(owner, case["id"])["stage"] == "researched"
+    get_db().fetch("""insert into public.artifact (user_id, case_id, kind, content, created_by)
+                      values (%s::uuid, %s::uuid, 'resume_version', '{}', 'tailor')""", [owner, case["id"]])
     for _ in range(2):
         asyncio.run(runtime.run_expert(ctx_for(owner, "supervisor", case["id"])))
     after = cases.get_case(owner, case["id"])
-    assert after["stage"] == "researched"
+    assert after["stage"] == "tailored"
     assert [e["kind"] for e in after["events"]].count("waiting") == 1  # not repeated on every wake
-    assert "Tailor" in after["events"][-1]["summary"]
+    assert "Email Outreach" in after["events"][-1]["summary"]
 
 
 def test_supervisor_skips_imported_cases(owner):
@@ -146,8 +151,8 @@ def test_paused_and_draft_experts_do_not_run_and_roster_shows_state(owner):
         with pytest.raises(Exception, match="paused"):
             asyncio.run(runtime.run_expert(ctx_for(owner, "scout")))
         with pytest.raises(Exception, match="draft"):
-            asyncio.run(runtime.run_expert(ctx_for(owner, "tailor")))
+            asyncio.run(runtime.run_expert(ctx_for(owner, "comp_analyst")))
         states = {e["id"]: e["state"] for e in roster(owner)}
-        assert states["scout"] == "paused" and states["tailor"] == "draft" and states["researcher"] == "idle"
+        assert states["scout"] == "paused" and states["comp_analyst"] == "draft" and states["researcher"] == "idle"
     finally:
         get_db().fetch("update public.agent_spec set status = 'active' where id = 'scout'")

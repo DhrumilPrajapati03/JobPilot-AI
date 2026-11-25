@@ -1,0 +1,50 @@
+# Synthetic fact vault for tests (matches tests/fixtures/resume/master.tex).
+version: 1
+experience:
+  - id: exp.labs
+    title: Machine Learning Engineer
+    employer: Example Labs
+    status: confirmed
+    achievements:
+      - id: exp.labs.rag
+        text: Built a RAG service on PostgreSQL and pgvector that answers support questions for 40 teams
+        skills: [RAG, PostgreSQL, pgvector]
+      - id: exp.labs.latency
+        text: Reduced model serving latency by 35% by batching requests in FastAPI
+        skills: [FastAPI, batching]
+        metrics:
+          - {value: "35%", what: serving latency reduction, basis: before-and-after load test}
+      - id: exp.labs.evals
+        text: Wrote evaluation suites in Pytest covering 120 labelled cases
+        skills: [Pytest, evaluation]
+  - id: exp.sample
+    title: Data Analyst Intern
+    employer: Sample Corp
+    status: confirmed
+    achievements:
+      - id: exp.sample.reports
+        text: Automated weekly sales reports with Python and SQL, saving 6 hours a week
+        skills: [Python, SQL]
+projects:
+  - id: proj.docsearch
+    name: Doc Search
+    status: confirmed
+    achievements:
+      - id: proj.docsearch.index
+        text: Indexed 10k pages with sentence embeddings and FAISS; Recall@5 of 0.82 on a held-out set
+        skills: [FAISS, embeddings]
+  - id: proj.chess
+    name: Chess Bot
+    status: draft          # not confirmed: may not be reworded
+    achievements:
+      - id: proj.chess.engine
+        text: Wrote a minimax chess engine in Python
+skills:
+  languages: [Python, SQL, Go]
+  ml: [PyTorch, FAISS, pgvector, RAG]
+  tools: [Docker, FastAPI, Pytest, Git]
+  status: confirmed
+application_facts:
+  total_experience_years: 1
+never_claim:
+  - Any employer, title or date not listed above.

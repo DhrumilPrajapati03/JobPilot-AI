@@ -40,7 +40,49 @@ class CompanyBrief(Strict):
     confidence: Literal["low", "medium", "high"] = "low"
 
 
-KINDS: dict[str, type[BaseModel]] = {"company_brief": CompanyBrief}
+class Change(Strict):
+    kind: Literal["reworded", "moved", "removed", "skills"]
+    target: str                     # bullet id, entry id or skills category
+    where: str = ""                 # plain-words location ("AI/ML Engineer, Clicode")
+    before: str = ""
+    after: str = ""
+    fact: str | None = None         # vault achievement id behind a reworded bullet
+
+
+class Rejected(Strict):
+    target: str
+    text: str
+    reasons: list[str]
+
+
+class ResumeFile(Strict):
+    path: str                       # relative to FILE_STORAGE_DIR
+    sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    pages: int | None = None
+
+
+class ResumeVersion(Strict):
+    """The diff card: what changed against the master, what was refused, and the files."""
+    company: str
+    role: str
+    master_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    vault_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    rationale: str = Field(default="", max_length=800)
+    changes: list[Change] = Field(default_factory=list)
+    rejected: list[Rejected] = Field(default_factory=list)
+    keywords: list[str] = Field(default_factory=list)
+    covered_before: list[str] = Field(default_factory=list)
+    covered_after: list[str] = Field(default_factory=list)
+    missing: list[str] = Field(default_factory=list)   # job terms not in your vault; never added
+    master_pages: int | None = None
+    trimmed: int = 0                # bullets dropped to keep the page count
+    tex: ResumeFile
+    pdf: ResumeFile | None = None
+    compile_error: str | None = None
+    status: Literal["awaiting_review", "approved", "rejected"] = "awaiting_review"
+
+
+KINDS: dict[str, type[BaseModel]] = {"company_brief": CompanyBrief, "resume_version": ResumeVersion}
 
 
 class ArtifactError(ValueError):

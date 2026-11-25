@@ -121,6 +121,19 @@ async def research_case(case_id: str, body: ResearchIn, user: CurrentUser = Depe
     return {"run_id": run["id"]}
 
 
+@router.post("/cases/{case_id}/tailor", status_code=202)
+async def tailor_case(case_id: str, user: CurrentUser = Depends(get_current_user)):
+    """Ask Tailor for a new resume version of this case (each run is a new, reviewable version)."""
+    _require_worker()
+    try:
+        run = await asyncio.to_thread(runtime.enqueue_expert, user.id, "tailor", case_id=case_id, trigger="manual")
+    except Exception as exc:
+        if "case_not_found" in str(exc):
+            raise HTTPException(404, "Case not found") from None
+        raise
+    return {"run_id": run["id"]}
+
+
 @router.post("/cases/{case_id}/supervise", status_code=202)
 async def supervise_case(case_id: str, user: CurrentUser = Depends(get_current_user)):
     _require_worker()

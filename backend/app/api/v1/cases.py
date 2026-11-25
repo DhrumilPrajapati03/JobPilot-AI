@@ -116,3 +116,59 @@ async def set_stage(case_id: str, body: StageIn, user: CurrentUser = Depends(get
         return await asyncio.to_thread(cases.set_stage, user.id, case_id, body.stage, actor="user")
     except LookupError:
         raise HTTPException(404, "Case not found") from None
+
+
+# --- artifacts: files and review -------------------------------------------------------------
+
+class ArtifactReviewIn(BaseModel):
+    decision: Literal["approved", "rejected"]
+    note: str = Field(default="", max_length=1000)
+
+
+def _artifact(user_id: str, case_id: str, artifact_id: str) -> dict | None:
+    from app.db import get_db
+    try:
+        rows = get_db(user_id).fetch("""select kind, content from public.artifact where id = %s::uuid
+                                        and case_id = %s::uuid and user_id = %s::uuid""", [artifact_id, case_id, user_id])
+    except Exception:
+        return None
+    return {"kind": rows[0][0], "content": rows[0][1]} if rows else None
+
+
+@router.get("/{case_id}/artifacts/{artifact_id}/file")
+async def artifact_file(case_id: str, artifact_id: str, format: Literal["pdf", "tex"] = "pdf",
+                        user: CurrentUser = Depends(get_current_user)):
+    """The tailored resume's PDF (or .tex), for the diff card and for opening in Overleaf."""
+    from pathlib import Path
+
+    from fastapi.responses import FileResponse
+
+    from app.config import settings
+    artifact = await asyncio.to_thread(_artifact, user.id, case_id, artifact_id)
+    meta = (artifact or {}).get("content", {}).get(format) if artifact and artifact["kind"] == "resume_version" else None
+    if not meta:
+        raise HTTPException(404, "No such file for this artifact")
+    root = Path(settings.FILE_STORAGE_DIR).resolve()
+    path = (root / meta["path"]).resolve()
+    if root not in path.parents or not path.is_file():
+        raise HTTPException(404, "The file is missing; ask Tailor for a new version.")
+    return FileResponse(path, media_type="application/pdf" if format == "pdf" else "application/x-tex",
+                        filename=f"resume-{case_id[:8]}.{format}")
+
+
+@router.post("/{case_id}/artifacts/{artifact_id}/review")
+async def review_artifact(case_id: str, artifact_id: str, body: ArtifactReviewIn, user: CurrentUser = Depends(get_current_user)):
+    """Approve or reject a resume version (the diff card's buttons)."""
+    from psycopg.types.json import Jsonb
+
+    from app.db import get_db
+    artifact = await asyncio.to_thread(_artifact, user.id, case_id, artifact_id)
+    if not artifact or artifact["kind"] != "resume_version":
+        raise HTTPException(404, "Resume version not found")
+    content = {**artifact["content"], "status": body.decision}
+    await asyncio.to_thread(get_db(user.id).fetch, "update public.artifact set content = %s where id = %s::uuid",
+                            [Jsonb(content), artifact_id])
+    await asyncio.to_thread(cases.add_event, user.id, case_id, f"resume_{body.decision}", actor="user",
+                            summary=f"You {body.decision} the tailored resume" + (f": {body.note}" if body.note else ""),
+                            data={"artifact_id": artifact_id})
+    return {"status": body.decision}

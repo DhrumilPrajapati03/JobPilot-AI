@@ -99,3 +99,9 @@ async def open_case(ctx, posting: dict):
 async def route_case(ctx, case_id: str, agent: str, reason: str):
     from app.experts import supervisor
     return await asyncio.to_thread(supervisor.hand_off, ctx.user_id, case_id, agent, reason)
+
+
+@tool("compile_resume", "Compile a resume .tex with Tectonic and count its pages")
+async def compile_resume(ctx, tex: str):
+    from app.tailor import compile as tex_compile
+    return await asyncio.to_thread(tex_compile.compile_tex, tex)
