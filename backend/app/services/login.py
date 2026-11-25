@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import logging
 import secrets
 from dataclasses import dataclass
 from urllib.parse import urlencode
@@ -38,6 +39,7 @@ GITHUB_USER = "https://api.github.com/user"
 TIMEOUT = httpx.Timeout(15.0)
 
 _jwks: jwt.PyJWKClient | None = None
+log = logging.getLogger(__name__)
 
 
 class LoginError(Exception):
@@ -124,9 +126,12 @@ def _google_identity(code: str, verifier: str, nonce: str, client: httpx.Client)
     id_token = response.json()["id_token"]
     try:
         key = _google_keys().get_signing_key_from_jwt(id_token)
+        # Leeway: Docker/WSL clocks drift a second or more behind Google's, and a token
+        # "issued in the future" would otherwise be rejected (iat check).
         claims = jwt.decode(id_token, key.key, algorithms=["RS256"], audience=settings.GOOGLE_LOGIN_CLIENT_ID,
-                            options={"require": ["sub", "iss", "aud", "exp", "iat"]})
-    except jwt.PyJWTError:
+                            leeway=60, options={"require": ["sub", "iss", "aud", "exp", "iat"]})
+    except jwt.PyJWTError as exc:
+        log.warning("Google ID token rejected (%s)", type(exc).__name__)
         raise LoginError("provider_error") from None
     if claims.get("iss") not in GOOGLE_ISSUERS or not secrets.compare_digest(str(claims.get("nonce", "")), nonce):
         raise LoginError("provider_error")

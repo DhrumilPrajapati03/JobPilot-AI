@@ -63,7 +63,7 @@ def provider(monkeypatch, *, google_sub="g-1", github_id=101, email="owner@examp
             form = parse_qs(request.content.decode())
             seen["google_verifier"] = form["code_verifier"][0]
             claims = {"iss": "https://accounts.google.com", "aud": "google-client", "sub": google_sub, "email": email,
-                      "email_verified": True, "iat": int(time.time()), "exp": int(time.time()) + 300,
+                      "email_verified": True, "iat": int(time.time()) + 5, "exp": int(time.time()) + 300,  # Google's clock runs ahead
                       "nonce": seen.get("nonce", "")}
             return httpx.Response(200, json={"id_token": jwt.encode(claims, KEY, algorithm="RS256")})
         if request.url.host == "github.com":
