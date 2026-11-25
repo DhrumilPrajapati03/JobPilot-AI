@@ -13,7 +13,7 @@ JobDots is being rebuilt from the JobPilot AI codebase on this branch (`jobdots`
 
 ## Status
 
-Days 0 and 1 of the plan are done (export, local Postgres + pgvector, Groq/Ollama, owner auth; Supabase and LangChain are gone). Day 2 adds the case spine (cases, actions with approvals, the `policy.yaml` engine, budgets, per-case queue concurrency) and Google/GitHub login.
+Days 0 and 1 of the plan are done (export, local Postgres + pgvector, Groq/Ollama, owner auth; Supabase and LangChain are gone). Day 2 added the case spine (cases, actions with approvals, the `policy.yaml` engine, budgets, per-case queue concurrency), Google/GitHub login, the JobPilot import, nightly backups and the eval harness. Day 3 adds the agent runtime: Supervisor, Scout and Researcher.
 
 ## Local stack
 
@@ -40,6 +40,20 @@ The schema lives in `backend/migrations/` (Alembic). Revision `0001` is the JobP
 
 ```
 cd backend && alembic revision -m "describe the change"
+```
+
+### Experts
+
+Experts are data: `backend/app/experts/builtin.yaml` holds the roster (synced into `agent_spec` on start). Each spec lists the tools it may use (the registry in `app/experts/tools.py` enforces the allowlist), the action kinds it may propose (only those in `policy.yaml`) and its budgets. Experts that are not built yet stay `draft`, and Supervisor says what it is waiting for.
+
+* **Scout** runs daily (routine `scout_daily_scan`), scans your boards and opens a case for each strong, eligible new match.
+* **Supervisor** routes each case: Researcher, then Tailor, then Email Outreach. No model calls.
+* **Researcher** writes a cited `company_brief`: every claim names its sources, uncited claims are dropped, and confidence is capped by the number of sources.
+* Routines catch up after the laptop was off ("JobDots woke up and ran N missed routines"). Every step is traced in `run_step`.
+
+```
+curl -H "Authorization: Bearer $OWNER_API_TOKEN" http://127.0.0.1:8000/api/v1/experts         # roster with live state
+curl -X POST -H "Authorization: Bearer $OWNER_API_TOKEN" http://127.0.0.1:8000/api/v1/experts/scout/run
 ```
 
 ### Backups

@@ -6,9 +6,10 @@ from psycopg.types.json import Jsonb
 
 from app.db import get_db
 
-STAGES = ("found", "tailored", "researched", "ready", "applied", "replied", "interview", "offer", "closed")
+# Research feeds tailoring, so Researched comes before Tailored (the plan's board listed them the other way).
+STAGES = ("found", "researched", "tailored", "ready", "applied", "replied", "interview", "offer", "closed")
 ACTORS = ("agent", "user", "courier", "system", "legacy")
-_CASE = ("id, user_id, source_url, company, role, jd_text, jd_analysis, stage, status, fit_score, "
+_CASE = ("id, user_id, posting_id, source_url, company, role, jd_text, jd_analysis, stage, status, fit_score, "
          "fit_score_legacy, notes, applied_at, follow_up_at, legacy, created_at, updated_at")
 
 
