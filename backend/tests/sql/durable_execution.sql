@@ -10,7 +10,6 @@ begin
   perform set_config('test.stranger',stranger::text,true);
 end $$;
 
-set local role service_role;
 do $$
 declare uid uuid := current_setting('test.owner')::uuid;
   other_uid uuid := current_setting('test.stranger')::uuid;
@@ -103,25 +102,9 @@ begin
   assert public.claim_agent_run('worker',120) is null;
   assert (select status from public.agent_runs where id=(claimed->>'id')::uuid)='failed';
   perform public.enqueue_agent_run(other_uid,'digest','{}','other-account');
-  assert not has_function_privilege('authenticated','public.claim_agent_run(text,integer)','execute');
-  assert not has_function_privilege('anon','public.enqueue_agent_run(uuid,text,jsonb,text,timestamp with time zone,uuid,uuid)','execute');
-  assert not has_table_privilege('authenticated','public.agent_runs','update');
+  assert (select count(*) from public.agent_runs where user_id=uid)=2;
+  assert (select count(*) from public.agent_runs where user_id=other_uid)=1;
+  assert not exists(select 1 from public.agent_run_events where agent_run_events.run_id=current_setting('test.run')::uuid and user_id<>uid), 'run events tagged with another owner';
 end $$;
-
-set local role authenticated;
-select set_config('request.jwt.claims',json_build_object('sub',current_setting('test.owner'),'role','authenticated')::text,true);
-do $$
-begin
-  assert (select count(*) from public.agent_runs)=2, 'owner RLS failed';
-  assert not exists(select 1 from public.agent_runs where user_id=current_setting('test.stranger')::uuid), 'foreign run visible';
-  assert not exists(select 1 from public.agent_run_events where user_id=current_setting('test.stranger')::uuid), 'foreign event visible';
-end $$;
-select set_config('request.jwt.claims',json_build_object('sub',current_setting('test.stranger'),'role','authenticated')::text,true);
-do $$
-begin
-  assert (select count(*) from public.agent_runs)=1, 'stranger RLS failed';
-  assert not exists(select 1 from public.agent_run_events where run_id=current_setting('test.run')::uuid), 'private replay visible';
-end $$;
-reset role;
 rollback;
 select 'durable_execution_smoke_passed' as result;

@@ -1,0 +1,44 @@
+# JobDots local stack (plan section 9, Phase A: everything on the laptop).
+#
+#   cp .env.example .env            set POSTGRES_PASSWORD once
+#   docker compose up -d db         Postgres 17 + pgvector on 127.0.0.1:${POSTGRES_PORT:-55432}
+#   docker compose run --rm migrate  apply Alembic migrations (alembic upgrade head)
+#
+# Ports bind to 127.0.0.1 only; nothing is reachable from the network.
+# The api and worker services are added once the backend runs on this database.
+
+name: jobdots
+
+services:
+  db:
+    # Same image as backend/scripts/check_database.py; keep the two in step.
+    image: pgvector/pgvector:pg17@sha256:b513c48566e4777cd3370451400000c78eda6a08131d68f4c31d4a76f27bd8fd
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: jobdots
+      POSTGRES_DB: jobdots
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env (see .env.example)}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-55432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U jobdots -d jobdots"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    shm_size: 256mb
+
+  migrate:
+    build: ./backend
+    command: ["python", "-m", "alembic", "upgrade", "head"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://jobdots:${POSTGRES_PASSWORD}@db:5432/jobdots
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+    profiles: ["tools"]
+
+volumes:
+  pgdata:

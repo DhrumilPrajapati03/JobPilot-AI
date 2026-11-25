@@ -185,13 +185,14 @@ def test_chunked_body_limit_runs_before_multipart_parser(monkeypatch, security_c
     assert response.status_code == 413
 
 
-def test_database_bundle_orders_baseline_before_incremental_migrations():
-    import importlib.util
-    path = Path(__file__).resolve().parents[1] / 'scripts/database_bundle.py'
-    spec = importlib.util.spec_from_file_location('database_bundle', path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    sql = module.bundle()
-    assert sql.index('create table if not exists public.job_applications') < sql.index('alter table public.job_applications')
-    assert 'BEGIN;' in sql and sql.rstrip().endswith('COMMIT;')
-    assert "values ('resumes', 'resumes', false" in sql
+def test_alembic_has_one_linear_head_starting_at_the_baseline():
+    from alembic.config import Config
+    from alembic.script import ScriptDirectory
+    backend = Path(__file__).resolve().parents[1]
+    scripts = ScriptDirectory.from_config(Config(str(backend / 'alembic.ini')))
+    assert len(scripts.get_heads()) == 1
+    assert scripts.get_base() == '0001'
+    baseline = (backend / 'migrations/0001_baseline.sql').read_text(encoding='utf-8')
+    # Single-owner local database: no Supabase roles, policies or RLS (checked live in tests/sql/baseline_smoke.sql).
+    for forbidden in ('CREATE POLICY', 'ROW LEVEL SECURITY', 'service_role', 'GRANT ', 'storage.'):
+        assert forbidden not in baseline.split('set local check_function_bodies')[1], forbidden

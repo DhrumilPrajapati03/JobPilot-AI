@@ -212,7 +212,7 @@ def test_cron_tick_needs_the_secret(ap, client, monkeypatch):
 
 def test_extension_flow(ap, client, monkeypatch):
     # Evidence RPC transactions are exercised against PostgreSQL in
-    # supabase/tests/application_execution.sql; stub that boundary here.
+    # tests/sql/application_execution.sql; stub that boundary here.
     def report(db, uid, application_id, *args):
         from datetime import datetime, timezone, timedelta
         now=datetime.now(timezone.utc)
