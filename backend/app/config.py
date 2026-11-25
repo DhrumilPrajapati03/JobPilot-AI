@@ -34,23 +34,23 @@ class Settings(BaseSettings):
     OWNER_API_TOKEN: str = ""
     OWNER_ID: str = ""
 
-    # LLM Providers
-    ANTHROPIC_API_KEY: str = ""
-    OPENAI_API_KEY: str = ""
+    # LLM providers (plan section 7.1): Groq and local Ollama, both OpenAI-compatible.
     GROQ_API_KEY: str = ""
-    GROQ_MODEL: str = ""  # override the default Groq model
+    GROQ_MODEL: str = ""  # override the default Groq model (openai/gpt-oss-120b)
     # Groq's free tier gives each model its own daily token quota, so when one is used up
-    # (or busy) JobPilot moves to the next. Light tasks (chat, parsing) start with GROQ_LIGHT_MODEL.
+    # (or busy) the next is tried. Light tasks (chat, parsing) start with GROQ_LIGHT_MODEL.
     GROQ_FALLBACK_MODELS: str = "openai/gpt-oss-20b,qwen/qwen3.8-27b"
     GROQ_LIGHT_MODEL: str = "openai/gpt-oss-20b"
-    OPENAI_MODEL: str = ""  # override the default OpenAI model
-    ANTHROPIC_MODEL: str = ""  # override the default Anthropic model
+    # Ollama on the laptop; containers reach it at http://host.docker.internal:11434.
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
+    OLLAMA_MODEL: str = "qwen3:8b"
+    OLLAMA_EMBED_MODEL: str = "embeddinggemma"
 
-    # Which provider every agent uses. "auto" = Anthropic, then OpenAI, then Groq (first with a key).
+    # Which provider every agent uses: groq | ollama | auto (Groq when its key is set, else Ollama).
     LLM_PROVIDER: str = "auto"
 
-    # Embeddings for resume search: "local" (offline MiniLM, default), "huggingface" (same model via API),
-    # or "openai". Each model has its own vector collection; re-save the base resume after switching.
+    # Embeddings for resume search: "local" (offline MiniLM, default), "ollama" (OLLAMA_EMBED_MODEL)
+    # or "huggingface" (MiniLM via API). Each model has its own vector collection.
     EMBEDDINGS_PROVIDER: str = "local"
     HUGGINGFACE_API_KEY: str = ""
 

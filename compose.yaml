@@ -23,6 +23,8 @@ x-backend: &backend
     OWNER_EMAIL: ${OWNER_EMAIL:-}
     OWNER_API_TOKEN: ${OWNER_API_TOKEN:-}
     OWNER_ID: ${OWNER_ID:-}
+    # Ollama runs on the host (Windows), not in Compose.
+    OLLAMA_BASE_URL: http://host.docker.internal:11434
   volumes:
     - files:/app/data/files
   depends_on:

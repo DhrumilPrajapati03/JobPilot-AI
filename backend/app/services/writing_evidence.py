@@ -1,6 +1,6 @@
 """Candidate facts remain distinct from requirements and untrusted company text."""
 import json
-from langchain_core.messages import HumanMessage, SystemMessage
+from app.services.llm import HumanMessage, SystemMessage
 from app.services.identity import source_content
 
 

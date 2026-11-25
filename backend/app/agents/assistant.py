@@ -24,7 +24,7 @@ from datetime import date
 from typing import Any, AsyncIterator
 
 from fastapi import HTTPException
-from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage, ToolMessage
+from app.services.llm import AIMessage, BaseMessage, HumanMessage, SystemMessage, ToolMessage
 
 from app.agents.orchestrator import run_agent_pipeline
 from app.api.v1.analytics import get_analytics_summary, get_skill_gaps
@@ -707,7 +707,7 @@ def _text_of(message: Any) -> str:
     return ""
 
 
-def to_langchain_messages(messages: list[dict]) -> list[BaseMessage]:
+def to_chat_messages(messages: list[dict]) -> list[BaseMessage]:
     converted: list[BaseMessage] = []
     for m in messages:
         content = (m.get("content") or "").strip()
@@ -730,7 +730,7 @@ async def run_assistant(
         yield {"type": "done"}
         return
 
-    history: list[BaseMessage] = [SystemMessage(system_prompt(user)), *to_langchain_messages(messages)]
+    history: list[BaseMessage] = [SystemMessage(system_prompt(user)), *to_chat_messages(messages)]
     retries = 0
     try:
         for _ in range(MAX_STEPS):
