@@ -21,7 +21,7 @@ from app.resume_engine.validator import validate_page_count
 from app.services.job_filters import evaluate_skip_rules
 from app.services import referrals
 from app.services.materials import insert_application
-from app.services.supabase import get_supabase_client
+from app.db import get_db
 from app.services.websocket import manager
 
 EMAIL_SEQUENCE_KEYS = ["initial", "follow_up_1", "follow_up_2"]
@@ -104,7 +104,7 @@ async def run_agent_pipeline(
     without a user session). Returns the new application's id, or None on failure.
     """
     manager.register(run_id, user_id)
-    supabase = supabase or get_supabase_client(user_jwt=user_token)
+    supabase = supabase or get_db(user_id)
 
     # 1. Parse Job Description
     await _emit(run_id, "jd_parsing", "running", "Parsing job description using LLM...")

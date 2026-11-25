@@ -3,7 +3,7 @@ from typing import Literal
 from fastapi import APIRouter,Depends,HTTPException
 from pydantic import BaseModel,Field
 from app.services.auth import CurrentUser,get_current_user
-from app.services.supabase import get_supabase_client
+from app.db import get_db
 
 router=APIRouter()
 Kind=Literal['email','dm','cover_letter']
@@ -17,14 +17,14 @@ class TemplateUpdate(BaseModel):
 @router.get('')
 def list_templates(user:CurrentUser=Depends(get_current_user)):
     try:
-        return {'templates':get_supabase_client(user_jwt=user.token).table('writing_templates').select('kind,content,updated_at').eq('user_id',user.id).execute().data}
+        return {'templates':get_db(user.id).table('writing_templates').select('kind,content,updated_at').eq('user_id',user.id).execute().data}
     except Exception:
         raise HTTPException(503,'Templates are unavailable. Check the release migration and try again.') from None
 
 
 @router.put('/{kind}')
 def save_template(kind:Kind,request:TemplateUpdate,user:CurrentUser=Depends(get_current_user)):
-    db=get_supabase_client(user_jwt=user.token)
+    db=get_db(user.id)
     row={'user_id':user.id,'kind':kind,'content':request.content,'updated_at':datetime.now(timezone.utc).isoformat()}
     try:
         if request.expected_updated_at:

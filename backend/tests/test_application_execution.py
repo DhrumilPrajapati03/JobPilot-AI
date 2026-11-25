@@ -51,7 +51,7 @@ def api_client(evidence,monkeypatch):
     previous=dict(app.dependency_overrides)
     app.dependency_overrides[extension_api.get_extension_user]=lambda:extension_api.ExtensionUser(UID,'ada@example.invalid',db)
     app.dependency_overrides[get_current_user]=lambda:CurrentUser(id=UID,email='ada@example.invalid',token='unit-test')
-    monkeypatch.setattr(applications,'get_supabase_client',lambda **kw:db)
+    monkeypatch.setattr(applications,'get_db',lambda *a, **k:db)
     with TestClient(app) as client: yield client
     app.dependency_overrides.clear();app.dependency_overrides.update(previous)
 
@@ -183,9 +183,9 @@ def test_history_and_delete_preserve_owned_audit(api_client,evidence):
 
 
 def test_web_report_uses_an_owned_session_and_explicit_user_provenance(api_client,evidence,monkeypatch):
-    from app.services import supabase
+    import app.db as database
     db,calls=evidence
-    monkeypatch.setattr(supabase,'get_supabase_admin_client',lambda:db)
+    monkeypatch.setattr(database,'get_db',lambda *a, **k:db)
     key=str(uuid.uuid4())
     response=api_client.post(f'/api/v1/applications/{APP}/report-submission',json={'request_key':key})
     assert response.status_code==200 and response.json()['evidence']=='user_reported_not_independently_verified'

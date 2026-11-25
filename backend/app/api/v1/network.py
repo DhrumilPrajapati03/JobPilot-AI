@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from app.api.v1.applications import _get_owned_application
 from app.services import referrals
 from app.services.auth import CurrentUser, get_current_user
-from app.services.supabase import get_supabase_client, select_all
+from app.db import get_db, select_all
 
 router = APIRouter()
 
@@ -67,7 +67,7 @@ def _guard():
 
 
 def _client(user: CurrentUser):
-    return get_supabase_client(user_jwt=user.token)
+    return get_db(user.id)
 
 
 def _owned(supabase, table: str, row_id: str, user_id: str) -> dict:

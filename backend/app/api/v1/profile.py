@@ -7,7 +7,7 @@ work preferences.
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.services.auth import get_current_user, CurrentUser
-from app.services.supabase import get_supabase_client
+from app.db import get_db
 from app.models.user import UserProfile, WorkPreferences
 from app.services import identity
 from pydantic import BaseModel, Field
@@ -19,7 +19,7 @@ router = APIRouter()
 def onboarding_status(current_user: CurrentUser = Depends(get_current_user)):
     from app.services.onboarding import status
     try:
-        return status(get_supabase_client(user_jwt=current_user.token),current_user.id)
+        return status(get_db(current_user.id),current_user.id)
     except Exception:
         raise HTTPException(503,'Onboarding status is unavailable. Check development database provisioning.') from None
 
@@ -32,14 +32,14 @@ class ConfirmFacts(BaseModel):
 @router.get("/facts")
 async def get_facts(current_user: CurrentUser = Depends(get_current_user)):
     try:
-        return identity.load_vault(get_supabase_client(user_jwt=current_user.token), current_user.id)
+        return identity.load_vault(get_db(current_user.id), current_user.id)
     except Exception as exc:
         raise HTTPException(503, "Identity facts are temporarily unavailable.") from exc
 
 
 @router.post("/facts/confirm")
 async def confirm_facts(request: ConfirmFacts, current_user: CurrentUser = Depends(get_current_user)):
-    db = get_supabase_client(user_jwt=current_user.token)
+    db = get_db(current_user.id)
     vault = identity.load_vault(db, current_user.id)
     if vault["source_digest"] != request.source_digest:
         raise HTTPException(409, "Your resume changed. Reload the facts before confirming.")
@@ -52,7 +52,7 @@ async def confirm_facts(request: ConfirmFacts, current_user: CurrentUser = Depen
 
 @router.delete("/facts/{fact_id}")
 async def revoke_fact(fact_id: str, current_user: CurrentUser = Depends(get_current_user)):
-    db = get_supabase_client(user_jwt=current_user.token)
+    db = get_db(current_user.id)
     db.table("identity_confirmations").delete().eq("user_id", current_user.id).eq("fact_id", fact_id).execute()
     return {"revoked": True}
 
@@ -62,7 +62,7 @@ async def get_profile(current_user: CurrentUser = Depends(get_current_user)):
     """Retrieve the current user's full identity vault profile."""
     try:
         # Pass user JWT so auth.uid() is set correctly in RLS policies
-        supabase = get_supabase_client(user_jwt=current_user.token)
+        supabase = get_db(current_user.id)
 
         response = supabase.table("user_profiles").select("*").eq("id", current_user.id).execute()
 
@@ -106,7 +106,7 @@ async def update_profile(
     """
     try:
         # Pass user JWT so auth.uid() is set correctly in RLS policies
-        supabase = get_supabase_client(user_jwt=current_user.token)
+        supabase = get_db(current_user.id)
 
         # Ensure the user updates ONLY their own profile by forcing user_id
         if "work_preferences" in profile_data:

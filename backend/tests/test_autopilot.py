@@ -118,9 +118,9 @@ def test_apply_urls():
 @pytest.fixture
 def ap(db, monkeypatch):
     for module in (autopilot_api,):
-        monkeypatch.setattr(module, "get_supabase_client", lambda user_jwt=None: db)
-    monkeypatch.setattr(autopilot_api, "get_supabase_admin_client", lambda: db)
-    monkeypatch.setattr(extension_api, "get_supabase_admin_client", lambda: db)
+        monkeypatch.setattr(module, "get_db", lambda *a, **k: db)
+    monkeypatch.setattr(autopilot_api, "get_db", lambda *a, **k: db)
+    monkeypatch.setattr(extension_api, "get_db", lambda *a, **k: db)
     monkeypatch.setattr(autopilot, "server_ready", lambda: True)
     monkeypatch.setattr(autopilot, "account_email", lambda admin, uid: "ada@example.com")
     monkeypatch.setattr(form_answers, "get_default_llm", lambda **_kw: StubLLM('{"1": "Because of the search team."}'))

@@ -10,7 +10,7 @@ from app.services import discovery, referrals
 from app.services import runs
 from app.services.auth import CurrentUser, get_current_user
 from app.services.job_boards import ATS_NAMES, REMOTE_BOARDS, BoardError, fetch_board, parse_board
-from app.services.supabase import get_supabase_client
+from app.db import get_db
 
 router = APIRouter()
 
@@ -120,7 +120,7 @@ def _guard():
 
 
 def _client(user: CurrentUser):
-    return get_supabase_client(user_jwt=user.token)
+    return get_db(user.id)
 
 
 def _owned(supabase, table: str, row_id: str, user_id: str, columns: str = "*") -> dict:

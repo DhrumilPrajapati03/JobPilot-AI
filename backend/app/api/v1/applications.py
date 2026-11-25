@@ -21,7 +21,7 @@ from app.services.materials import (
     update_application,
 )
 from app.services.referrals import contact_counts
-from app.services.supabase import get_supabase_client
+from app.db import get_db
 from app.services.websocket import manager
 from app.services import runs
 
@@ -35,16 +35,16 @@ class ReportSubmissionRequest(BaseModel):
 @router.post("/{application_id}/report-submission")
 async def report_submission(application_id: uuid.UUID, request: ReportSubmissionRequest, current_user: CurrentUser = Depends(get_current_user)):
     from app.services import application_execution as execution
-    from app.services.supabase import get_supabase_admin_client
+    from app.db import get_db
     sid = uuid.uuid5(uuid.NAMESPACE_URL, f"jobpilot:web-report:{current_user.id}:{application_id}:{request.request_key}")
-    execution.report(get_supabase_admin_client(), current_user.id, str(application_id), sid, request.request_key)
+    execution.report(get_db(), current_user.id, str(application_id), sid, request.request_key)
     return {"application_id": str(application_id), "evidence": "user_reported_not_independently_verified"}
 
 
 @router.get("/{application_id}/execution")
 async def execution_history(application_id: uuid.UUID, current_user: CurrentUser = Depends(get_current_user)):
     from app.services.application_execution import DOCUMENT_FIELDS, owned
-    db = get_supabase_client(user_jwt=current_user.token)
+    db = get_db(current_user.id)
     owned(db, current_user.id, application_id)
     try:
         sessions = db.table("application_execution_sessions").select("*").eq("application_id", str(application_id)).eq("user_id", current_user.id).order("created_at", desc=True).limit(20).execute().data
@@ -213,7 +213,7 @@ async def list_applications(
         current_user: Authenticated user.
     """
     limit = max(1, min(limit, 500))
-    supabase = get_supabase_client(user_jwt=current_user.token)
+    supabase = get_db(current_user.id)
     query = supabase.table("job_applications").select("*", count="exact").eq("user_id", current_user.id)
 
     if status:
@@ -271,7 +271,7 @@ async def get_application_details(
         uuid.UUID(application_id)
     except ValueError:
         raise HTTPException(status_code=404, detail="Application not found")
-    supabase = get_supabase_client(user_jwt=current_user.token)
+    supabase = get_db(current_user.id)
     application = _get_owned_application(supabase, application_id, current_user.id)
 
     resume_res = (
@@ -318,7 +318,7 @@ async def update_application_details(
     if not payload:
         raise HTTPException(status_code=400, detail="No fields to update")
 
-    supabase = get_supabase_client(user_jwt=current_user.token)
+    supabase = get_db(current_user.id)
     current = _get_owned_application(supabase, application_id, current_user.id)
     try:
         return update_application(supabase, application_id, current_user.id, payload, current)
@@ -343,7 +343,7 @@ async def update_application_status(
         request: New status value.
         current_user: Authenticated user.
     """
-    supabase = get_supabase_client(user_jwt=current_user.token)
+    supabase = get_db(current_user.id)
     current = _get_owned_application(supabase, application_id, current_user.id)
 
     new_status = request.status.value
@@ -390,7 +390,7 @@ async def update_cold_email(
     current_user: CurrentUser = Depends(get_current_user)
 ):
     """Edit a cold email draft or mark it as sent / replied."""
-    supabase = get_supabase_client(user_jwt=current_user.token)
+    supabase = get_db(current_user.id)
     _get_owned_application(supabase, application_id, current_user.id)
 
     payload = request.model_dump(exclude_unset=True, exclude={"sent"})
@@ -417,7 +417,7 @@ async def delete_application(
     current_user: CurrentUser = Depends(get_current_user)
 ):
     """Delete an application together with its tailored resumes and emails."""
-    supabase = get_supabase_client(user_jwt=current_user.token)
+    supabase = get_db(current_user.id)
     _get_owned_application(supabase, application_id, current_user.id)
 
     try:

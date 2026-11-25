@@ -21,7 +21,7 @@ async def test_production_sessions_reject_revocation_and_fail_closed(monkeypatch
         assert name=='jobpilot_session_active' and params['p_session_id']
         if active=='unavailable':raise RuntimeError('private database details')
         return SimpleNamespace(execute=lambda:SimpleNamespace(data=active))
-    monkeypatch.setattr('app.services.supabase.get_supabase_admin_client',lambda:SimpleNamespace(rpc=rpc))
+    monkeypatch.setattr('app.db.get_db',lambda *a, **k:SimpleNamespace(rpc=rpc))
     payload={'sub':str(uuid.uuid4()),'session_id':str(uuid.uuid4()),'aud':'authenticated','iss':settings.SUPABASE_URL+'/auth/v1','exp':time.time()+60}
     token=jwt.encode(payload,settings.SUPABASE_JWT_SECRET,algorithm='HS256')
     if status==200:assert (await auth._verify_token(token))['sub']==payload['sub']
@@ -51,7 +51,7 @@ async def test_jwks_verifies_signature_and_required_claims(monkeypatch,algorithm
 
 def test_templates_are_owned_and_use_optimistic_concurrency(db,client,monkeypatch):
     from app.api.v1 import templates
-    monkeypatch.setattr(templates,'get_supabase_client',lambda **_:db)
+    monkeypatch.setattr(templates,'get_db',lambda *a, **k:db)
     saved=client.put('/api/v1/templates/email',json={'content':'Use a concise tone.'})
     assert saved.status_code==200,saved.text
     timestamp=saved.json()['template']['updated_at']
@@ -112,6 +112,6 @@ async def test_progress_socket_stops_before_replay_when_session_revoked(monkeypa
     monkeypatch.setattr(settings,'APP_ENV','production')
     monkeypatch.setattr(auth,'_verify_token',revoked)
     monkeypatch.setattr(run_stream,'RunStore',lambda *_:Store())
-    monkeypatch.setattr(run_stream,'get_supabase_client',lambda **_:None)
+    monkeypatch.setattr(run_stream,'get_db',lambda *a, **k:None)
     await run_stream.stream_run(Socket(),str(uuid.uuid4()),'owner','revoked-token')
     assert closed[0]['code']==4401 and not events

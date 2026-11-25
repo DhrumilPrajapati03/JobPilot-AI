@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.models.application import ApplicationStatus
 from app.services.auth import CurrentUser, get_current_user
-from app.services.supabase import get_supabase_client, select_all
+from app.db import get_db, select_all
 
 router = APIRouter()
 
@@ -19,7 +19,7 @@ router = APIRouter()
 @router.get('/outcomes')
 def product_outcomes(current_user: CurrentUser = Depends(get_current_user)):
     try:
-        result = get_supabase_client(user_jwt=current_user.token).rpc('get_product_metrics',{}).execute().data
+        result = get_db(current_user.id).rpc('get_product_metrics',{}).execute().data
     except Exception:
         raise HTTPException(503,'Evidence analytics are unavailable. Apply the Sprint 6 migration.') from None
     gmail = result['gmail']
@@ -56,7 +56,7 @@ async def get_analytics_summary(current_user: CurrentUser = Depends(get_current_
     response/interview/offer rates, outreach counts, follow-ups due,
     average ATS score, weekly trend and recent activity.
     """
-    supabase = get_supabase_client(user_jwt=current_user.token)
+    supabase = get_db(current_user.id)
     apps = select_all(lambda: (
         supabase.table("job_applications")
         .select("id,user_id,company,role,status,created_at,updated_at,applied_at,follow_up_at")
@@ -138,7 +138,7 @@ async def get_skill_gaps(current_user: CurrentUser = Depends(get_current_user)):
     is "in_base_resume" when the user's base resume already mentions it — the
     tailoring didn't surface it, so it's a quick fix rather than a skill to learn.
     """
-    supabase = get_supabase_client(user_jwt=current_user.token)
+    supabase = get_db(current_user.id)
     apps = supabase.table("job_applications").select("*").eq("user_id", current_user.id).execute().data
     ids = [a["id"] for a in apps]
 

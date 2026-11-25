@@ -39,7 +39,7 @@ from app.services.auth import CurrentUser
 from app.api.v1 import network as network_api
 from app.services import discovery, referrals
 from app.services.llm import ModelsExhausted, default_provider, get_chat_llm
-from app.services.supabase import get_supabase_client
+from app.db import get_db
 from app.services.websocket import manager
 
 MAX_STEPS = 6
@@ -357,7 +357,7 @@ def _discovery_guard(fn):
 
 
 async def _get_briefing(user: CurrentUser, _args: dict) -> dict:
-    supabase = get_supabase_client(user_jwt=user.token)
+    supabase = get_db(user.id)
 
     def build():
         b = discovery.build_briefing(supabase, user.id, discovery.load_preferences(supabase, user.id))
@@ -368,7 +368,7 @@ async def _get_briefing(user: CurrentUser, _args: dict) -> dict:
 
 
 async def _get_job_feed(user: CurrentUser, args: dict) -> dict:
-    supabase = get_supabase_client(user_jwt=user.token)
+    supabase = get_db(user.id)
     limit = max(1, min(int(args.get("limit") or 8), 15))
     min_score = float(args.get("min_score") or 0)
 
@@ -387,7 +387,7 @@ def _contact_view(c: dict) -> dict:
 
 
 async def _find_referrals(user: CurrentUser, args: dict) -> dict:
-    supabase = get_supabase_client(user_jwt=user.token)
+    supabase = get_db(user.id)
     try:
         if args.get("application_id"):
             res = await network_api.referrals_for_application(str(args["application_id"]), current_user=user)
@@ -411,7 +411,7 @@ async def _find_referrals(user: CurrentUser, args: dict) -> dict:
 
 
 async def _propose_referral_request(user: CurrentUser, args: dict) -> dict:
-    supabase = get_supabase_client(user_jwt=user.token)
+    supabase = get_db(user.id)
     detail = await get_application_details(str(args.get("application_id", "")), current_user=user)
     app = detail["application"]
     try:
@@ -441,7 +441,7 @@ async def _scan_jobs(user: CurrentUser, _args: dict) -> dict:
     if runs.durable_enabled():
         run = runs.enqueue_for_user(user.id, "scan", {"auto_draft": True}, f"manual-scan:{int(time.time() // 60)}")
         return {"run_id": run["id"], "status": run["status"], "message": "Scan queued; results will appear in the job feed."}
-    supabase = get_supabase_client(user_jwt=user.token)
+    supabase = get_db(user.id)
     try:
         summary = await discovery.scan_user(supabase, user.id, user_token=user.token, user_email=user.email)
     except discovery.DiscoveryError as e:
@@ -460,7 +460,7 @@ async def _scan_jobs(user: CurrentUser, _args: dict) -> dict:
 
 
 async def _draft_job(user: CurrentUser, args: dict) -> dict:
-    supabase = get_supabase_client(user_jwt=user.token)
+    supabase = get_db(user.id)
     posting_id = str(args.get("posting_id") or "")
     try:
         uuid.UUID(posting_id)

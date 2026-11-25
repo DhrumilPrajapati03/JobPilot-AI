@@ -9,7 +9,7 @@ from contextvars import ContextVar
 from fastapi import HTTPException
 
 from app.config import settings
-from app.services.supabase import get_supabase_admin_client
+from app.db import get_db
 
 TERMINAL = {"succeeded", "failed"}
 INPUT_FIELDS = {
@@ -37,7 +37,7 @@ def durable_enabled() -> bool:
 
 class RunStore:
     def __init__(self, client=None):
-        self.client = client or get_supabase_admin_client()
+        self.client = client or get_db()
 
     def rpc(self, name: str, **params):
         return self.client.rpc(name, params).execute().data

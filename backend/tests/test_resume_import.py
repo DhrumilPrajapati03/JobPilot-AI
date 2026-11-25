@@ -161,7 +161,7 @@ def test_imported_resume_can_be_confirmed_and_used_in_job_feed(db, client, groq_
             description='Build Python, FastAPI, RAG and Docker applications.', posted_at=None)]
 
     monkeypatch.setattr(discovery, 'fetch_board', fetch)
-    monkeypatch.setattr(discovery_api, 'get_supabase_client', lambda user_jwt=None: db)
+    monkeypatch.setattr(discovery_api, 'get_db', lambda *a, **k: db)
     monkeypatch.setattr(llm.settings, 'MATCHING_SEMANTIC', False)
     db.tables['job_sources'] = [{'id': 'fixture-source', 'user_id': USER_ID, 'enabled': True,
                                  'ats': 'greenhouse', 'slug': 'example', 'company': 'Example Labs'}]

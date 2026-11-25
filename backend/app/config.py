@@ -21,11 +21,16 @@ class Settings(BaseSettings):
         hide_input_in_errors=True,
     )
 
-    # Supabase
+    # Database: local Postgres + pgvector (compose.yaml), e.g.
+    # postgresql+psycopg://jobdots:<password>@127.0.0.1:55432/jobdots
+    DATABASE_URL: str = ""
+    DATABASE_POOL_SIZE: int = Field(default=10, ge=1, le=50)
+    # Uploaded originals (resume files). Kept on local disk, never in git.
+    FILE_STORAGE_DIR: str = "data/files"
+
+    # Supabase Auth token verification only, until owner auth replaces it (plan section 4.1).
     SUPABASE_URL: str = ""
-    SUPABASE_KEY: str = ""
-    SUPABASE_SERVICE_KEY: str = ""
-    SUPABASE_JWT_SECRET: str = ""  
+    SUPABASE_JWT_SECRET: str = ""
 
     # LLM Providers
     ANTHROPIC_API_KEY: str = ""
@@ -51,8 +56,7 @@ class Settings(BaseSettings):
     AGENT_PROVIDER: str = "auto"
     AGENT_MODEL: str = ""
 
-    # Nightly board scans and morning digests on the server (services/autopilot.py). Needs
-    # SUPABASE_SERVICE_KEY; without it the app scans when the user opens it instead.
+    # Nightly board scans and morning digests on the server (services/autopilot.py).
     DISCOVERY_AUTO_SCAN: bool = True
 
     # HR Enrichment

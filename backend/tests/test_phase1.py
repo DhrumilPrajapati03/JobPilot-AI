@@ -69,6 +69,6 @@ def test_missing_answer_table_gives_actionable_error(client, monkeypatch):
         def table(self, _name):
             raise Exception("{'code': 'PGRST205', 'message': \"Could not find the table 'public.qa_answers'\"}")
 
-    monkeypatch.setattr(answers, "get_supabase_client", lambda user_jwt=None: Broken())
+    monkeypatch.setattr(answers, "get_db", lambda *a, **k: Broken())
     res = client.get("/api/v1/answers/")
     assert res.status_code == 503 and "20261010_answer_bank.sql" in res.json()["detail"]

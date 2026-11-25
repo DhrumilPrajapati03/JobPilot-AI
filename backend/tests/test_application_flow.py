@@ -158,7 +158,7 @@ def db(request, monkeypatch):
     fake.tables["user_profiles"] = [{"id": USER_ID, "name": "Ada Lovelace", "location": "London"}]
     fake.tables["resumes"] = [copy.deepcopy(BASE_RESUME)]
     for module in (orchestrator, applications, resume, analytics, answers, profile):
-        monkeypatch.setattr(module, "get_supabase_client", lambda user_jwt=None: fake)
+        monkeypatch.setattr(module, "get_db", lambda *a, **k: fake)
 
     async def parse(self, jd_url=None, jd_text=None):
         return JDAnalysis(

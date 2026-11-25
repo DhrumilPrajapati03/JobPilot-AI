@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
 from app.services.auth import CurrentUser, get_current_user
-from app.services.supabase import get_supabase_client
+from app.db import get_db
 
 router = APIRouter()
 
@@ -41,7 +41,7 @@ def _raise_for(error: Exception):
 @router.get("/")
 async def list_answers(current_user: CurrentUser = Depends(get_current_user)):
     """All saved answers, grouped client-side by category."""
-    supabase = get_supabase_client(user_jwt=current_user.token)
+    supabase = get_db(current_user.id)
     try:
         res = supabase.table("qa_answers").select("*").eq("user_id", current_user.id).order("question").execute()
     except Exception as e:
@@ -52,7 +52,7 @@ async def list_answers(current_user: CurrentUser = Depends(get_current_user)):
 @router.put("/")
 async def save_answers(batch: AnswerBatch, current_user: CurrentUser = Depends(get_current_user)):
     """Create or update answers, matched by question text."""
-    supabase = get_supabase_client(user_jwt=current_user.token)
+    supabase = get_db(current_user.id)
     rows = [{**a.model_dump(), "question": a.question.strip(), "user_id": current_user.id} for a in batch.answers]
     if not rows:
         return {"answers": []}
@@ -65,7 +65,7 @@ async def save_answers(batch: AnswerBatch, current_user: CurrentUser = Depends(g
 
 @router.delete("/{answer_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_answer(answer_id: str, current_user: CurrentUser = Depends(get_current_user)):
-    supabase = get_supabase_client(user_jwt=current_user.token)
+    supabase = get_db(current_user.id)
     try:
         supabase.table("qa_answers").delete().eq("id", answer_id).eq("user_id", current_user.id).execute()
     except Exception as e:
@@ -74,7 +74,7 @@ async def delete_answer(answer_id: str, current_user: CurrentUser = Depends(get_
 
 async def answers_for_llm(current_user: CurrentUser) -> list[dict]:
     """Answers safe to include in a prompt — sensitive ones are excluded."""
-    supabase = get_supabase_client(user_jwt=current_user.token)
+    supabase = get_db(current_user.id)
     try:
         res = supabase.table("qa_answers").select("question, answer, category, sensitive").eq("user_id", current_user.id).execute()
     except Exception as e:

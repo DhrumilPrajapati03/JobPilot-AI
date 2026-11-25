@@ -10,7 +10,7 @@ from app.models.user import WorkPreferences
 from app.services import autopilot, digest
 from app.services import runs
 from app.services.auth import CurrentUser, get_current_user
-from app.services.supabase import get_supabase_admin_client, get_supabase_client
+from app.db import get_db
 
 router = APIRouter()
 MIGRATION_FILE = "supabase/migrations/20261014_autopilot.sql"
@@ -18,7 +18,7 @@ _background: set[asyncio.Task] = set()
 
 
 def _client(user: CurrentUser):
-    return get_supabase_client(user_jwt=user.token)
+    return get_db(user.id)
 
 
 def _prefs(supabase, user_id: str) -> WorkPreferences:
@@ -102,11 +102,11 @@ async def cron_tick(x_cron_secret: str = Header(default="")):
     if not settings.CRON_SECRET or x_cron_secret != settings.CRON_SECRET:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Bad or missing X-Cron-Secret.")
     if not autopilot.server_ready():
-        raise HTTPException(status_code=503, detail="Set SUPABASE_SERVICE_KEY on the server to run the schedule.")
+        raise HTTPException(status_code=503, detail="Set DATABASE_URL on the server to run the schedule.")
     if runs.durable_enabled():
         # Only enqueue date-keyed jobs. The long-running work happens in workers.
-        return await autopilot.tick(get_supabase_admin_client())
-    task = asyncio.create_task(autopilot.tick(get_supabase_admin_client()))
+        return await autopilot.tick(get_db())
+    task = asyncio.create_task(autopilot.tick(get_db()))
     _background.add(task)
     task.add_done_callback(_background.discard)
     return {"status": "started"}

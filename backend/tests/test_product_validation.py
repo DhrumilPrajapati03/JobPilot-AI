@@ -104,13 +104,12 @@ def test_stage_duration_is_recorded_once_and_not_fabricated_on_recovery():
 
 def test_readiness_cache_bounds_database_probes_and_expires(monkeypatch):
     clock=[0.0];calls=[]
-    monkeypatch.setattr(settings,'SUPABASE_URL','https://synthetic.example')
-    monkeypatch.setattr(settings,'SUPABASE_SERVICE_KEY','synthetic-key')
+    monkeypatch.setattr(settings,'DATABASE_URL','postgresql://synthetic@db.invalid/jobdots')
     monkeypatch.setattr(settings,'EXECUTION_MODE','durable')
     monkeypatch.setattr(operations.time,'monotonic',lambda:clock[0])
     monkeypatch.setattr(operations,'_cache',{'until':0,'key':None,'health':None})
     def execute():calls.append(True);return SimpleNamespace(data={'healthy_workers':1})
-    monkeypatch.setattr(operations,'get_supabase_admin_client',lambda:SimpleNamespace(rpc=lambda *a:SimpleNamespace(execute=execute)))
+    monkeypatch.setattr(operations,'get_db',lambda *a, **k:SimpleNamespace(rpc=lambda *a:SimpleNamespace(execute=execute)))
     assert operations.check_readiness()[0] and operations.check_readiness()[0] and len(calls)==1
     clock[0]=6
     assert operations.check_readiness()[0] and len(calls)==2

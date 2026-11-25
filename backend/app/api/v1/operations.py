@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 
 from app.config import settings
 from app.services import observability
-from app.services.supabase import get_supabase_admin_client
+from app.db import get_db
 
 router = APIRouter()
 _cache_lock = threading.Lock()
@@ -17,14 +17,14 @@ _cache = {'until':0.0,'key':None,'health':None}
 
 def check_readiness():
     try:
-        if not settings.SUPABASE_URL or not settings.SUPABASE_SERVICE_KEY:
+        if not settings.DATABASE_URL:
             raise ValueError()
-        key = (settings.SUPABASE_URL,settings.SUPABASE_SERVICE_KEY)
+        key = settings.DATABASE_URL
         with _cache_lock:
             if time.monotonic() >= _cache['until'] or _cache['key'] != key:
                 try:
-                    _cache['health'] = get_supabase_admin_client().rpc('get_execution_health',{}).execute().data
-                    if settings.APP_ENV=='production' and get_supabase_admin_client().rpc('release_schema_ready',{}).execute().data is not True:
+                    _cache['health'] = get_db().rpc('get_execution_health',{}).execute().data
+                    if settings.APP_ENV=='production' and get_db().rpc('release_schema_ready',{}).execute().data is not True:
                         _cache['health']=None
                 except Exception:
                     _cache['health'] = None

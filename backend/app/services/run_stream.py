@@ -6,14 +6,14 @@ from uuid import UUID
 from fastapi import WebSocket, WebSocketDisconnect
 
 from app.services.runs import RunStore, TERMINAL
-from app.services.supabase import get_supabase_client
+from app.db import get_db
 from app.config import settings
 
 
 async def stream_run(websocket: WebSocket, run_id: str, user_id: str, token: str):
     try:
         UUID(run_id)
-        store = RunStore(get_supabase_client(user_jwt=token))
+        store = RunStore(get_db(user_id))
         if not await asyncio.to_thread(store.get, run_id, user_id):
             await websocket.send_json({"type": "unknown_run", "run_id": run_id})
             await websocket.close()

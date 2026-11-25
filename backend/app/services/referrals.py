@@ -17,7 +17,7 @@ from datetime import datetime
 
 from app.services.job_matching import _title_words
 from app.services.llm import get_default_llm
-from app.services.supabase import select_all
+from app.db import select_all
 
 MAX_IMPORT_ROWS = 50_000
 MESSAGE_LIMIT = 900
