@@ -3,7 +3,7 @@
 import asyncio
 import json
 
-from langchain_core.messages import AIMessageChunk, ToolMessage
+from app.services.llm import AIMessageChunk, ToolMessage
 
 from app.agents import assistant
 from app.services.websocket import manager

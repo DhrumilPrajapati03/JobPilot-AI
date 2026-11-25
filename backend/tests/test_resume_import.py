@@ -6,13 +6,11 @@ from types import SimpleNamespace
 
 import httpx
 import pytest
-from langchain_core.exceptions import OutputParserException
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_groq import ChatGroq
 
 from app.api.v1 import discovery as discovery_api, resume as resume_api
 from app.models.resume import Resume, ResumeContent
 from app.services import discovery, llm, parser
+from app.services.llm import OutputParserException
 from app.services.job_boards import Posting
 from test_application_flow import USER_ID, db, client  # noqa: F401
 
@@ -28,8 +26,9 @@ CONTENT = {
 
 @pytest.fixture
 def groq_factory(monkeypatch):
-    """Use the installed Groq/LangChain SDK, with only HTTP mocked."""
+    """Use the real provider adapter and openai SDK against Groq's API shape, with only HTTP mocked."""
     monkeypatch.setattr(llm, '_cooldown', {})
+    monkeypatch.setattr(llm.settings, 'GROQ_API_KEY', 'synthetic-test-key')
     clients = []
 
     def create(payload, name='openai/gpt-oss-20b', status=200):
@@ -58,8 +57,8 @@ def groq_factory(monkeypatch):
         sync = httpx.Client(transport=transport)
         asynchronous = httpx.AsyncClient(transport=transport)
         clients.append((sync, asynchronous))
-        return ChatGroq(model=name, api_key='synthetic-test-key', max_retries=0,
-                        http_client=sync, http_async_client=asynchronous), requests
+        return llm.ChatModel('groq', name, max_retries=0,
+                             http_client=sync, http_async_client=asynchronous), requests
 
     yield create
     for sync, asynchronous in clients:
@@ -71,7 +70,7 @@ def groq_factory(monkeypatch):
 def test_groq_extraction_uses_json_not_tool_names(groq_factory, asynchronous):
     model, requests = groq_factory(CONTENT)
     structured = llm.with_structured(model, ResumeContent)
-    prompt = ChatPromptTemplate.from_messages([('human', '{source}')]).invoke({'source': 'Synthetic resume'})
+    prompt = [('human', 'Synthetic resume')]
     result = asyncio.run(structured.ainvoke(prompt)) if asynchronous else structured.invoke('Synthetic resume')
     assert isinstance(result, ResumeContent) and result.skills.primary == ['Python', 'FastAPI']
     request = requests[0]

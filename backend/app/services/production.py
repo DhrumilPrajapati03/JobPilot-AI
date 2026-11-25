@@ -21,12 +21,12 @@ def validate_production(config=settings):
     origins=[v.strip().rstrip('/') for v in config.FRONTEND_URL.split(',') if v.strip()]
     if not origins or any(urlsplit(v).scheme!='https' or not urlsplit(v).netloc or urlsplit(v).username or urlsplit(v).password or urlsplit(v).path or urlsplit(v).query or urlsplit(v).fragment or '*' in v for v in origins):
         failures.append('FRONTEND_URL must contain exact HTTPS origins')
-    providers={'groq':config.GROQ_API_KEY,'openai':config.OPENAI_API_KEY,'anthropic':config.ANTHROPIC_API_KEY}
-    configured=lambda key:bool(key) and not key.startswith('your-')
+    # Groq needs a real key; Ollama needs a base URL (local models; unreachable from a cloud host).
+    providers={'groq':bool(config.GROQ_API_KEY) and not config.GROQ_API_KEY.startswith('your-'),'ollama':bool(config.OLLAMA_BASE_URL)}
     if config.LLM_PROVIDER not in {'auto',*providers}: failures.append('LLM_PROVIDER is unsupported')
-    elif config.LLM_PROVIDER!='auto' and not configured(providers[config.LLM_PROVIDER]): failures.append('The selected generation provider needs its API key')
-    elif config.LLM_PROVIDER=='auto' and not any(configured(v) for v in providers.values()): failures.append('A generation provider must be configured')
-    if config.AGENT_PROVIDER!='auto' and (config.AGENT_PROVIDER not in providers or not configured(providers[config.AGENT_PROVIDER])): failures.append('The selected chat provider needs its API key')
+    elif config.LLM_PROVIDER!='auto' and not providers[config.LLM_PROVIDER]: failures.append('The selected generation provider is not configured')
+    elif config.LLM_PROVIDER=='auto' and not any(providers.values()): failures.append('A generation provider must be configured')
+    if config.AGENT_PROVIDER!='auto' and not providers.get(config.AGENT_PROVIDER): failures.append('The selected chat provider is not configured')
     if config.MAILBOX_ENABLED and not (config.COMPOSIO_API_KEY and config.COMPOSIO_GMAIL_AUTH_CONFIG_ID): failures.append('Mailbox configuration is incomplete')
     if config.MAIL_SEND_ENABLED and not config.MAILBOX_ENABLED: failures.append('Sending requires mailbox connections')
     if failures: raise RuntimeError('Production configuration rejected: '+'; '.join(failures))
