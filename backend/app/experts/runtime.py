@@ -39,6 +39,8 @@ def redact(value, depth: int = 0):
         return value if len(value) <= MAX_TEXT else value[:MAX_TEXT] + f"… ({len(value)} chars)"
     if isinstance(value, (int, float, bool)) or value is None:
         return value
+    if isinstance(value, (bytes, bytearray)):
+        return f"<{len(value)} bytes>"
     return str(value)[:MAX_TEXT]
 
 
@@ -98,8 +100,8 @@ def enqueue_expert(user_id: str, agent: str, *, case_id: str | None = None, key:
 
 async def run_expert(ctx: ExpertContext) -> dict:
     """Budget gate, the expert's own work, then charges and the hand-back to Supervisor."""
-    from app.experts import researcher, scout, supervisor
-    handlers = {"supervisor": supervisor.run, "scout": scout.run, "researcher": researcher.run}
+    from app.experts import researcher, scout, supervisor, tailor
+    handlers = {"supervisor": supervisor.run, "scout": scout.run, "researcher": researcher.run, "tailor": tailor.run}
     if ctx.spec.status != "active":
         raise PermanentRunError(f"{ctx.spec.name} is {ctx.spec.status}; nothing was run.")
     handler = handlers.get(ctx.spec.id)

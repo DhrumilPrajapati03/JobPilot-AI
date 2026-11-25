@@ -13,7 +13,7 @@ JobDots is being rebuilt from the JobPilot AI codebase on this branch (`jobdots`
 
 ## Status
 
-Days 0 and 1 of the plan are done (export, local Postgres + pgvector, Groq/Ollama, owner auth; Supabase and LangChain are gone). Day 2 added the case spine (cases, actions with approvals, the `policy.yaml` engine, budgets, per-case queue concurrency), Google/GitHub login, the JobPilot import, nightly backups and the eval harness. Day 3 adds the agent runtime: Supervisor, Scout and Researcher.
+Days 0 and 1 of the plan are done (export, local Postgres + pgvector, Groq/Ollama, owner auth; Supabase and LangChain are gone). Day 2 added the case spine (cases, actions with approvals, the `policy.yaml` engine, budgets, per-case queue concurrency), Google/GitHub login, the JobPilot import, nightly backups and the eval harness. Day 3 added the agent runtime (Supervisor, Scout, Researcher); Day 4 adds the Tailor.
 
 ## Local stack
 
@@ -49,6 +49,7 @@ Experts are data: `backend/app/experts/builtin.yaml` holds the roster (synced in
 * **Scout** runs daily (routine `scout_daily_scan`), scans your boards and opens a case for each strong, eligible new match.
 * **Supervisor** routes each case: Researcher, then Tailor, then Email Outreach. No model calls.
 * **Researcher** writes a cited `company_brief`: every claim names its sources, uncited claims are dropped, and confidence is capped by the number of sources.
+* **Tailor** makes a job-specific version of `private/resume/master.tex`. The model only proposes a plan (bullet order, drops, skill order, a few rewordings); the validator checks every rewording against `private/fact_vault.yaml` (no new numbers, tools or names, approximate numbers stay approximate, no added skills), code renders the LaTeX and Tectonic compiles it in the container. The result is a `resume_version` diff card with the PDF; approve or reject it via `POST /api/v1/cases/<case>/artifacts/<id>/review`. Ask for a new version with `POST /api/v1/experts/cases/<case>/tailor`.
 * Routines catch up after the laptop was off ("JobDots woke up and ran N missed routines"). Every step is traced in `run_step`.
 
 ```

@@ -1,0 +1,97 @@
+%-------------------------
+% Synthetic resume for tests (no real person). Same macros as the common "Jake's resume".
+%-------------------------
+\documentclass[letterpaper,11pt]{article}
+
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{tabularx}
+
+\addtolength{\oddsidemargin}{-0.5in}
+\addtolength{\textwidth}{1in}
+\addtolength{\topmargin}{-.5in}
+\addtolength{\textheight}{1.0in}
+\raggedright
+\setlength{\tabcolsep}{0in}
+\titleformat{\section}{\scshape\raggedright\large}{}{0em}{}[\titlerule]
+
+\newcommand{\resumeItem}[1]{\item\small{{#1 \vspace{-2pt}}}}
+\newcommand{\resumeSubheading}[4]{
+  \vspace{-2pt}\item
+    \begin{tabular*}{0.97\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{#1} & #2 \\
+      \textit{\small#3} & \textit{\small #4} \\
+    \end{tabular*}\vspace{-7pt}
+}
+\newcommand{\resumeProjectHeading}[2]{
+    \item
+    \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+      \small#1 & #2 \\
+    \end{tabular*}\vspace{-7pt}
+}
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.15in, label={}]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-5pt}}
+
+\begin{document}
+
+\begin{center}
+  {\textbf{ADA EXAMPLE}}\\
+  \small ada@example.invalid
+\end{center}
+
+\section{Experience}
+\resumeSubHeadingListStart
+
+  \resumeSubheading
+    {Machine Learning Engineer}
+    {Jan 2025 -- Present}
+    {Example Labs}
+    {Remote}
+    \resumeItemListStart
+      \resumeItem{Built a \textbf{RAG} service on PostgreSQL and pgvector that answers support questions for 40 teams}
+      \resumeItem{Reduced model serving latency by 35\% by batching requests in FastAPI}
+      \resumeItem{Wrote evaluation suites in Pytest covering 120 labelled cases}
+    \resumeItemListEnd
+
+  \resumeSubheading
+    {Data Analyst Intern}
+    {Jun 2024 -- Dec 2024}
+    {Sample Corp}
+    {Pune, India}
+    \resumeItemListStart
+      \resumeItem{Automated weekly sales reports with Python and SQL, saving 6 hours a week}
+    \resumeItemListEnd
+
+\resumeSubHeadingListEnd
+
+\section{Projects}
+\resumeSubHeadingListStart
+
+  \resumeProjectHeading
+    {\textbf{Doc Search} $|$ \textit{Semantic search over manuals}}
+    \resumeItemListStart
+      \resumeItem{Indexed 10k pages with sentence embeddings and FAISS; Recall@5 of 0.82 on a held-out set}
+    \resumeItemListEnd
+
+  \resumeProjectHeading
+    {\textbf{Chess Bot} $|$ \textit{Weekend project}}
+    \resumeItemListStart
+      \resumeItem{Wrote a minimax chess engine in Python}
+    \resumeItemListEnd
+
+\resumeSubHeadingListEnd
+
+\section{Technical Skills}
+\begin{itemize}[leftmargin=0.15in, label={}]
+\small\item{
+  \textbf{Languages}: Python, SQL, Go\\
+  \textbf{ML \& Retrieval}: PyTorch, FAISS, pgvector, RAG\\
+  \textbf{Tools}: Docker, FastAPI, Pytest, Git
+}
+\end{itemize}
+
+\end{document}

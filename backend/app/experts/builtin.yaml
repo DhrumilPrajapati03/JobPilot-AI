@@ -67,11 +67,15 @@
 - id: tailor
   name: Tailor
   role: Tailors your master resume to the role
-  description: Edits your master .tex per job, compiles the PDF and rejects claims that are not in your fact vault.
-  model: {provider: default}
-  tools: [read_case, save_artifact]
+  description: Reorders and rewords your master .tex for one job, compiles the PDF and refuses any claim that is not in your fact vault.
+  instructions: Plan only (bullet order, drops, skill order, a few rewordings); code validates against the fact vault and renders the LaTeX.
+  policy_notes: No web, no sending. Titles, employers, dates, education and awards are never edited.
+  model: {provider: default, task: quality}
+  tools: [read_case, compile_resume, save_artifact]
   outputs: [resume_version]
-  status: draft
+  triggers: [{kind: event, event: routed}, {kind: manual}]
+  budgets: {steps: 20, tokens: 60000, seconds: 900}
+  status: active
 
 - id: answerer
   name: Answerer

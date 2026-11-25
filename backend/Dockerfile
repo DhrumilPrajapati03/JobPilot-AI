@@ -46,8 +46,8 @@ COPY . .
 
 ENV FILE_STORAGE_DIR=/app/data/files
 RUN useradd --create-home --uid 10001 jobpilot \
-    && mkdir -p /app/data/files /app/data/backups \
-    && chown -R jobpilot:jobpilot /app/data
+    && mkdir -p /app/data/files /app/data/backups /home/jobpilot/.cache/Tectonic \
+    && chown -R jobpilot:jobpilot /app/data /home/jobpilot/.cache
 USER jobpilot
 
 # Render (and most hosts) pass the port in $PORT.

@@ -28,6 +28,11 @@ class Settings(BaseSettings):
     # Uploaded originals (resume files). Kept on local disk, never in git.
     FILE_STORAGE_DIR: str = "data/files"
 
+    # Tailor (plan Day 4): your master resume and fact vault. Both stay in /private (git-ignored);
+    # Compose mounts ./private read-only at /app/private.
+    RESUME_MASTER_PATH: str = "private/resume/master.tex"
+    FACT_VAULT_PATH: str = "private/fact_vault.yaml"
+
     # Owner auth (single user). OWNER_API_TOKEN is the bearer token for the API (32+ random
     # characters). OWNER_ID optionally pins the owner's uuid (e.g. the old JobPilot user id).
     OWNER_EMAIL: str = ""

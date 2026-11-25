@@ -14,7 +14,7 @@ from app.experts.tools import REGISTRY, Tool, ToolBox, ToolDenied
 def test_builtin_roster_is_valid_and_only_wave_one_is_active():
     specs = builtin_specs()
     assert len(specs) == 14
-    assert {s.id for s in specs.values() if s.status == "active"} == {"supervisor", "scout", "researcher"}
+    assert {s.id for s in specs.values() if s.status == "active"} == {"supervisor", "scout", "researcher", "tailor"}
     assert all(not s.action_kinds or s.status == "draft" for s in specs.values())  # nothing that sends is active yet
 
 

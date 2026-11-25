@@ -94,7 +94,31 @@ def policy_suite() -> list[Metric]:
     ]
 
 
-SUITES = {"matching": matching_suite, "policy": policy_suite}
+def tailor_suite() -> list[Metric]:
+    """Tailor: the fact-vault validator on labelled rewrites, and lossless rendering of the .tex."""
+    from app.tailor import validator, vault as vault_mod
+    from app.tailor.texdoc import Edits, parse, render
+    fixtures = ROOT / "tests" / "fixtures" / "resume"
+    source = (fixtures / "master.tex").read_text(encoding="utf-8")
+    doc, vault = parse(source), vault_mod.load(fixtures / "fact_vault.yaml")
+    cases = [json.loads(line) for line in (DATASETS / "tailor_cases.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
+    wrong = []
+    for case in cases:
+        reviewed = validator.review(doc, Edits(rewrites={case["bullet"]: case["text"]}), vault)
+        accepted = case["bullet"] in reviewed.edits.rewrites
+        if accepted != (case["expect"] == "accept"):
+            wrong.append({"id": case["id"], "accepted": accepted, "rejected": reviewed.rejected})
+    refused = [c for c in cases if c["expect"] == "reject"]
+    leaked = [w for w in wrong if w["accepted"]]
+    return [
+        Metric("tailor", "tailor_cases", "validator_accuracy", (len(cases) - len(wrong)) / len(cases), 1.0, details={"wrong": wrong}),
+        Metric("tailor", "tailor_cases", "invented_claims_accepted", len(leaked), 0, higher_is_better=False,
+               details={"of": len(refused)}),
+        Metric("tailor", "fixture master.tex", "render_without_edits_identical", float(render(doc) == source), 1.0),
+    ]
+
+
+SUITES = {"matching": matching_suite, "policy": policy_suite, "tailor": tailor_suite}
 
 
 def run(names: list[str] | None = None, *, semantic: bool = False) -> list[Metric]:
