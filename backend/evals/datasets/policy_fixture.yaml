@@ -1,0 +1,27 @@
+# Pinned policy for the behavioural policy cases, so the eval does not move when
+# config/policy.yaml caps change. The real file is checked separately (structure).
+version: 1
+kill_switch: false
+action_modes:
+  read_public_web: act
+  save_artifact: act
+  fill_form: act_with_preview
+  send_email: ask_first
+  send_linkedin_invite: ask_first
+  send_linkedin_dm: ask_first
+  submit_application: ask_first
+  referral_request: ask_first
+  captcha_or_2fa: hand_off
+  legal_attestation: hand_off
+  bulk_send: never
+  fake_identity: never
+caps:
+  emails_per_day: 10
+  linkedin_invites_per_day: 10
+  linkedin_invites_per_week: 40
+  linkedin_dms_per_day: 10
+  max_people_per_company: 3
+  min_hours_accept_to_dm: 24
+  no_contact_if_touched_within_days: 14
+  quiet_hours: "22:00-08:00"
+  timezone: Asia/Kolkata
