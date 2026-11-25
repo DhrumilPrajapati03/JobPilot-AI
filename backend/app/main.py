@@ -18,6 +18,7 @@ from app.services import runs
 from app.services.request_limits import UploadBodyLimitMiddleware
 from app.services.observability import RequestMetricsMiddleware, setup_monitoring
 from app.api.v1.operations import router as operations_router
+from app.api.login_routes import router as login_router
 
 
 @asynccontextmanager
@@ -68,6 +69,7 @@ app.add_middleware(
 # Include API v1 router
 app.include_router(api_v1_router, prefix="/api/v1")
 app.include_router(operations_router)
+app.include_router(login_router, prefix="/auth", tags=["Login"])
 
 
 @app.get("/health", tags=["Health"])
@@ -94,11 +96,16 @@ async def agent_stream(websocket: WebSocket, run_id: str):
         websocket: The WebSocket connection.
         run_id: Unique identifier for the agent run to stream.
     """
-    # Credentials travel in the first frame, never in URL/query strings or logs.
+    # Credentials travel in the first frame (bearer token) or in the session cookie, never in
+    # URL/query strings or logs. Cookies are only trusted from an allowed Origin, so another
+    # site can't open this socket with the owner's cookie.
     await websocket.accept()
     try:
         credentials = await asyncio.wait_for(websocket.receive_json(), timeout=10)
         token = credentials.get("token") if isinstance(credentials, dict) else None
+        cookie = websocket.cookies.get(auth.SESSION_COOKIE)
+        if not token and cookie and auth.origin_allowed(websocket.headers.get("origin")):
+            token = cookie
         if not isinstance(token, str) or not token or len(token) > 16384:
             await websocket.close(code=4401)
             return

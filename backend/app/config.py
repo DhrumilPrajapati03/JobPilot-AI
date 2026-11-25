@@ -33,6 +33,19 @@ class Settings(BaseSettings):
     OWNER_EMAIL: str = ""
     OWNER_API_TOKEN: str = ""
     OWNER_ID: str = ""
+    # Break-glass: the bearer token keeps working next to Google/GitHub login. Set to false
+    # once login is proven (plan section 4.1).
+    BEARER_AUTH_ENABLED: bool = True
+
+    # Login (plan section 4.1): Google (OpenID Connect) and GitHub OAuth, single-owner
+    # allowlist on provider ids. Separate clients from the Gmail/Calendar/Drive connection.
+    GOOGLE_LOGIN_CLIENT_ID: str = ""
+    GOOGLE_LOGIN_CLIENT_SECRET: str = ""
+    GITHUB_OAUTH_CLIENT_ID: str = ""
+    GITHUB_OAUTH_CLIENT_SECRET: str = ""
+    # Where the browser reaches this API; login callbacks are <PUBLIC_API_URL>/auth/<provider>/callback.
+    PUBLIC_API_URL: str = "http://localhost:8000"
+    SESSION_DAYS: int = Field(default=7, ge=1, le=90)
 
     # LLM providers (plan section 7.1): Groq and local Ollama, both OpenAI-compatible.
     GROQ_API_KEY: str = ""
