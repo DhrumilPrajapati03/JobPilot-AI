@@ -103,7 +103,7 @@ export default function Chat() {
     window.addEventListener('pointerup', onUp);
   };
   const starter = useStarter();
-  const firstName = (user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || '').split(' ')[0];
+  const firstName = (user?.email?.split('@')[0] || '').split(' ')[0];
 
   useEffect(() => {
     if (!stage) setExpanded(false);

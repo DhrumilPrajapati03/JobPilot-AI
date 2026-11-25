@@ -4,6 +4,7 @@
 
 import { API_URL } from '../lib/constants';
 import { getChatAccountId, getChatSessionRevision, useChatStore, type ChatMessage, type StreamEvent, type ToolPart } from './store';
+import { sessionFetch } from '../lib/session';
 
 const HISTORY_LIMIT = 30;
 
@@ -53,11 +54,6 @@ function buildHistory(messages: ChatMessage[]) {
     .slice(-HISTORY_LIMIT);
 }
 
-async function authToken() {
-  const { supabase } = await import('../lib/supabase');
-  const { data } = await supabase.auth.getSession();
-  return data.session?.access_token ?? null;
-}
 
 let controller: AbortController | null = null;
 
@@ -82,11 +78,10 @@ export async function sendChatMessage(text: string) {
 
   let error: string | undefined;
   try {
-    const token = await authToken();
     if (revision !== getChatSessionRevision() || requestController.signal.aborted) return;
-    const response = await fetch(`${API_URL}/agent/chat`, {
+    const response = await sessionFetch(`${API_URL}/agent/chat`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ messages: history }),
       signal: requestController.signal,
     });

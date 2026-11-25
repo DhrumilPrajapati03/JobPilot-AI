@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { WS_BASE_URL } from '../lib/constants';
-import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../stores/auth-store';
 
 export const PIPELINE_STEPS = [
@@ -160,9 +159,9 @@ export function useAgentStream({ persist = true, runId }: { persist?: boolean; r
       socketRef.current = socket;
 
       socket.onopen = async () => {
-        const { data } = await supabase.auth.getSession();
         if (socketRef.current !== socket || socket.readyState !== WebSocket.OPEN) return;
-        socket.send(JSON.stringify({ token: data.session?.access_token ?? '' }));
+        // The session cookie authenticates the socket; the first frame just starts it.
+        socket.send(JSON.stringify({}));
       };
       socket.onmessage = (message) => {
         try {

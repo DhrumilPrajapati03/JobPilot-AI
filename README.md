@@ -13,7 +13,7 @@ JobDots is being rebuilt from the JobPilot AI codebase on this branch (`jobdots`
 
 ## Status
 
-Day 0 of the plan is done: secret scan, JobPilot snapshot, data export and removal of parts JobDots will not use. Day 1 is in progress: the backend runs on local Postgres + pgvector (Alembic baseline) with owner bearer-token auth; Supabase is no longer used. The frontend still expects the old Supabase login until the Day 2 login page.
+Days 0 and 1 of the plan are done (export, local Postgres + pgvector, Groq/Ollama, owner auth; Supabase and LangChain are gone). Day 2 adds the case spine (cases, actions with approvals, the `policy.yaml` engine, budgets, per-case queue concurrency) and Google/GitHub login.
 
 ## Local stack
 
@@ -25,7 +25,16 @@ docker compose up -d                 # db -> migrate (alembic upgrade head) -> a
 curl -H "Authorization: Bearer $OWNER_API_TOKEN" http://127.0.0.1:8000/api/v1/auth/me
 ```
 
-Postgres 17 + pgvector listens on 127.0.0.1:55432 and the API on 127.0.0.1:8000; nothing is exposed beyond the laptop. JobDots has one user, the owner: the API accepts `Authorization: Bearer <OWNER_API_TOKEN>` (Google and GitHub login come next). Provider keys such as `GROQ_API_KEY` are read from `backend/.env` when it exists.
+Postgres 17 + pgvector listens on 127.0.0.1:55432 and the API on 127.0.0.1:8000; nothing is exposed beyond the laptop. Provider keys such as `GROQ_API_KEY` are read from `backend/.env` when it exists. `config/policy.yaml` (action modes, caps, budgets) is mounted read-only and re-read when it changes.
+
+### Signing in
+
+JobDots has one user, the owner. Run the frontend (`cd frontend && npm run dev`) and open http://localhost:5173:
+
+1. First time: choose **Use owner token instead** and paste `OWNER_API_TOKEN`. The API trades it for an HttpOnly session cookie; the browser never stores the token.
+2. In **Settings → Sign-in**, link your Google and GitHub accounts. Only those exact accounts (by provider id, not email) can sign in afterwards.
+
+Login needs a Google OAuth client (Web application, redirect URI `http://localhost:8000/auth/google/callback`) and a GitHub OAuth app (callback `http://localhost:8000/auth/github/callback`), with their ids and secrets in `backend/.env` (see `backend/.env.example`). The bearer token keeps working for scripts and recovery until `BEARER_AUTH_ENABLED=false`.
 
 The schema lives in `backend/migrations/` (Alembic). Revision `0001` is the JobPilot schema without Supabase auth, row-level security or grants; see the header of `backend/migrations/0001_baseline.sql`. New schema changes are new Alembic revisions:
 

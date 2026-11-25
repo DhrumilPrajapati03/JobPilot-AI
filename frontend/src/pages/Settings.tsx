@@ -22,6 +22,7 @@ import {
 } from '../hooks/use-autopilot';
 import { cn } from '@/lib/utils';
 import { GmailConnection } from '../components/email/GmailConnection';
+import { SignInMethods } from '../components/auth/SignInMethods';
 
 const hourLabel = (h: number) => new Date(2000, 0, 1, h).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 
@@ -188,8 +189,8 @@ function ScheduleCard() {
       </CardHeader>
       <CardContent>
         <ul className="space-y-2.5 text-sm">
-          {row(data.tables_ready, 'Database ready', data.tables_ready ? 'Autopilot tables exist.' : 'Run supabase/migrations/20261014_autopilot.sql in Supabase.')}
-          {row(data.server_scheduler, 'Server scheduler', data.server_scheduler ? 'Runs every 10 minutes while the server is awake.' : 'Add SUPABASE_SERVICE_KEY to the backend. Until then, boards are scanned when you open the app.')}
+          {row(data.tables_ready, 'Database ready', data.tables_ready ? 'Autopilot tables exist.' : 'Run `docker compose up -d` so the migrations apply.')}
+          {row(data.server_scheduler, 'Server scheduler', data.server_scheduler ? 'Runs every 10 minutes while the server is awake.' : 'Set DATABASE_URL on the backend. Until then, boards are scanned when you open the app.')}
           {row(
             data.cron_configured,
             'Wake-up cron',
@@ -247,7 +248,7 @@ function ExtensionCard() {
         {tokens.data && !tokens.data.server_ready && (
           <p className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/5 px-3 py-2 text-sm">
             <AlertTriangle size={15} className="mt-0.5 shrink-0 text-warning" />
-            The extension needs SUPABASE_SERVICE_KEY on the backend to read your data.
+            The extension needs DATABASE_URL on the backend to read your data.
           </p>
         )}
         <div className="flex flex-wrap items-center gap-2">
@@ -312,8 +313,9 @@ export default function Settings() {
     <div className="mx-auto max-w-4xl space-y-5">
       <div>
         <h1 className="text-xl font-semibold tracking-tight">Settings</h1>
-        <p className="text-sm text-muted-foreground">Your morning digest, the overnight schedule and the Chrome extension.</p>
+        <p className="text-sm text-muted-foreground">Sign-in, your morning digest, the overnight schedule and the Chrome extension.</p>
       </div>
+      <SignInMethods />
       <GmailConnection />
       <DigestCard />
       <ExtensionCard />

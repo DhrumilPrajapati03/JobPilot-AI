@@ -41,7 +41,7 @@ export function Sidebar() {
   const { user, signOut } = useAuth();
   const { threads, activeId, streaming, startThread, selectThread, deleteThread } = useChatStore();
   const [theme, setTheme] = useState<ThemePreference>(getThemePreference);
-  const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'You';
+  const displayName = user?.email?.split('@')[0] || 'You';
   const onChat = location.pathname.startsWith(ROUTES.CHAT);
   const ThemeIcon = THEME_ICON[theme];
 
