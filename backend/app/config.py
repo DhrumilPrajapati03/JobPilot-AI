@@ -47,6 +47,20 @@ class Settings(BaseSettings):
     PUBLIC_API_URL: str = "http://localhost:8000"
     SESSION_DAYS: int = Field(default=7, ge=1, le=90)
 
+    # Nightly encrypted backups (plan section 9.2). BACKUP_ENCRYPTION_KEY stays only in the
+    # local .env (keep a copy in your password manager: without it no backup can be restored).
+    BACKUP_ENABLED: bool = True
+    BACKUP_ENCRYPTION_KEY: str = ""
+    BACKUP_DIR: str = "data/backups"
+    BACKUP_HOUR: int = Field(default=2, ge=0, le=23)  # local time (policy.yaml timezone)
+    BACKUP_KEEP_DAILY: int = Field(default=7, ge=1, le=60)
+    BACKUP_KEEP_WEEKLY: int = Field(default=4, ge=1, le=52)
+    # Google API connection (Drive now; Gmail/Calendar later). Separate from the login client.
+    GOOGLE_OAUTH_CLIENT_ID: str = ""
+    GOOGLE_OAUTH_CLIENT_SECRET: str = ""
+    GOOGLE_DRIVE_REFRESH_TOKEN: str = ""
+    BACKUP_DRIVE_FOLDER_ID: str = ""  # optional Drive folder for the backups
+
     # LLM providers (plan section 7.1): Groq and local Ollama, both OpenAI-compatible.
     GROQ_API_KEY: str = ""
     GROQ_MODEL: str = ""  # override the default Groq model (openai/gpt-oss-120b)

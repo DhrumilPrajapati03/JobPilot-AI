@@ -83,6 +83,14 @@ class Worker:
         db, uid = self.store.client, ctx.run["user_id"]
         email = autopilot.account_email(db, uid)
         kind = ctx.run["kind"]
+        if kind == "backup":
+            from app.services import backup
+            async def run():
+                result = await asyncio.to_thread(backup.run_backup)
+                if result.status != "verified":
+                    raise RuntimeError(result.error or "Backup failed")  # retried with backoff; local copy kept
+                return {"file": result.file_name, "destination": result.destination, "size_bytes": result.size_bytes}
+            return await ctx.stage("backup", "Backing up the database", run)
         if kind == 'company_research':
             from app.services.company_research import execute
             return await execute(ctx)
@@ -154,6 +162,12 @@ async def main(once=False):
                         await autopilot.tick(worker.store.client)
                     from app.services import mailbox
                     await mailbox.schedule_sync(worker.store.client)
+                    try:
+                        from app.services import backup
+                        from app.services.auth import owner_identity
+                        await asyncio.to_thread(backup.schedule, worker.store, (await asyncio.to_thread(owner_identity))[0])
+                    except Exception as exc:
+                        log.warning("Backup scheduling skipped (%s)", type(exc).__name__)
                     last_schedule = asyncio.get_running_loop().time()
                 worked = await worker.run_once()
                 if once:

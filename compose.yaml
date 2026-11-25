@@ -25,8 +25,16 @@ x-backend: &backend
     OWNER_ID: ${OWNER_ID:-}
     # Ollama runs on the host (Windows), not in Compose.
     OLLAMA_BASE_URL: http://host.docker.internal:11434
+    # Nightly encrypted backups (scripts/backup.py new-key / connect-drive write these).
+    BACKUP_ENCRYPTION_KEY: ${BACKUP_ENCRYPTION_KEY:-}
+    GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:-}
+    GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_OAUTH_CLIENT_SECRET:-}
+    GOOGLE_DRIVE_REFRESH_TOKEN: ${GOOGLE_DRIVE_REFRESH_TOKEN:-}
+    BACKUP_DRIVE_FOLDER_ID: ${BACKUP_DRIVE_FOLDER_ID:-}
   volumes:
     - files:/app/data/files
+    # Encrypted backups waiting for (or instead of) Drive; on the host in ./data/backups.
+    - ./data/backups:/app/data/backups
     # policy.yaml (action modes, caps, budgets) is read live; edits apply without a rebuild.
     - ./config:/app/config:ro
   depends_on:
