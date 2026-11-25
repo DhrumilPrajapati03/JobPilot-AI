@@ -7,11 +7,13 @@ import asyncio, os, resource, time
 from pathlib import Path
 assert os.getuid()==10001, 'Runtime must not run as root'
 assert not any(Path(p).exists() for p in ['/app/.env','/app/.venv','/app/.venv-release','/app/tests'])
-from app.services.matching_semantics import local_model,similarity
+import subprocess
 started=time.perf_counter()
-assert local_model() is not None, 'Prepared offline model missing'
-value,model=similarity('Python engineer building APIs','Build Python APIs','synthetic-image-check')
-assert value is not None and model=='all-MiniLM-L6-v2'
+version=subprocess.run(['tectonic','--version'],capture_output=True,text=True,check=True)
+assert '0.15.0' in version.stdout+version.stderr, 'Tectonic 0.15.0 missing'
+# No network here, so local embeddings (Ollama) are unreachable: matching must degrade, not fail.
+from app.services.matching_semantics import similarity
+assert similarity('Python engineer building APIs','Build Python APIs','synthetic-image-check')==(None,'unavailable')
 from app.resume_engine.renderer import render_resume_pdf
 from app.resume_engine.schemas import ResumeContentJSON,RendererType
 pdf,_=asyncio.run(render_resume_pdf(ResumeContentJSON(name='Synthetic Person',headline='Engineer',summary='Builds Python tools.',renderer=RendererType.HTML)))
@@ -26,7 +28,7 @@ from app.services.production import validate_production
 try:validate_production(Settings(_env_file=None,APP_ENV='production'))
 except RuntimeError:pass
 else:raise AssertionError('Unsafe production startup accepted')
-print('PASS: non-root Linux runtime, read-only filesystem, network disabled, offline embeddings, PDF, liveness and fail-closed readiness.')
+print('PASS: non-root Linux runtime, read-only filesystem, network disabled, Tectonic, lexical fallback without Ollama, PDF, liveness and fail-closed readiness.')
 print('Synthetic smoke elapsed seconds:',round(time.perf_counter()-started,2),'peak RSS MiB:',round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/1024,1))
 '''
 

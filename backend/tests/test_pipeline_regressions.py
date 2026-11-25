@@ -6,7 +6,6 @@ from datetime import datetime, timezone
 
 from app.agents import orchestrator, resume_tailor
 from app.models.resume import Resume
-from app.services.llm import FallbackEmbeddings
 from app.services.websocket import manager
 from test_application_flow import BASE_RESUME, USER_ID, db  # noqa: F401  (pytest fixture)
 
@@ -56,29 +55,26 @@ def test_failed_save_removes_partial_application(db):
     assert db.tables["job_applications"] == []
 
 
-def test_embeddings_stop_calling_a_failing_primary():
-    calls = {"primary": 0}
+def test_semantic_matching_backs_off_while_ollama_is_down(monkeypatch):
+    from app.services import matching_semantics
+    calls = {"probe": 0}
 
-    class Primary:
-        def embed_documents(self, texts):
-            calls["primary"] += 1
-            raise OSError("getaddrinfo failed")
-
-        def embed_query(self, text):
-            return self.embed_documents([text])[0]
-
-    class Backup:
-        def embed_documents(self, texts):
-            return [[0.0] * 3 for _ in texts]
+    class Down:
+        def __init__(self, *a, **k):
+            calls["probe"] += 1
 
         def embed_query(self, text):
-            return [0.0] * 3
+            raise OSError("connection refused")
 
-    emb = FallbackEmbeddings(Primary(), Backup())
-    for _ in range(3):
-        assert emb.embed_documents(["a"]) == [[0.0, 0.0, 0.0]]
-    assert emb.embed_query("b") == [0.0, 0.0, 0.0]
-    assert calls["primary"] == 1
+    monkeypatch.setattr("app.services.llm.OllamaEmbeddings", Down)
+    monkeypatch.setattr(matching_semantics.settings, "MATCHING_SEMANTIC", True)
+    matching_semantics.reset()
+    try:
+        for _ in range(3):
+            assert matching_semantics.similarity("ML engineer", "Machine learning engineer") == (None, "unavailable")
+        assert calls["probe"] == 1  # re-probed at most once per RETRY_SECONDS, not on every posting
+    finally:
+        matching_semantics.reset()
 
 
 def test_ats_score_normalises_dashes_parentheticals_and_job_terms():

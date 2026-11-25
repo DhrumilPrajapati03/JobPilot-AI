@@ -1,6 +1,7 @@
 import asyncio
 import copy
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -87,8 +88,9 @@ def test_labeled_dataset_lexical_fallback_has_no_false_positive(monkeypatch):
 
 
 def test_cached_semantic_model_adds_role_paraphrase_recall(monkeypatch):
-    if matching_semantics.local_model() is None:
-        pytest.skip('Install the local MiniLM model to run this optional model integration test')
+    # Optional live check: JOBDOTS_TEST_OLLAMA=1 python tests/run_offline.py (needs Ollama + embeddinggemma).
+    if not os.environ.get('JOBDOTS_TEST_OLLAMA') or matching_semantics.local_model() is None:
+        pytest.skip('Set JOBDOTS_TEST_OLLAMA=1 with Ollama running to run this local-model integration test')
     monkeypatch.setattr(settings,'MATCHING_SEMANTIC',True)
     dataset = json.loads((Path(__file__).parents[1]/'evaluations/matching_cases.json').read_text())
     report = evaluate_dataset(dataset)

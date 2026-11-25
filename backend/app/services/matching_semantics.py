@@ -1,41 +1,57 @@
-"""CPU MiniLM similarity using an already installed model. No inference API calls."""
+"""Semantic similarity from local embeddings (Ollama, OLLAMA_EMBED_MODEL). No cloud calls.
+
+Replaces the ONNX MiniLM model that came with Chroma (plan Day 1: Chroma and
+onnxruntime removed). When Ollama is not reachable, similarity() returns
+(None, "unavailable") and matching falls back to its lexical score; the probe is
+retried after RETRY_SECONDS instead of being cached forever.
+"""
 import math
 import threading
-from pathlib import Path
+import time
 from functools import lru_cache
 
 from app.config import settings
 
+RETRY_SECONDS = 60.0
 _lock = threading.Lock()
+_state = {"model": None, "checked": 0.0}
 
 
-@lru_cache(maxsize=1)
+def model_name() -> str:
+    return settings.OLLAMA_EMBED_MODEL
+
+
 def local_model():
-    try:
-        from chromadb.utils.embedding_functions import ONNXMiniLM_L6_V2
-        class OfflineMiniLM(ONNXMiniLM_L6_V2):
-            DOWNLOAD_PATH = Path(settings.MINILM_CACHE_PATH) if settings.MINILM_CACHE_PATH else ONNXMiniLM_L6_V2.DOWNLOAD_PATH
-            def _download_model_if_not_exists(self):
-                folder = self.DOWNLOAD_PATH / self.EXTRACTED_FOLDER_NAME
-                if not all((folder / name).is_file() for name in (
-                    "config.json", "model.onnx", "special_tokens_map.json", "tokenizer_config.json", "tokenizer.json", "vocab.txt"
-                )):
-                    raise FileNotFoundError("Install the MiniLM model before enabling semantic matching")
-        model = OfflineMiniLM(preferred_providers=["CPUExecutionProvider"])
-        model._download_model_if_not_exists()
-        return model
-    except Exception:
-        return None
+    """The embeddings client when Ollama answers, else None (re-probed at most once a minute)."""
+    with _lock:
+        if _state["model"] is not None:
+            return _state["model"]
+        if time.monotonic() - _state["checked"] < RETRY_SECONDS and _state["checked"]:
+            return None
+        _state["checked"] = time.monotonic()
+        try:
+            from app.services.llm import OllamaEmbeddings
+            model = OllamaEmbeddings()
+            model.embed_query("ping")
+            _state["model"] = model
+        except Exception:
+            _state["model"] = None
+        return _state["model"]
+
+
+def reset() -> None:
+    with _lock:
+        _state.update(model=None, checked=0.0)
+    vector.cache_clear()
 
 
 @lru_cache(maxsize=512)
 def vector(owner: str, text: str) -> tuple:
     # Owner is part of the bounded cache key; resume text is never persisted here.
-    with _lock:
-        model = local_model()
-        if model is None:
-            raise RuntimeError("Local semantic model unavailable")
-        return tuple(float(v) for v in model([text])[0])
+    model = local_model()
+    if model is None:
+        raise RuntimeError("Local semantic model unavailable")
+    return tuple(float(v) for v in model.embed_query(text))
 
 
 def similarity(left: str, right: str, owner: str = "") -> tuple[float | None, str]:
@@ -48,6 +64,6 @@ def similarity(left: str, right: str, owner: str = "") -> tuple[float | None, st
         norm = math.sqrt(sum(v*v for v in a) * sum(v*v for v in b))
         score = sum(x*y for x, y in zip(a, b)) / norm if norm else 0.0
         if not math.isfinite(score): raise ValueError("Invalid embedding")
-        return round(max(0, min(1, score)), 4), "all-MiniLM-L6-v2"
+        return round(max(0, min(1, score)), 4), model_name()
     except Exception:
         return None, "unavailable"

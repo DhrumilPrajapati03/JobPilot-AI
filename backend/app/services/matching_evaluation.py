@@ -24,5 +24,5 @@ def evaluate_dataset(dataset):
         "eligibility_accuracy": round(sum(r["expected_eligibility"] == r["actual_eligibility"] for r in outcomes)/len(outcomes),4),
         "precision": round(tp/(tp+fp),4) if tp+fp else 0, "recall": round(tp/(tp+fn),4) if tp+fn else 0,
         "false_positives": fp, "false_negatives": fn,
-        "semantic_cases": sum(r["semantic_model"] == "all-MiniLM-L6-v2" for r in outcomes),
+        "semantic_cases": sum(r["semantic_model"] not in ("disabled", "unavailable", "insufficient_text") for r in outcomes),
         "outcomes": outcomes}
