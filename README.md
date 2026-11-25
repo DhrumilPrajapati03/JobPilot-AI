@@ -57,6 +57,7 @@ Copy `backend/.env` and `frontend/.env` into that folder, since git does not cop
 ```
 cd backend   && python tests/run_offline.py      # backend, no .env loaded
 cd backend   && python scripts/check_database.py --worker-recovery   # migrations + SQL tests on a throwaway Postgres (Docker)
+cd backend   && python -m evals                   # agent evals (Scout matching, Courier policy); --semantic, --record
 cd frontend  && npm test && npx tsc --noEmit
 cd extension && npm test
 ```
