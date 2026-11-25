@@ -1,9 +1,10 @@
 // ============================================================
-// JobPilot AI — API Client (Fetch Wrapper for FastAPI Backend)
+// JobDots — API Client (Fetch Wrapper for FastAPI Backend)
 // ============================================================
 
 import { API_URL } from './constants';
 import { accountContext } from './account-context';
+import { sessionInit } from './session';
 
 interface RequestOptions extends Omit<RequestInit, 'body'> {
   body?: unknown;
@@ -17,42 +18,37 @@ class ApiClient {
     this.baseUrl = baseUrl;
   }
 
-  private async getAuthToken(expectedUserId?: string): Promise<string | null> {
-    const started = accountContext();
-    const { supabase } = await import('./supabase');
-    const { data: { session } } = await supabase.auth.getSession();
-    if ((expectedUserId && session?.user.id !== expectedUserId) || accountContext().revision !== started.revision ||
-        (started.account !== undefined && (session?.user.id ?? null) !== started.account)) {
+  /** Requests stay with the account they began in (the cookie may change underneath). */
+  private checkAccount(started: ReturnType<typeof accountContext>, expectedUserId?: string) {
+    const now = accountContext();
+    if ((expectedUserId && now.account !== expectedUserId) || now.revision !== started.revision) {
       throw new Error('Account changed. Reopen this page before continuing.');
     }
-    return session?.access_token ?? null;
   }
-
 
   private async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
     const { body, expectedUserId, headers: customHeaders, ...rest } = options;
 
-    const token = await this.getAuthToken(expectedUserId);
+    const started = accountContext();
+    this.checkAccount(started, expectedUserId);
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...((customHeaders as Record<string, string>) || {}),
     };
 
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    const config: RequestInit = {
+    const config: RequestInit = sessionInit({
       ...rest,
       headers,
-    };
+    });
 
     if (body) {
       config.body = JSON.stringify(body);
     }
 
     const response = await fetch(`${this.baseUrl}${endpoint}`, config);
+    // A reply that lands after an account switch belongs to the old account: drop it.
+    this.checkAccount(started, expectedUserId);
 
     if (!response.ok) {
       throw await this.toError(response);
@@ -77,10 +73,8 @@ class ApiClient {
 
   /** Fetch a binary response (e.g. a generated PDF) with auth. */
   async getBlob(endpoint: string): Promise<Blob> {
-    const token = await this.getAuthToken();
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    this.checkAccount(accountContext());
+    const response = await fetch(`${this.baseUrl}${endpoint}`, sessionInit());
     if (!response.ok) {
       throw await this.toError(response);
     }
@@ -89,19 +83,10 @@ class ApiClient {
 
   /** POST a file as multipart form data (the browser sets the boundary header). */
   async upload<T>(endpoint: string, file: File, field = 'file', expectedUserId?: string): Promise<T> {
-    const started = accountContext();
-    const {supabase} = await import('./supabase');
-    const {data:{session}} = await supabase.auth.getSession();
-    if ((expectedUserId && session?.user.id !== expectedUserId) || started.revision !== accountContext().revision ||
-        (started.account !== undefined && (session?.user.id ?? null) !== started.account)) throw new Error('Account changed. Reopen this page.');
-    const token = session?.access_token;
+    this.checkAccount(accountContext(), expectedUserId);
     const form = new FormData();
     form.append(field, file);
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      method: 'POST',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      body: form,
-    });
+    const response = await fetch(`${this.baseUrl}${endpoint}`, sessionInit({ method: 'POST', body: form }));
     if (!response.ok) {
       throw await this.toError(response);
     }

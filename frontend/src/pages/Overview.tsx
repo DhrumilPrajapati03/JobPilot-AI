@@ -1,6 +1,5 @@
 import {Link} from 'react-router-dom';
 import {ArrowRight, ArrowUpRight, CircleAlert, FileCheck2, ListChecks, Loader2, Radar, Sparkles} from 'lucide-react';
-import {useAuth} from '../hooks/use-auth';
 import {useBriefing} from '../hooks/use-discovery';
 import {useAnalyticsSummary} from '../hooks/use-analytics';
 import {useResume} from '../hooks/use-profile';
@@ -10,11 +9,10 @@ import {Button} from '../components/ui/button';
 import {RunActivity} from '../components/agent/RunActivity';
 
 export default function Overview() {
-  const {user}=useAuth();
   const briefing=useBriefing();
   const analytics=useAnalyticsSummary();
   const resume=useResume();
-  const name=(user?.user_metadata?.full_name||user?.user_metadata?.name||'').split(' ')[0];
+  const name=(resume.data?.name||'').split(' ')[0];
   const drafts=(briefing.data?.drafts??[]).filter(d=>d.status==='drafted'&&d.application_id);
   const matches=briefing.data?.top_matches??[];
   const stats=[

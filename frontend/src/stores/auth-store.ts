@@ -1,204 +1,127 @@
 // ============================================================
-// JobPilot AI — Auth Zustand Store
+// JobDots — Auth store
 // ============================================================
+// Sign-in happens on the API (plan section 4.1): Google or GitHub, or the owner token as
+// break-glass. The API sets an HttpOnly session cookie; this store only asks who is
+// signed in (GET /api/v1/auth/me) and never holds a credential.
 
 import { create } from 'zustand';
-import { supabase } from '../lib/supabase';
-import type { User, Session } from '@supabase/supabase-js';
 import { resetQueryAccount } from '../lib/query-client';
 import { selectChatAccount } from '../agent/store';
 import { stopChat } from '../agent/client';
-import { authErrorMessage } from '../lib/auth-errors';
+import { authErrorMessage, loginErrorFromUrl } from '../lib/auth-errors';
 import { setAccountContext } from '../lib/account-context';
-import { authReturnUrl, hasAuthCallback, cleanAuthCallbackUrl, legacySessionFromUrl } from '../lib/auth-redirect';
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../lib/constants';
+import { cleanAuthCallbackUrl } from '../lib/auth-redirect';
+import { API_BASE_URL, API_URL } from '../lib/constants';
+import { sessionFetch } from '../lib/session';
 
 export type SignInProvider = 'google' | 'github';
+export interface Owner { id: string; email: string }
+export interface Providers { google: boolean; github: boolean; token: boolean }
 
 let accountId: string | null | undefined;
-let authSubscription: { unsubscribe: () => void } | undefined;
-let resumeHandler: ((event: PageTransitionEvent) => void) | undefined;
 let initialization: Promise<void> | null = null;
 
-function isolateAccount(session: Session | null) {
-    const nextId = session?.user.id ?? null;
-    if (accountId === nextId) return;
-    setAccountContext(nextId);
-    stopChat();
-    resetQueryAccount();
-    selectChatAccount(nextId);
-    // Never resume a previous account's standalone generation run.
-    try { sessionStorage.removeItem('jobpilot:active-run'); } catch { /* blocked storage */ }
-    accountId = nextId;
+function isolateAccount(user: Owner | null) {
+  const nextId = user?.id ?? null;
+  if (accountId === nextId) return;
+  setAccountContext(nextId);
+  stopChat();
+  resetQueryAccount();
+  selectChatAccount(nextId);
+  // Never resume a previous account's standalone generation run.
+  try { sessionStorage.removeItem('jobpilot:active-run'); } catch { /* blocked storage */ }
+  accountId = nextId;
+}
+
+async function whoAmI(): Promise<Owner | null> {
+  const response = await sessionFetch(`${API_URL}/auth/me`);
+  if (response.status === 401) return null;
+  if (!response.ok) throw Object.assign(new Error('session check failed'), { status: response.status });
+  const body = await response.json();
+  return { id: body.user_id, email: body.email ?? '' };
 }
 
 interface AuthState {
-    user: User | null;
-    session: Session | null;
-    loading: boolean;
-    initialized: boolean;
-    error: string | null;
-    activeProvider: SignInProvider | null;
+  user: Owner | null;
+  providers: Providers | null;
+  loading: boolean;
+  initialized: boolean;
+  error: string | null;
+  activeProvider: SignInProvider | null;
 
-    // Actions
-    initialize: () => Promise<void>;
-    signIn: (email: string) => Promise<void>;
-    signInWithProvider: (provider: SignInProvider) => Promise<void>;
-    clearError: () => void;
-    signOut: () => Promise<void>;
-    setSession: (session: Session | null) => void;
+  initialize: () => Promise<void>;
+  signInWithProvider: (provider: SignInProvider) => void;
+  signInWithToken: (token: string) => Promise<void>;
+  clearError: () => void;
+  signOut: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
-    user: null,
-    session: null,
-    loading: true,
-    initialized: false,
-    error: null,
-    activeProvider: null,
-    clearError: () => set({error:null}),
+  user: null,
+  providers: null,
+  loading: true,
+  initialized: false,
+  error: null,
+  activeProvider: null,
+  clearError: () => set({ error: null }),
 
-    initialize: () => {
-        if(initialization)return initialization;
-        const run=async()=>{
-        set({ loading: true, error: null });
-        const callback = hasAuthCallback(window.location.href);
-        try {
-            // The SDK owns PKCE exchange and verifier validation. Do not exchange twice.
-            let { error: callbackError } = await supabase.auth.initialize();
-            const legacy = legacySessionFromUrl(window.location.href);
-            if (legacy) {
-                // SDK validates/refetches the user; the singleton stays PKCE for
-                // every later sign-in, including after sign-out without reload.
-                const result=await supabase.auth.setSession(legacy);
-                callbackError=result.error;
-            }
-            // 1. Get current active session (from localStorage)
-            const { data: { session }, error } = await supabase.auth.getSession();
-            if (error) throw error;
-            if (callback) window.history.replaceState(window.history.state, '', cleanAuthCallbackUrl(window.location.href));
-            isolateAccount(session);
+  initialize: () => {
+    if (initialization) return initialization;
+    const run = async () => {
+      set({ loading: true, error: null });
+      // The API sends failed logins back as /login?auth_error=<code>.
+      const urlError = loginErrorFromUrl(window.location.href);
+      if (urlError) window.history.replaceState(window.history.state, '', cleanAuthCallbackUrl(window.location.href));
+      try {
+        const [user, providers] = await Promise.all([
+          whoAmI(),
+          fetch(`${API_BASE_URL}/auth/providers`).then(r => (r.ok ? r.json() : null)).catch(() => null),
+        ]);
+        isolateAccount(user);
+        set({ user, providers, loading: false, initialized: true, error: user ? null : urlError });
+      } catch (err) {
+        set({ error: authErrorMessage(err, 'session'), loading: false, initialized: true });
+      }
+    };
+    // React StrictMode may run startup effects twice; share one in-flight check.
+    initialization = run().finally(() => { initialization = null; });
+    return initialization;
+  },
 
-            set({
-                session,
-                user: session?.user ?? null,
-                loading: false,
-                initialized: true,
-                error: callbackError ? authErrorMessage(callbackError,'session') : callback && !session
-                    ? authErrorMessage({code:'flow_state_not_found'},'session') : null,
-            });
+  signInWithProvider: (provider: SignInProvider) => {
+    if (get().loading && get().activeProvider) return;
+    if (!['google', 'github'].includes(provider)) return;
+    set({ loading: true, error: null, activeProvider: provider });
+    // Full-page navigation: the API sets state and PKCE, then redirects to the provider.
+    window.location.assign(`${API_BASE_URL}/auth/${provider}/start`);
+  },
 
-            // 2. Set up event listener for session changes
-            // This will trigger automatically when a user clicks the magic link,
-            // token expires, or they log out.
-            authSubscription?.unsubscribe();
-            const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-                isolateAccount(session);
-                set({
-                    session,
-                    user: session?.user ?? null,
-                    loading: session ? false : get().loading,
-                    ...(session ? {activeProvider:null} : {}),
-                });
-            });
-            authSubscription = data.subscription;
-            if (resumeHandler) window.removeEventListener('pageshow',resumeHandler);
-            resumeHandler = event => {
-                if(event.persisted && get().activeProvider) set({loading:false,activeProvider:null,error:null});
-            };
-            window.addEventListener('pageshow',resumeHandler);
-        } catch (err: any) {
-            set({
-                error: authErrorMessage(err,'session'),
-                loading: false,
-                initialized: true,
-            });
-            if (callback) window.history.replaceState(window.history.state, '', cleanAuthCallbackUrl(window.location.href));
-        }
-        };
-        // React StrictMode may run startup effects twice. Consume old email
-        // fragments and attach listeners once per in-flight initialization.
-        initialization=run().finally(()=>{initialization=null;});
-        return initialization;
-    },
+  signInWithToken: async (token: string) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/session`, {
+        method: 'POST', credentials: 'include',
+        headers: { Authorization: `Bearer ${token.trim()}` },
+      });
+      if (!response.ok) throw Object.assign(new Error('token rejected'), { status: response.status });
+      const user = await whoAmI();
+      isolateAccount(user);
+      set({ user, loading: false });
+    } catch (err) {
+      const message = authErrorMessage(err, 'token');
+      set({ error: message, loading: false });
+      throw new Error(message);
+    }
+  },
 
-    signIn: async (email: string) => {
-        set({ loading: true, error: null });
-        try {
-            const { error } = await supabase.auth.signInWithOtp({
-                email: email.trim(),
-                options: {
-                    emailRedirectTo: authReturnUrl(window.location.origin),
-                },
-            });
-
-            if (error) throw error;
-            set({ loading: false });
-        } catch (err: any) {
-            const message = authErrorMessage(err);
-            set({
-                error: message,
-                loading: false
-            });
-            throw new Error(message);
-        }
-    },
-
-    signInWithProvider: async (provider: SignInProvider) => {
-        if (get().loading) throw new Error('A sign-in request is already in progress.');
-        if (!['google','github'].includes(provider)) throw new Error('Unsupported sign-in provider.');
-        set({loading:true,error:null,activeProvider:provider});
-        let redirectStarted=false;
-        try {
-            // A disabled provider's authorize endpoint can render an off-site JSON
-            // error. Check public availability first, keeping the email fallback here.
-            const response = await fetch(`${SUPABASE_URL}/auth/v1/settings`, {
-                headers:{apikey:SUPABASE_ANON_KEY}, signal:AbortSignal.timeout(10000),
-            });
-            if (!response.ok) throw new Error('Sign-in availability check failed.');
-            const available = await response.json();
-            if (available.external?.[provider] !== true)
-                throw Object.assign(new Error('Provider unavailable'),{code:'provider_disabled'});
-            const {data,error} = await supabase.auth.signInWithOAuth({
-                provider,
-                options:{redirectTo:authReturnUrl(window.location.origin),
-                    skipBrowserRedirect:true,
-                    scopes:provider==='google'?'openid email profile':'user:email',
-                    ...(provider==='google'?{queryParams:{prompt:'select_account'}}:{}),
-                },
-            });
-            if (error) throw error;
-            if (!data.url) throw new Error('Sign-in did not start.');
-            window.location.assign(data.url);
-            redirectStarted=true;
-        } catch (err: unknown) {
-            const message=authErrorMessage(err,'oauth');
-            set({error:message});
-            throw new Error(message);
-        } finally {
-            // Do not replace the verifier while navigation is pending. A fresh
-            // load or BFCache pageshow resets this state when the user returns.
-            if(!redirectStarted) set({loading:false,activeProvider:null});
-        }
-    },
-
-    signOut: async () => {
-        set({ loading: true, error: null });
-        try {
-            const { error } = await supabase.auth.signOut();
-            if (error) throw error;
-            isolateAccount(null);
-            set({ user: null, session: null, loading: false });
-        } catch (err: any) {
-            set({
-                error: err.message || 'Failed to sign out',
-                loading: false
-            });
-        }
-    },
-
-    setSession: (session: Session | null) => {
-        isolateAccount(session);
-        set({ session, user: session?.user ?? null });
-    },
+  signOut: async () => {
+    set({ loading: true, error: null });
+    try {
+      await sessionFetch(`${API_BASE_URL}/auth/logout`, { method: 'POST' });
+    } finally {
+      isolateAccount(null);
+      set({ user: null, loading: false });
+    }
+  },
 }));

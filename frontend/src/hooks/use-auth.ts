@@ -1,18 +1,18 @@
 // ============================================================
-// JobPilot AI — Auth Hook (Zustand Integrated)
+// JobDots — Auth hook
 // ============================================================
 
 import { useAuthStore } from '../stores/auth-store';
-import type { User } from '@supabase/supabase-js';
-import type { SignInProvider } from '../stores/auth-store';
+import type { Owner, Providers, SignInProvider } from '../stores/auth-store';
 
 interface UseAuthReturn {
-  user: User | null;
+  user: Owner | null;
+  providers: Providers | null;
   loading: boolean;
   initialized: boolean;
   error: string | null;
-  signIn: (email: string) => Promise<void>;
-  signInWithProvider: (provider: SignInProvider) => Promise<void>;
+  signInWithProvider: (provider: SignInProvider) => void;
+  signInWithToken: (token: string) => Promise<void>;
   activeProvider: SignInProvider | null;
   clearError: () => void;
   signOut: () => Promise<void>;
@@ -20,19 +20,10 @@ interface UseAuthReturn {
 }
 
 export function useAuth(): UseAuthReturn {
-  const { user, session, loading, initialized, error, signIn, signInWithProvider, activeProvider, clearError, signOut } = useAuthStore();
-
+  const { user, providers, loading, initialized, error, signInWithProvider, signInWithToken, activeProvider, clearError, signOut } = useAuthStore();
   return {
-    user,
-    loading,
-    initialized,
-    error,
-    signIn,
-    signInWithProvider,
-    activeProvider,
-    clearError,
-    signOut,
-    isAuthenticated: !!session,
+    user, providers, loading, initialized, error, signInWithProvider, signInWithToken, activeProvider, clearError, signOut,
+    isAuthenticated: !!user,
   };
 }
 

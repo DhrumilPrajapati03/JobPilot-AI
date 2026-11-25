@@ -25,9 +25,7 @@ export const API_URL = `${API_BASE_URL}/api/${API_VERSION}`;
 // --- WebSocket ---
 export const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8000';
 
-// --- Supabase ---
-export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
-export const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+
 
 // --- Routes ---
 export const ROUTES = {
