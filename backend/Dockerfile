@@ -19,6 +19,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 
+# pg_dump/pg_restore 17 for the nightly backup (must match the Postgres 17 server), from
+# the PostgreSQL project's apt repository.
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl gnupg \
+    && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /usr/share/keyrings/pgdg.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/pgdg.gpg] https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
+    && apt-get update && apt-get install -y --no-install-recommends postgresql-client-17 \
+    && apt-get purge -y --auto-remove curl gnupg && rm -rf /var/lib/apt/lists/* \
+    && pg_dump --version
+
 # Tectonic compiles the master .tex resume (plan Day 4). Static musl build, pinned by checksum.
 # It downloads its TeX bundle on first use and caches it in the user's home directory.
 ADD --checksum=sha256:dfb82876f2986862996e564fa507a9e576e0c1e3bee63c2c1bd677c2543e6407 \
@@ -37,7 +46,7 @@ COPY . .
 
 ENV FILE_STORAGE_DIR=/app/data/files
 RUN useradd --create-home --uid 10001 jobpilot \
-    && mkdir -p /app/data/files \
+    && mkdir -p /app/data/files /app/data/backups \
     && chown -R jobpilot:jobpilot /app/data
 USER jobpilot
 
