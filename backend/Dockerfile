@@ -1,4 +1,4 @@
-# JobPilot API — production image (Render, Railway, Fly, any Docker host).
+# JobDots API and worker image (local Compose now; Render later).
 FROM ghcr.io/astral-sh/uv:0.13.7@sha256:96f40d3904aad8d0bd010539001d36c8e2188b981e1334471a90c4a1d93bb490 AS uv
 FROM python:3.12-slim-bookworm@sha256:935c3c5b12357a7e10caa9c1e6ca5692344d97cf229832ef584be2cec9fc03df
 
@@ -19,6 +19,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 
+# Tectonic compiles the master .tex resume (plan Day 4). Static musl build, pinned by checksum.
+# It downloads its TeX bundle on first use and caches it in the user's home directory.
+ADD --checksum=sha256:dfb82876f2986862996e564fa507a9e576e0c1e3bee63c2c1bd677c2543e6407 \
+    https://github.com/tectonic-typesetting/tectonic/releases/download/tectonic%400.15.0/tectonic-0.15.0-x86_64-unknown-linux-musl.tar.gz \
+    /tmp/tectonic.tar.gz
+RUN tar -xzf /tmp/tectonic.tar.gz -C /usr/local/bin tectonic && rm /tmp/tectonic.tar.gz && tectonic --version
+
 WORKDIR /app
 
 COPY requirements.lock .
@@ -28,17 +35,10 @@ RUN --mount=from=uv,source=/uv,target=/usr/local/bin/uv \
 
 COPY . .
 
-ENV MINILM_CACHE_PATH=/opt/jobpilot-models/minilm \
-    CHROMA_PATH=/tmp/jobpilot-chroma \
-    HF_HUB_OFFLINE=1 \
-    TOKENIZERS_PARALLELISM=false \
-    OMP_NUM_THREADS=2 \
-    OPENBLAS_NUM_THREADS=2
 ENV FILE_STORAGE_DIR=/app/data/files
-RUN python scripts/prepare_models.py --minilm \
-    && useradd --create-home --uid 10001 jobpilot \
-    && mkdir -p /tmp/jobpilot-chroma /app/data/files \
-    && chown -R jobpilot:jobpilot /tmp/jobpilot-chroma /app/data
+RUN useradd --create-home --uid 10001 jobpilot \
+    && mkdir -p /app/data/files \
+    && chown -R jobpilot:jobpilot /app/data
 USER jobpilot
 
 # Render (and most hosts) pass the port in $PORT.

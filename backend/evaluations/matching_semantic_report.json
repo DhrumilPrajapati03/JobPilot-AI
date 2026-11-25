@@ -15,9 +15,9 @@
       "actual_eligibility": "eligible",
       "expected_relevant": true,
       "actual_relevant": true,
-      "score": 95.7,
+      "score": 93.9,
       "title_match": 1.0,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -26,9 +26,9 @@
       "actual_eligibility": "eligible",
       "expected_relevant": true,
       "actual_relevant": true,
-      "score": 86.7,
+      "score": 87.1,
       "title_match": 0.8,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -37,9 +37,9 @@
       "actual_eligibility": "eligible",
       "expected_relevant": true,
       "actual_relevant": true,
-      "score": 86.0,
+      "score": 86.2,
       "title_match": 0.8,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -48,9 +48,9 @@
       "actual_eligibility": "eligible",
       "expected_relevant": true,
       "actual_relevant": true,
-      "score": 94.4,
+      "score": 92.8,
       "title_match": 1.0,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -59,9 +59,9 @@
       "actual_eligibility": "eligible",
       "expected_relevant": true,
       "actual_relevant": true,
-      "score": 92.7,
+      "score": 92.5,
       "title_match": 1.0,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -70,9 +70,9 @@
       "actual_eligibility": "eligible",
       "expected_relevant": true,
       "actual_relevant": true,
-      "score": 94.2,
+      "score": 93.8,
       "title_match": 1.0,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -81,9 +81,9 @@
       "actual_eligibility": "eligible",
       "expected_relevant": true,
       "actual_relevant": true,
-      "score": 87.2,
+      "score": 87.4,
       "title_match": 0.86,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -92,9 +92,9 @@
       "actual_eligibility": "eligible",
       "expected_relevant": true,
       "actual_relevant": true,
-      "score": 94.4,
+      "score": 94.5,
       "title_match": 1.0,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -103,9 +103,9 @@
       "actual_eligibility": "eligible",
       "expected_relevant": true,
       "actual_relevant": true,
-      "score": 91.1,
+      "score": 93.1,
       "title_match": 1.0,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -114,9 +114,9 @@
       "actual_eligibility": "eligible",
       "expected_relevant": true,
       "actual_relevant": true,
-      "score": 93.6,
+      "score": 93.9,
       "title_match": 1.0,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -125,9 +125,9 @@
       "actual_eligibility": "eligible",
       "expected_relevant": true,
       "actual_relevant": true,
-      "score": 94.1,
+      "score": 94.8,
       "title_match": 1.0,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -136,9 +136,9 @@
       "actual_eligibility": "eligible",
       "expected_relevant": true,
       "actual_relevant": true,
-      "score": 92.1,
+      "score": 92.2,
       "title_match": 1.0,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -149,7 +149,7 @@
       "actual_relevant": false,
       "score": 0,
       "title_match": 1.0,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -160,7 +160,7 @@
       "actual_relevant": false,
       "score": 0,
       "title_match": 1.0,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -171,7 +171,7 @@
       "actual_relevant": false,
       "score": 0,
       "title_match": 1.0,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -182,7 +182,7 @@
       "actual_relevant": false,
       "score": 0,
       "title_match": 0.67,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -193,7 +193,7 @@
       "actual_relevant": false,
       "score": 0,
       "title_match": 1.0,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -204,7 +204,7 @@
       "actual_relevant": false,
       "score": 0,
       "title_match": 1.0,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -215,7 +215,7 @@
       "actual_relevant": false,
       "score": 0,
       "title_match": 1.0,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -226,7 +226,7 @@
       "actual_relevant": false,
       "score": 0,
       "title_match": 1.0,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -237,7 +237,7 @@
       "actual_relevant": false,
       "score": 60,
       "title_match": 1.0,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -248,7 +248,7 @@
       "actual_relevant": false,
       "score": 0,
       "title_match": 1.0,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -259,7 +259,7 @@
       "actual_relevant": false,
       "score": 0,
       "title_match": 0.8,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -270,7 +270,7 @@
       "actual_relevant": false,
       "score": 0,
       "title_match": 1.0,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -281,7 +281,7 @@
       "actual_relevant": false,
       "score": 60,
       "title_match": 1.0,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -292,7 +292,7 @@
       "actual_relevant": false,
       "score": 60,
       "title_match": 1.0,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -303,7 +303,7 @@
       "actual_relevant": false,
       "score": 0,
       "title_match": 1.0,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -314,7 +314,7 @@
       "actual_relevant": false,
       "score": 60,
       "title_match": 1.0,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -325,7 +325,7 @@
       "actual_relevant": false,
       "score": 60,
       "title_match": 1.0,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -336,7 +336,7 @@
       "actual_relevant": false,
       "score": 60,
       "title_match": 1.0,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -347,7 +347,7 @@
       "actual_relevant": false,
       "score": 0,
       "title_match": 1.0,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -358,7 +358,7 @@
       "actual_relevant": false,
       "score": 60,
       "title_match": 1.0,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -367,9 +367,9 @@
       "actual_eligibility": "eligible",
       "expected_relevant": false,
       "actual_relevant": false,
-      "score": 49.5,
+      "score": 50.6,
       "title_match": 0.0,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -378,9 +378,9 @@
       "actual_eligibility": "eligible",
       "expected_relevant": false,
       "actual_relevant": false,
-      "score": 35.8,
+      "score": 37.4,
       "title_match": 0.0,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -389,9 +389,9 @@
       "actual_eligibility": "eligible",
       "expected_relevant": false,
       "actual_relevant": false,
-      "score": 58.0,
+      "score": 58.9,
       "title_match": 0.0,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     },
     {
@@ -400,9 +400,9 @@
       "actual_eligibility": "eligible",
       "expected_relevant": true,
       "actual_relevant": false,
-      "score": 62.1,
+      "score": 59.7,
       "title_match": 0.0,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": false
     },
     {
@@ -413,7 +413,7 @@
       "actual_relevant": true,
       "score": 82.2,
       "title_match": 0.59,
-      "semantic_model": "all-MiniLM-L6-v2",
+      "semantic_model": "embeddinggemma",
       "passed": true
     }
   ]

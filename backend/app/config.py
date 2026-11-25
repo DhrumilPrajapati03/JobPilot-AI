@@ -49,10 +49,6 @@ class Settings(BaseSettings):
     # Which provider every agent uses: groq | ollama | auto (Groq when its key is set, else Ollama).
     LLM_PROVIDER: str = "auto"
 
-    # Embeddings for resume search: "local" (offline MiniLM, default), "ollama" (OLLAMA_EMBED_MODEL)
-    # or "huggingface" (MiniLM via API). Each model has its own vector collection.
-    EMBEDDINGS_PROVIDER: str = "local"
-    HUGGINGFACE_API_KEY: str = ""
 
     # Chat assistant. "auto" follows LLM_PROVIDER; set to override it for the chat only.
     AGENT_PROVIDER: str = "auto"
@@ -81,16 +77,13 @@ class Settings(BaseSettings):
     ADZUNA_APP_ID: str = ""
     ADZUNA_API_KEY: str = ""
 
-    # Infrastructure
-    REDIS_URL: str = "redis://localhost:6379/0"
-    # Inline preserves existing installs; durable requires the Sprint 2 migration
-    # and `python -m app.workers.runner`. No Redis broker is required in this mode.
+    # Infrastructure. Durable mode runs jobs through the Postgres queue and needs
+    # `python -m app.workers.runner` (the Compose worker service).
     EXECUTION_MODE: Literal["inline", "durable"] = "inline"
     RUN_LEASE_SECONDS: int = Field(default=120, ge=30, le=1800)
     RUN_POLL_SECONDS: float = Field(default=2.0, ge=0.1, le=60)
-    MATCHING_SEMANTIC: bool = True  # Cached local MiniLM only; never downloads during a scan.
-    MINILM_CACHE_PATH: str = ''
-    CHROMA_PATH: str = 'data/chroma'
+    # Semantic job matching from local Ollama embeddings; lexical-only when Ollama is down.
+    MATCHING_SEMANTIC: bool = True
     USAGE_LIMITS_ENABLED: bool = False
     APPLICATION_DAILY_LIMIT: int = Field(default=25, ge=1, le=1000)
     CHAT_DAILY_LIMIT: int = Field(default=100, ge=1, le=5000)

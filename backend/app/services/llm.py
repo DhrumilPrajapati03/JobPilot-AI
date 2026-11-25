@@ -443,89 +443,14 @@ class OllamaEmbeddings:
         return self.embed_documents([text])[0]
 
 
-class ChromaDefaultEmbeddings:
-    """Offline MiniLM embeddings (prepared ONNX model; never downloads at runtime)."""
+def get_embeddings() -> tuple[str, OllamaEmbeddings]:
+    """Return (model id, client) for embeddings: local Ollama, OLLAMA_EMBED_MODEL.
 
-    def embed_documents(self, texts: list[str]) -> list[list[float]]:
-        from app.services.matching_semantics import local_model
-        model = local_model()
-        if model is None:
-            raise RuntimeError('Local embeddings are unavailable. Prepare the model and restart.')
-        return model(texts)
-
-    def embed_query(self, text: str) -> list[float]:
-        return self.embed_documents([text])[0]
+    The model id is stored next to every vector, so vectors from different models never mix.
+    """
+    return "ollama-" + settings.OLLAMA_EMBED_MODEL.split(":")[0], OllamaEmbeddings()
 
 
-class HuggingFaceAPIEmbeddings:
-    """Generates embeddings by calling Hugging Face's Serverless Inference API."""
-    def __init__(self, api_key: str, model_id: str = "sentence-transformers/all-MiniLM-L6-v2"):
-        self.api_url = f"https://router.huggingface.co/hf-inference/models/{model_id}/pipeline/feature-extraction"
-        self.headers = {"Authorization": f"Bearer {api_key}"}
-
-    def _call_api(self, texts: list[str]) -> list[list[float]]:
-        with httpx.Client() as client:
-            response = client.post(self.api_url, headers=self.headers,
-                                   json={"inputs": texts, "options": {"wait_for_model": True}}, timeout=30.0)
-            if response.status_code != 200:
-                raise ValueError(f"Hugging Face API returned status {response.status_code}: {response.text}")
-            return response.json()
-
-    def embed_documents(self, texts: list[str]) -> list[list[float]]:
-        return self._call_api(texts)
-
-    def embed_query(self, text: str) -> list[float]:
-        return self._call_api([text])[0]
-
-
-class FallbackEmbeddings:
-    """Delegates to a primary embedding API, falling back to a local model after the first failure."""
-    def __init__(self, primary, backup):
-        self.primary = primary
-        self.backup = backup
-        self.primary_failed = False
-
-    def _fail_over(self, error: Exception):
-        self.primary_failed = True
-        print(f"Warning: Primary embedding API failed ({type(error).__name__}). Using the offline model from now on.")
-
-    def embed_documents(self, texts: list[str]) -> list[list[float]]:
-        if not self.primary_failed:
-            try:
-                return self.primary.embed_documents(texts)
-            except Exception as e:
-                self._fail_over(e)
-        return self.backup.embed_documents(texts)
-
-    def embed_query(self, text: str) -> list[float]:
-        if not self.primary_failed:
-            try:
-                return self.primary.embed_query(text)
-            except Exception as e:
-                self._fail_over(e)
-        return self.backup.embed_query(text)
-
-
-# Embedding model identity -> vector collection. Vectors from different models (or dimensions)
-# must never share a collection. MiniLM keeps the original collection name so existing data stays.
-EMBEDDING_COLLECTIONS = {
-    "minilm": "resume_sections",
-    "ollama-embeddinggemma": "resume_sections_ollama-embeddinggemma",
-}
-
-
-def get_embeddings():
-    """Return (model id, client) for resume embeddings, per EMBEDDINGS_PROVIDER (local | ollama | huggingface)."""
-    provider = (settings.EMBEDDINGS_PROVIDER or "local").lower()
-    if provider == "ollama":
-        return "ollama-" + settings.OLLAMA_EMBED_MODEL.split(":")[0], OllamaEmbeddings()
-    hf_token = settings.HUGGINGFACE_API_KEY
-    if provider == "huggingface" and hf_token and not hf_token.startswith("your-"):
-        # Same MiniLM model as the local one, so a fallback never mixes vector spaces.
-        return "minilm", FallbackEmbeddings(primary=HuggingFaceAPIEmbeddings(api_key=hf_token), backup=ChromaDefaultEmbeddings())
-    return "minilm", ChromaDefaultEmbeddings()
-
-
-def get_embeddings_client():
+def get_embeddings_client() -> OllamaEmbeddings:
     """Embeddings client only (see get_embeddings for the model id)."""
     return get_embeddings()[1]
