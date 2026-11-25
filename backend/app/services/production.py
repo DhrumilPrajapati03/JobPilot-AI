@@ -10,10 +10,12 @@ def validate_production(config=settings):
     if config.DEBUG: failures.append('DEBUG must be false')
     if config.EXECUTION_MODE != 'durable': failures.append('EXECUTION_MODE must be durable')
     if not config.USAGE_LIMITS_ENABLED: failures.append('USAGE_LIMITS_ENABLED must be true')
-    for key in ('SUPABASE_URL','SUPABASE_KEY','SUPABASE_SERVICE_KEY'):
-        if not getattr(config,key): failures.append(key+' is required')
-    database_url=urlsplit(config.SUPABASE_URL)
-    if database_url.scheme!='https' or not database_url.netloc or database_url.username or database_url.password: failures.append('SUPABASE_URL must use a valid HTTPS origin')
+    database_url=urlsplit(config.DATABASE_URL)
+    if database_url.scheme not in ('postgresql','postgresql+psycopg') or not database_url.hostname or not database_url.path.strip('/'):
+        failures.append('DATABASE_URL must be a postgresql:// URL with a host and database name')
+    # Login still verifies Supabase-issued tokens until owner auth lands (plan section 4.1).
+    login_url=urlsplit(config.SUPABASE_URL)
+    if login_url.scheme!='https' or not login_url.netloc or login_url.username or login_url.password: failures.append('SUPABASE_URL must use a valid HTTPS origin')
     for key in ('SECRET_KEY','OBSERVABILITY_TOKEN','CRON_SECRET'):
         if len(getattr(config,key))<32 or 'change-me' in getattr(config,key): failures.append(key+' must be a unique random value of at least 32 characters')
     if len({config.SECRET_KEY,config.OBSERVABILITY_TOKEN,config.CRON_SECRET})!=3: failures.append('Backend secrets must use separate random values')

@@ -1,10 +1,28 @@
-"""Bounded upload reads and archive inspection before document parsers run."""
+"""Bounded upload reads, archive inspection, and local storage of originals."""
 import io
+import re
+import uuid
 import zipfile
+from pathlib import Path
 
 from fastapi import HTTPException, UploadFile
 
+from app.config import settings
+
 MAX_RESUME_BYTES = 10 * 1024 * 1024
+
+
+def save_upload(bucket: str, owner_id: str, filename: str, data: bytes) -> Path:
+    """Store an uploaded original under FILE_STORAGE_DIR/<bucket>/<owner>/ and return its path.
+
+    Path parts are sanitised so a crafted filename or id cannot leave the storage folder.
+    """
+    safe = lambda part: re.sub(r"[^A-Za-z0-9._-]", "_", part)[:120].lstrip(".") or "file"
+    folder = Path(settings.FILE_STORAGE_DIR).resolve() / safe(bucket) / safe(owner_id)
+    folder.mkdir(parents=True, exist_ok=True)
+    path = folder / f"{uuid.uuid4()}_{safe(filename)}"
+    path.write_bytes(data)
+    return path
 
 
 async def read_resume(file: UploadFile) -> tuple[bytes, str]:

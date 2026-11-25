@@ -46,8 +46,8 @@ def board(db, monkeypatch):
 
     monkeypatch.setattr(discovery, "fetch_board", fake_fetch)
     monkeypatch.setattr(discovery_api, "fetch_board", fake_fetch)
-    monkeypatch.setattr(discovery_api, "get_supabase_client", lambda user_jwt=None: db)
-    monkeypatch.setattr(assistant, "get_supabase_client", lambda user_jwt=None: db)
+    monkeypatch.setattr(discovery_api, "get_db", lambda *a, **k: db)
+    monkeypatch.setattr(assistant, "get_db", lambda *a, **k: db)
     db.tables["user_profiles"][0]["work_preferences"] = {"preferred_roles": ["Machine Learning Engineer"]}
     return state
 

@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from app.config import settings
 from app.services.auth import CurrentUser, get_current_user
-from app.services.supabase import get_supabase_admin_client
+from app.db import get_db
 from app.services import mailbox
 from app.services.gmail_broker import GmailBroker, BrokerError, configured
 from app.services.runs import RunStore, durable_enabled
@@ -21,7 +21,7 @@ router = APIRouter()
 
 
 def admin():
-    try: return get_supabase_admin_client()
+    try: return get_db()
     except Exception as exc: raise HTTPException(503, "Email storage is unavailable") from exc
 
 

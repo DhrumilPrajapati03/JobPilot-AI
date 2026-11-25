@@ -458,7 +458,7 @@ async def draft_posting(supabase, user_id: str, posting_id: str, run_id: str, *,
 
 def server_scans_enabled() -> bool:
     """Nightly scans run on the server (see services.autopilot)."""
-    return bool(settings.DISCOVERY_AUTO_SCAN and settings.SUPABASE_URL and settings.SUPABASE_SERVICE_KEY)
+    return bool(settings.DISCOVERY_AUTO_SCAN and settings.DATABASE_URL)
 
 
 def compact_posting(r: dict) -> dict:

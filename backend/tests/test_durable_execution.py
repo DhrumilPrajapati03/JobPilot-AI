@@ -189,7 +189,7 @@ def test_websocket_replays_terminal_event_committed_between_reads(monkeypatch):
         def __init__(self): self.frames, self.closed = [], False
         async def send_json(self, value): self.frames.append(value)
         async def close(self, **kw): self.closed = True
-    monkeypatch.setattr(run_stream, "get_supabase_client", lambda **kw: object())
+    monkeypatch.setattr(run_stream, "get_db", lambda *a, **k: object())
     monkeypatch.setattr(run_stream, "RunStore", lambda *a: ReplayStore())
     socket = Socket()
     asyncio.run(run_stream.stream_run(socket, str(uuid.uuid4()), USER_ID, "token"))

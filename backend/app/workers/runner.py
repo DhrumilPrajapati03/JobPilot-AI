@@ -126,7 +126,7 @@ async def main(once=False):
     if not durable_enabled():
         raise SystemExit("Set EXECUTION_MODE=durable before starting the background worker.")
     if not autopilot.server_ready():
-        raise SystemExit("Configure SUPABASE_URL and SUPABASE_SERVICE_KEY before starting a durable worker.")
+        raise SystemExit("Configure DATABASE_URL before starting a durable worker.")
     worker = Worker()
     setup_monitoring()
     last_schedule = 0.0

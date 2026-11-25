@@ -26,14 +26,26 @@ def sql(container, query):
     return result.stdout
 
 
-def migrate(container, password):
+def database_url(container, password):
     port = subprocess.run(['docker', 'port', container, '5432/tcp'], capture_output=True, text=True, check=True).stdout.split()[0].rsplit(':', 1)[1]
-    env = {**os.environ, 'DATABASE_URL': f'postgresql+psycopg://postgres:{password}@127.0.0.1:{port}/postgres'}
-    result = subprocess.run([sys.executable, '-m', 'alembic', 'upgrade', 'head'], cwd=ROOT, env=env, capture_output=True, text=True)
+    return f'postgresql+psycopg://postgres:{password}@127.0.0.1:{port}/postgres'
+
+
+def migrate(url):
+    result = subprocess.run([sys.executable, '-m', 'alembic', 'upgrade', 'head'], cwd=ROOT, env={**os.environ, 'DATABASE_URL': url},
+                            capture_output=True, text=True)
     if result.returncode:
         raise RuntimeError('alembic upgrade head failed:\n' + result.stderr[-4000:])
-    head = sql(container, 'select version_num from alembic_version;').split()[2]
-    print('Alembic upgrade head passed; revision', head, flush=True)
+    print('Alembic upgrade head passed.', flush=True)
+
+
+def db_layer_tests(url):
+    # app.db against the real schema; run_offline passes JOBDOTS_TEST_DATABASE_URL on as DATABASE_URL.
+    result = subprocess.run([sys.executable, 'tests/run_offline.py', 'tests/integration', '-q', '-p', 'no:cacheprovider'],
+                            cwd=ROOT, env={**os.environ, 'JOBDOTS_TEST_DATABASE_URL': url}, capture_output=True, text=True)
+    if result.returncode or ' passed' not in result.stdout or 'skipped' in result.stdout:
+        raise RuntimeError('Database layer tests failed:\n' + (result.stdout + result.stderr)[-4000:])
+    print('Database layer tests passed:', result.stdout.strip().splitlines()[-1], flush=True)
 
 
 def backup_restore(container):
@@ -72,10 +84,12 @@ def main(worker_recovery=False):
             time.sleep(1)
         else:
             raise RuntimeError('Disposable Postgres did not start')
-        migrate(name, password)
+        url = database_url(name, password)
+        migrate(url)
         for file in sorted((ROOT / 'tests/sql').glob('*.sql')):
             sql(name, file.read_text(encoding='utf-8'))
             print('SQL check passed:', file.name, flush=True)
+        db_layer_tests(url)
         if worker_recovery:
             from check_worker_recovery import check
             check(name)

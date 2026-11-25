@@ -13,7 +13,7 @@ from fastapi import HTTPException
 from app.config import settings
 from app.services.gmail_broker import GmailBroker, BrokerError, configured, safe_id
 from app.services.runs import RunStore, PermanentRunError, durable_enabled
-from app.services.supabase import select_all
+from app.db import select_all
 
 HISTORY_COLUMNS = ('id,user_id,application_id,cold_email_id,to_email,subject,body,revision,approved_revision,approved_at,'
                    'connection_id,from_email,state,run_id,sent_at,delivery_status,provider_message_id,provider_thread_id,last_error,created_at,updated_at,'

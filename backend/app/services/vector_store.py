@@ -129,8 +129,8 @@ def search_relevant(query: str, user_id: str, top_k: int = 5) -> list[dict]:
     """
     if settings.APP_ENV == 'production':
         # API and worker caches are independent and disposable. Supabase is canonical.
-        from app.services.supabase import get_supabase_admin_client
-        rows=get_supabase_admin_client().table('resumes').select('*').eq('user_id',user_id).eq('version','base').execute().data
+        from app.db import get_db
+        rows=get_db().table('resumes').select('*').eq('user_id',user_id).eq('version','base').execute().data
         with _index_lock:
             if not rows:
                 collection.delete(where={'user_id':user_id})

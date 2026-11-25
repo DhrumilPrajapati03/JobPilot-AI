@@ -14,7 +14,7 @@ from app.config import Settings, settings
 def seed(db, monkeypatch):
     pid=str(uuid.uuid4())
     db.tables['job_postings']=[{'id':pid,'user_id':USER_ID,'title':'Engineer','company':'Example','description':'Python services','url':'https://example.invalid/jobs','fit_score':80,'matching_details':{'version':'v2','eligibility':{'status':'eligible'}}}]
-    monkeypatch.setattr(research,'get_supabase_admin_client',lambda:db)
+    monkeypatch.setattr(research,'get_db',lambda *a, **k:db)
     return pid
 
 
@@ -70,9 +70,9 @@ def test_usage_limit_and_missing_database_fail_closed(monkeypatch):
     monkeypatch.setattr(settings,'USAGE_LIMITS_ENABLED',True)
     class DB:
         def rpc(self,*_):return SimpleNamespace(execute=lambda:SimpleNamespace(data=False))
-    monkeypatch.setattr(usage,'get_supabase_admin_client',lambda:DB())
+    monkeypatch.setattr(usage,'get_db',lambda *a, **k:DB())
     with pytest.raises(HTTPException) as error:usage.reserve('owner','test',1)
     assert error.value.status_code==429
-    monkeypatch.setattr(usage,'get_supabase_admin_client',lambda:(_ for _ in ()).throw(ValueError('secret')))
+    monkeypatch.setattr(usage,'get_db',lambda *a, **k:(_ for _ in ()).throw(ValueError('secret')))
     with pytest.raises(HTTPException) as error:usage.reserve('owner','test',1)
     assert error.value.status_code==503 and 'secret' not in str(error.value.detail)

@@ -129,9 +129,9 @@ async def _verify_token(token: str) -> dict:
                 sid=str(UUID(payload.get('session_id','')))
             except (ValueError,TypeError):
                 raise HTTPException(401,'Sign in again to create a current session.') from None
-            from app.services.supabase import get_supabase_admin_client
+            from app.db import get_db
             try:
-                active=await asyncio.to_thread(lambda:get_supabase_admin_client().rpc('jobpilot_session_active',{'p_user_id':uid,'p_session_id':sid}).execute().data)
+                active=await asyncio.to_thread(lambda:get_db().rpc('jobpilot_session_active',{'p_user_id':uid,'p_session_id':sid}).execute().data)
             except Exception:
                 raise HTTPException(503,'Session validation is temporarily unavailable.') from None
             if active is not True:

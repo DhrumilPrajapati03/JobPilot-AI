@@ -39,7 +39,7 @@ class FakeLLM:
 @pytest.fixture
 def net(db, monkeypatch):
     for module in (network, assistant):
-        monkeypatch.setattr(module, "get_supabase_client", lambda user_jwt=None: db)
+        monkeypatch.setattr(module, "get_db", lambda *a, **k: db)
     monkeypatch.setattr(referrals, "get_default_llm", lambda temperature=0.4, **_kw: FakeLLM("Hi Meera, would you refer me for the ML Engineer role?"))
     return db
 

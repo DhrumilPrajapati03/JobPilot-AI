@@ -27,7 +27,7 @@ from app.models.user import WorkPreferences
 from app.services import form_answers
 from app.services.job_boards import HEADERS, TIMEOUT
 from app.services.materials import is_missing_column_error
-from app.services.supabase import select_all
+from app.db import select_all
 
 TICK_SECONDS = 600
 TOKEN_PREFIX = "jpx_"
@@ -207,13 +207,13 @@ def new_token() -> str:
 # --- Daily schedule -----------------------------------------------------------------------------
 
 def server_ready() -> bool:
-    return bool(settings.SUPABASE_URL and settings.SUPABASE_SERVICE_KEY)
+    return bool(settings.DATABASE_URL)
 
 
 def account_email(admin, user_id: str) -> str:
     try:
-        res = admin.auth.admin.get_user_by_id(user_id)
-        return getattr(getattr(res, "user", None), "email", "") or ""
+        rows = admin.fetch("select email from auth.users where id = %s", [user_id])
+        return rows[0][0] if rows else ""
     except Exception:
         return ""
 
@@ -306,12 +306,12 @@ async def _tick(admin) -> dict:
 
 async def scheduler_loop():
     """Runs ``tick`` every few minutes while the server is awake."""
-    from app.services.supabase import get_supabase_admin_client
+    from app.db import get_db
 
     await asyncio.sleep(30)  # let the app finish starting
     while True:
         try:
-            report = await tick(get_supabase_admin_client())
+            report = await tick(get_db())
             if report.get("scanned") or report.get("digests") or report.get("errors"):
                 print(f"Autopilot: {report}")
         except asyncio.CancelledError:

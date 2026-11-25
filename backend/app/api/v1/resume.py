@@ -8,14 +8,14 @@ import uuid
 from fastapi import APIRouter, Depends, File, UploadFile, HTTPException, Response, status
 from starlette.concurrency import run_in_threadpool
 from app.services.auth import get_current_user, CurrentUser
-from app.services.supabase import get_supabase_client
+from app.db import get_db
 from app.services.parser import extract_text_from_pdf, extract_text_from_docx, parse_resume_text
 from app.models.resume import Resume
 from app.resume_engine.builder import build_render_content
 from app.resume_engine.renderer import render_resume_pdf
 from app.resume_engine.validator import calculate_ats_score
 from app.services.vector_store import embed_resume
-from app.services.uploads import read_resume
+from app.services.uploads import read_resume, save_upload
 
 router = APIRouter()
 
@@ -39,7 +39,7 @@ def _latest_tailored_resume(supabase, application_id: str, user_id: str) -> dict
 async def get_tailored_resume(application_id: str, current_user: CurrentUser = Depends(get_current_user)):
     """Return the latest tailored resume record for a specific application."""
     try:
-        supabase = get_supabase_client(user_jwt=current_user.token)
+        supabase = get_db(current_user.id)
         return _latest_tailored_resume(supabase, application_id, current_user.id)
     except HTTPException:
         raise
@@ -57,7 +57,7 @@ async def update_tailored_resume(
     current_user: CurrentUser = Depends(get_current_user)
 ):
     """Save edits to a tailored resume and recompute its ATS keyword score."""
-    supabase = get_supabase_client(user_jwt=current_user.token)
+    supabase = get_db(current_user.id)
     tailored = _latest_tailored_resume(supabase, application_id, current_user.id)
 
     app_res = (
@@ -89,7 +89,7 @@ async def download_tailored_resume_pdf(
     current_user: CurrentUser = Depends(get_current_user)
 ):
     """Render the latest tailored resume content to PDF on demand."""
-    supabase = get_supabase_client(user_jwt=current_user.token)
+    supabase = get_db(current_user.id)
     tailored = _latest_tailored_resume(supabase, application_id, current_user.id)
     profile_res = supabase.table("user_profiles").select("*").eq("id", current_user.id).execute()
     profile = profile_res.data[0] if profile_res.data else {}
@@ -115,7 +115,7 @@ async def download_tailored_resume_pdf(
 async def get_base_resume(current_user: CurrentUser = Depends(get_current_user)):
     """Retrieve the user's base resume content as JSON."""
     try:
-        supabase = get_supabase_client(user_jwt=current_user.token)
+        supabase = get_db(current_user.id)
         response = (
             supabase.table("resumes")
             .select("*")
@@ -140,7 +140,7 @@ async def save_base_resume(
 ):
     """Save or update the user's structured base resume."""
     try:
-        supabase = get_supabase_client(user_jwt=current_user.token)
+        supabase = get_db(current_user.id)
         resume_data["user_id"] = current_user.id
         resume_data["version"] = "base"
         existing = (
@@ -202,19 +202,12 @@ async def upload_resume(
                    "or enter your resume in the profile tabs."
         ) from e
 
-    supabase = get_supabase_client(user_jwt=current_user.token)
-    storage_path = ""
+    supabase = get_db(current_user.id)
     try:
-        storage_path = f"{current_user.id}/{uuid.uuid4()}_{filename}"
-        content_type = file.content_type or "application/octet-stream"
-        supabase.storage.from_("resumes").upload(
-            path=storage_path,
-            file=file_bytes,
-            file_options={"content-type": content_type}
-        )
+        # Keep the original upload on local disk (was the Supabase "resumes" bucket).
+        save_upload("resumes", current_user.id, filename, file_bytes)
     except Exception as e:
-        print(f"Warning: Storage upload failed: {type(e).__name__}")
-        storage_path = ""
+        print(f"Warning: Saving the original resume file failed: {type(e).__name__}")
 
     try:
         resume_dict = parsed_resume.model_dump(exclude_none=True)

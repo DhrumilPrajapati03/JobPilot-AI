@@ -18,7 +18,7 @@ from app.resume_engine.builder import build_render_content
 from app.resume_engine.renderer import render_resume_pdf
 from app.services import autopilot, form_answers, application_execution as execution
 from pydantic import ValidationError
-from app.services.supabase import get_supabase_admin_client
+from app.db import get_db
 
 router = APIRouter()
 FOLLOW_UP_AFTER_DAYS = 5
@@ -35,8 +35,8 @@ async def get_extension_user(x_jobpilot_token: str = Header(default="")) -> Exte
     if not x_jobpilot_token.startswith(autopilot.TOKEN_PREFIX):
         raise HTTPException(status_code=401, detail="Connect the extension from JobPilot → Settings.")
     if not autopilot.server_ready():
-        raise HTTPException(status_code=503, detail="The server needs SUPABASE_SERVICE_KEY for the extension to work.")
-    admin = get_supabase_admin_client()
+        raise HTTPException(status_code=503, detail="The server needs DATABASE_URL for the extension to work.")
+    admin = get_db()
     try:
         rows = admin.table("extension_tokens").select("id, user_id").eq("token_hash", autopilot.hash_token(x_jobpilot_token)).execute().data
     except Exception as e:

@@ -59,8 +59,7 @@ async def user(authorization: str=Header(default='')):
 app.dependency_overrides[get_current_user]=user;auth._verify_token=verify
 for module in list(sys.modules.values()):
     if getattr(module,'__name__','').startswith('app.'):
-        if hasattr(module,'get_supabase_client'):module.get_supabase_client=lambda **kwargs:db
-        if hasattr(module,'get_supabase_admin_client'):module.get_supabase_admin_client=lambda:db
+        if hasattr(module,'get_db'):module.get_db=lambda *args,**kwargs:db
 autopilot.server_ready=lambda:True
 autopilot.account_email=lambda _db,uid:'alice@example.invalid' if uid==ALICE else 'bob@example.invalid'
 db.storage=SimpleNamespace(from_=lambda bucket:SimpleNamespace(upload=lambda **kwargs:None))
