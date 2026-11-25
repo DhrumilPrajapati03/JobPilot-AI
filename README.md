@@ -13,17 +13,19 @@ JobDots is being rebuilt from the JobPilot AI codebase on this branch (`jobdots`
 
 ## Status
 
-Day 0 of the plan is done: secret scan, JobPilot snapshot, data export and removal of parts JobDots will not use. Day 1 is in progress: the local Postgres + pgvector stack and the Alembic baseline are in place. Until the backend is switched over, it is still the JobPilot app (Supabase auth and database).
+Day 0 of the plan is done: secret scan, JobPilot snapshot, data export and removal of parts JobDots will not use. Day 1 is in progress: the backend runs on local Postgres + pgvector (Alembic baseline) with owner bearer-token auth; Supabase is no longer used. The frontend still expects the old Supabase login until the Day 2 login page.
 
 ## Local stack
 
 Needs Docker Desktop and Python 3.12 (`uv python install 3.12`).
 
 ```
-cp .env.example .env                 # then set POSTGRES_PASSWORD
-docker compose up -d db              # Postgres 17 + pgvector on 127.0.0.1:55432
-docker compose run --rm migrate      # alembic upgrade head
+cp .env.example .env                 # set POSTGRES_PASSWORD, OWNER_EMAIL, OWNER_API_TOKEN
+docker compose up -d                 # db -> migrate (alembic upgrade head) -> api + worker
+curl -H "Authorization: Bearer $OWNER_API_TOKEN" http://127.0.0.1:8000/api/v1/auth/me
 ```
+
+Postgres 17 + pgvector listens on 127.0.0.1:55432 and the API on 127.0.0.1:8000; nothing is exposed beyond the laptop. JobDots has one user, the owner: the API accepts `Authorization: Bearer <OWNER_API_TOKEN>` (Google and GitHub login come next). Provider keys such as `GROQ_API_KEY` are read from `backend/.env` when it exists.
 
 The schema lives in `backend/migrations/` (Alembic). Revision `0001` is the JobPilot schema without Supabase auth, row-level security or grants; see the header of `backend/migrations/0001_baseline.sql`. New schema changes are new Alembic revisions:
 

@@ -28,9 +28,11 @@ class Settings(BaseSettings):
     # Uploaded originals (resume files). Kept on local disk, never in git.
     FILE_STORAGE_DIR: str = "data/files"
 
-    # Supabase Auth token verification only, until owner auth replaces it (plan section 4.1).
-    SUPABASE_URL: str = ""
-    SUPABASE_JWT_SECRET: str = ""
+    # Owner auth (single user). OWNER_API_TOKEN is the bearer token for the API (32+ random
+    # characters). OWNER_ID optionally pins the owner's uuid (e.g. the old JobPilot user id).
+    OWNER_EMAIL: str = ""
+    OWNER_API_TOKEN: str = ""
+    OWNER_ID: str = ""
 
     # LLM Providers
     ANTHROPIC_API_KEY: str = ""
