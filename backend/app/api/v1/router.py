@@ -12,6 +12,7 @@ from app.api.v1 import (
     applications,
     auth,
     autopilot,
+    cases,
     contacts,
     discovery,
     network,
@@ -25,6 +26,7 @@ api_v1_router = APIRouter()
 api_v1_router.include_router(templates.router, prefix='/templates', tags=['Writing templates'])
 api_v1_router.include_router(research.router, prefix='/research', tags=['Cited company research'])
 api_v1_router.include_router(runs.router, prefix="/runs", tags=["Background runs"])
+api_v1_router.include_router(cases.router, prefix="/cases", tags=["Cases and actions"])
 
 api_v1_router.include_router(
     auth.router,

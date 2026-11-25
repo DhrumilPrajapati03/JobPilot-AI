@@ -34,7 +34,13 @@ begin
   assert claimed->>'id'=run_id::text;
   old_token=(claimed->>'lease_token')::uuid;
   perform public.enqueue_agent_run(uid,'scan','{}','scan-after-application');
-  assert public.claim_agent_run('concurrent-worker',120) is null, 'per-user lock failed';
+  -- Per-case concurrency: the scan has its own key, so it runs beside the application.
+  second=public.claim_agent_run('concurrent-worker',120);
+  assert second->>'kind'='scan', 'scan should run beside a running application';
+  assert public.claim_agent_run('third-worker',120) is null, 'nothing else is runnable';
+  -- Park the scan so the recovery checks below see only the application run.
+  update public.agent_runs set status='queued',attempts=0,worker_id=null,lease_token=null,lease_expires_at=null,
+    available_at=clock_timestamp()+interval '1 hour' where id=(second->>'id')::uuid;
   perform public.checkpoint_agent_run(run_id,old_token,'jd_parsing','{"role":"Engineer"}');
   assert public.renew_agent_run(run_id,old_token,120);
   update public.agent_runs set lease_expires_at=clock_timestamp()-interval '1 second' where id=run_id;
@@ -83,6 +89,7 @@ begin
   assert (select message from public.referral_requests where user_id=uid)='User edited';
   perform public.save_run_prepared(run_id,(resumed->>'lease_token')::uuid,(saved->>'application_id')::uuid,'{"fields":[]}');
   perform public.finish_agent_run(run_id,(resumed->>'lease_token')::uuid,'succeeded',saved);
+  update public.agent_runs set available_at=clock_timestamp() where kind='scan' and user_id=uid;
   claimed=public.claim_agent_run('worker',120);
   assert claimed->>'kind'='scan';
   perform public.finish_agent_run((claimed->>'id')::uuid,(claimed->>'lease_token')::uuid,'retry_wait','{}','temporary',0);

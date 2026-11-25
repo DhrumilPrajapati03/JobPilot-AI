@@ -42,7 +42,8 @@ class RunStore:
     def rpc(self, name: str, **params):
         return self.client.rpc(name, params).execute().data
 
-    def enqueue(self, user_id: str, kind: str, inputs: dict, key: str | None = None, available_at=None):
+    def enqueue(self, user_id: str, kind: str, inputs: dict, key: str | None = None, available_at=None,
+                case_id: str | None = None):
         if kind not in INPUT_FIELDS or set(inputs) - INPUT_FIELDS[kind]:
             raise ValueError("Unsupported durable job payload")
         key = str(uuid.uuid4()) if key is None else key
@@ -57,6 +58,9 @@ class RunStore:
             params["p_available_at"] = available_at
         if parent:
             params.update(p_parent_id=parent.run["id"], p_parent_token=parent.token)
+        if case_id:
+            # Runs on one case wait for each other; runs on different cases run side by side.
+            params["p_case_id"] = case_id
         return self.rpc("enqueue_agent_run", **params)
 
     def claim(self, worker_id: str):

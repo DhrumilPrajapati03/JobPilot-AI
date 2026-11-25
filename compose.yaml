@@ -27,6 +27,8 @@ x-backend: &backend
     OLLAMA_BASE_URL: http://host.docker.internal:11434
   volumes:
     - files:/app/data/files
+    # policy.yaml (action modes, caps, budgets) is read live; edits apply without a rebuild.
+    - ./config:/app/config:ro
   depends_on:
     db:
       condition: service_healthy

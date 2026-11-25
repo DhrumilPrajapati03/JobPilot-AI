@@ -182,6 +182,12 @@ class Database:
         """Run raw SQL (trusted, static text with %s placeholders) and return rows."""
         return self._run(lambda conn: _rows(conn.execute(query, params)))
 
+    def run(self, work):
+        """Run ``work(conn)`` in one transaction (with app.user_id set) and return its result.
+
+        For multi-statement logic that must be atomic (the action state machine, imports)."""
+        return self._run(work)
+
     def _run(self, work):
         try:
             with _get_pool().connection() as conn:

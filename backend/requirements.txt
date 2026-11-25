@@ -20,4 +20,5 @@ sentry-sdk[fastapi]>=1.43.0
 beautifulsoup4>=4.12.3
 pytest>=8.1.1
 pytest-asyncio>=0.23.6
+PyYAML>=6.0  # config/policy.yaml (app/core/policy.py)
 tzdata>=2024.1  # time zones for the digest schedule, including old aliases like Asia/Calcutta
