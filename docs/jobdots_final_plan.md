@@ -19,6 +19,7 @@ Status of claims: items marked **[unverified]** come from memory or third-party 
 3. **Researcher** may add LLM Context results as extra cited sources for a company brief. These are pre-extracted page text with URLs, so the existing citation rules apply unchanged.
 4. **Hunter is optional.** Its signup refuses webmail addresses, so Recon works without it: it uses emails published on company pages, plus a recipient Dhrumil sets himself. When `HUNTER_API_KEY` is present, Hunter is used for email lookup.
 5. Brave's MIT-licensed API reference skills (`brave-web-search`, `brave-llm-context`) are in `.claude/skills/` for the coding agent. The key stays in `.env` and is never put into the agent's environment.
+6. **As built on Day 6:** Recon is **deterministic** (rules, no model). It accepts a person only with evidence that they work at the company now: the result title, the profile's "Experience" line, or a first-person post. It checks the company with an exact match, so "Acme Infotech" is not "Acme AI". A labelled eval (`recon_cases`) requires zero wrong-company people. The local 8B model stays an option for ambiguous titles. Supervisor runs Recon **after Researcher and before Tailor**, so Email Outreach can write to the recruiter or hiring mailbox Recon found. Searches are capped per run and per day (`recon_searches_per_run`, `recon_searches_per_day` in `policy.yaml`).
 
 ### v1.7 changes (26 Nov: React Bits)
 
@@ -126,7 +127,7 @@ Each `agent_spec` has `model` and `fallback_model`. Two endpoint types, both Ope
 | Tailor | Groq strong (quality-critical) |
 | Answerer | Local small model for question-type detection and retrieval; Groq strong for adapted and company-specific answers |
 | Applicant | Local small model for field mapping |
-| Recon | Local 8B for extracting names and titles from snippets; Groq for ambiguous matches |
+| Recon | Rules only (Day 6): titles and company evidence from search results; a local 8B model only if the eval shows the rules miss too much |
 | Connector, Email Outreach, DM Outreach | Groq strong |
 | Inbox | Local small classifier (reply type, interview invite); acceptance emails by rules first |
 | Interview Buddy | Groq strong |

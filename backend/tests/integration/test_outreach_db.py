@@ -166,6 +166,7 @@ def test_telegram_approve_then_courier_sends_once(owner, tmp_path, monkeypatch):
     assert courier.execute(owner, result["action_id"], now=NOON, client=client)["skipped"] == "already settled"
     assert len(log["sent"]) == 1
     assert get_db().fetch("select count(*) from public.contact_touch where user_id = %s::uuid", [owner])[0][0] == 1
+    assert get_db().fetch("select stage from public.contact where user_id = %s::uuid", [owner])[0][0] == "message_sent"
     bot.refresh()
     assert "Sent" in tg.edits[-1]["text"]
     resume = get_db().fetch("""select content->>'status' from public.artifact where case_id = %s::uuid

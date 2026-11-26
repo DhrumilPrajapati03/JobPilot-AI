@@ -99,7 +99,8 @@ class Settings(BaseSettings):
     # Nightly board scans and morning digests on the server (services/autopilot.py).
     DISCOVERY_AUTO_SCAN: bool = True
 
-    # HR Enrichment
+    # Recon (Day 6): Brave Search API for public people lookups; Hunter is optional (verified emails).
+    BRAVE_API_KEY: str = ""
     HUNTER_API_KEY: str = ""
 
     # Email: the morning digest is sent with Resend (free tier: from onboarding@resend.dev to your own address).

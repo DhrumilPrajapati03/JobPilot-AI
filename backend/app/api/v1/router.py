@@ -15,6 +15,7 @@ from app.api.v1 import (
     cases,
     experts,
     contacts,
+    crm,
     discovery,
     network,
     email,
@@ -64,6 +65,11 @@ api_v1_router.include_router(
     contacts.router,
     prefix="/contacts",
     tags=["HR Contacts"],
+)
+api_v1_router.include_router(
+    crm.router,
+    prefix="/crm",
+    tags=["Contacts CRM"],
 )
 api_v1_router.include_router(
     agent.router,

@@ -97,10 +97,15 @@
 - id: recon
   name: Recon
   role: Finds recruiters, hiring managers and peers
-  model: {provider: default}
-  tools: [read_case, fetch_public_page, save_artifact]
+  description: Finds the people at the company from public LinkedIn results and your own connections, adds verified emails and GitHub/X handles, and ranks who to contact within your caps.
+  instructions: Deterministic (no model); see app/experts/recon.py. Public sources only; LinkedIn pages are never opened and emails are never guessed.
+  policy_notes: Read-only. Searches are capped per run and per day in policy.yaml; contacting anyone is a separate, approved action.
+  model: {provider: none}
+  tools: [read_case, search_people, find_work_email, lookup_handles, save_contact, save_artifact]
   outputs: [contact_list]
-  status: draft
+  triggers: [{kind: event, event: routed}, {kind: manual}]
+  budgets: {steps: 45, seconds: 300}
+  status: active
 
 - id: connector
   name: Connector

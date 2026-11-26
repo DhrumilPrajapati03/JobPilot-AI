@@ -96,7 +96,36 @@ class EmailDraft(Strict):
     review: dict = Field(default_factory=dict)
 
 
-KINDS: dict[str, type[BaseModel]] = {"company_brief": CompanyBrief, "resume_version": ResumeVersion, "draft": EmailDraft}
+class Person(Strict):
+    """One person on a contact list card; the contact row holds the full history."""
+    contact_id: str
+    name: str = Field(default="", max_length=120)
+    title: str = Field(default="", max_length=160)
+    role_class: Literal["recruiter", "hiring_manager", "ceo", "cto", "employee", "unknown"]
+    linkedin_url: HttpUrl | None = None
+    email: str = Field(default="", max_length=254)
+    email_source: Literal["", "job_description", "hunter", "you", "imported", "public_page"] = ""
+    github: str = Field(default="", max_length=39)
+    x_handle: str = Field(default="", max_length=15)
+    confidence: float | None = Field(default=None, ge=0, le=1)
+    evidence: list[str] = Field(default_factory=list, max_length=4)    # plain words: why we think it's them
+    connected: bool = False          # already in your LinkedIn connections
+    last_touch_at: str | None = None
+    blocked: str = ""                # why not to contact now (cooldown, do not contact)
+    suggested: bool = False          # within max_people_per_company, in outreach order
+    channel: Literal["email", "linkedin", "referral", ""] = ""
+
+
+class ContactList(Strict):
+    """The people Recon found at the company for one case."""
+    company: str = Field(min_length=1, max_length=200)
+    people: list[Person] = Field(default_factory=list, max_length=30)
+    searches: int = 0
+    notes: list[str] = Field(default_factory=list, max_length=10)
+
+
+KINDS: dict[str, type[BaseModel]] = {"company_brief": CompanyBrief, "resume_version": ResumeVersion, "draft": EmailDraft,
+                                     "contact_list": ContactList}
 
 
 class ArtifactError(ValueError):

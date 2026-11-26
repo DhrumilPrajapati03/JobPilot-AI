@@ -41,6 +41,9 @@ caps:
   max_people_per_company: 3
   min_hours_accept_to_dm: 24
   no_contact_if_touched_within_days: 14
+  # Recon's web searches (Brave): per Recon run on one case, and per day across cases.
+  recon_searches_per_run: 6
+  recon_searches_per_day: 40
   quiet_hours: "22:00-08:00"
   timezone: Asia/Kolkata
 
