@@ -101,7 +101,7 @@ Anatomy of a draft card (email shown; DM, invite, form answers, resume diff foll
 
 Before adding a control, ask: does it help him delegate, or give him one more thing to manage? Prefer removing panel options, model pickers, run metadata and extra badges. Keep practical limits visible only when hit (for example the outreach caps from `policy.yaml`).
 
-## 9. Libraries.dev components (motion with a job)
+## 9. Component sources: Libraries.dev and React Bits (motion with a job)
 
 [libraries.dev](https://libraries.dev/) publishes small React components for AI interfaces. Its Terms (October 2026) release the **npm libraries under MIT**; its **Models** (Magnetic UI, Voice position, Mood recognition) and anything **Pro** (Studio, presets, Pro skill) are under a separate licence that needs a paid plan for commercial use, so JobDots never uses those. Catalog checked on 26 Nov 2026:
 
@@ -124,6 +124,30 @@ How to bring one in (the `bot-avatars` adoption is the template):
 5. Motion budget: per screen, the avatars plus at most **one** other moving library element. Spend motion on what needs him (approvals, hand-offs), never on decoration (frontend-design's "one orchestrated moment").
 6. Record it in plan section 6.2/7.1 and in this table.
 
+### React Bits (source registry, reactbits.dev)
+
+React Bits is **copy-in source**, not a package: components are added through the shadcn registry `@react-bits` (configured in `frontend/components.json`) and become our files. Licence: **MIT + Commons Clause** — free to use inside JobDots, never to resell or redistribute the components on their own; the copyright notice must travel with every copied file (the registry files don't carry one, so we add it). Checked on 26 Nov 2026.
+
+**How to add one** (only when the screen that needs it is being built):
+
+1. Find and inspect it with the shadcn MCP server (`.mcp.json`, pinned `shadcn@4.23.0`, run from `frontend/`), or from `frontend/`: `npx shadcn@4.23.0 view @react-bits/<Name>-TS-TW`. Always the **TS + Tailwind** variant. Read its dependencies and code first.
+2. Add it: `npx shadcn@4.23.0 add @react-bits/<Name>-TS-TW` (from `frontend/`). Pin any new dependency exactly (`--save-exact`), `npm audit`.
+3. Put this header at the top of each copied file:
+   `// Adapted from React Bits (https://reactbits.dev), (c) David Haz, MIT + Commons Clause. Do not redistribute on its own.`
+4. Adapt before use: our tokens and light/dark theme, **Lucide** icons (swap out any other icon set), plain-words labels, keyboard focus. Keep its `prefers-reduced-motion` handling (the three below have it); if one doesn't, add it.
+5. Wrap it in a JobDots component; screens never import the React Bits file directly. Same motion budget as above.
+
+**Use / don't use** (checked 26 Nov 2026):
+
+| React Bits | Use in JobDots | Notes |
+|---|---|---|
+| `Stack` | **Approval inbox deck**: pending drafts of one kind stack; the top card is the actionable approval card | needs `motion` |
+| `CountUp` | **Pipeline dashboard** numbers (found, applied, replies…) settle when they change; never on first paint of every number | needs `motion` |
+| `AnimatedList` | **Activity stream**: new grouped activity lines arrive in place; arrow-key navigation | swap its Hugeicons for Lucide |
+| `Counter`, `Stepper`, `TextType`, `SpotlightCard`, `StarBorder`, `BorderGlow`, `Dock`, menus | Not now: `border-beam` already covers the one highlighted card, the roster is our navigation, `thinking-orbs` covers "composing" | ask before adding |
+| Backgrounds (63), 3D/WebGL text and cards, glitch/scramble text, cursor effects | **Never**: the chrome stays neutral and the avatars carry the colour | |
+| React Bits **Pro** (pages, templates, Agent Kit) | Not used: paid licence | |
+
 ## 10. Checklist for every JobDots screen
 
 - [ ] `frontend-design` loaded and its two-pass design plan done for new screens.
@@ -134,4 +158,4 @@ How to bring one in (the `bot-avatars` adoption is the template):
 - [ ] Empty states tell him what to do next; errors say what happened and how to fix it.
 - [ ] Works at 360 px wide; keyboard focus visible; reduced motion respected; light and dark themes.
 - [ ] No copied code or assets from Grok Bot or OpenBots; avatars only through `ExpertAvatar` (`bot-avatars`).
-- [ ] Any Libraries.dev component is MIT (npm), wrapped, pinned, reduced-motion safe, and within the motion budget (section 9).
+- [ ] Any Libraries.dev or React Bits component is licensed for this use, wrapped, pinned, reduced-motion safe, carries its notice (React Bits) and stays within the motion budget (section 9).
