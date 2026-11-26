@@ -6,6 +6,7 @@ own extension, to fill your own forms, and never into a model prompt except name
 """
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -32,6 +33,14 @@ class Profile:
         return " ".join(self.full_name.split()[1:])
 
 
+PLACEHOLDER = re.compile(r"^\s*(todo|tbd|tbc|xx+|\?+|-+|<[^>]*>|\[[^\]]*\]|fill ?me|fixme)\s*$", re.I)
+
+
+def real(value) -> bool:
+    """A filled-in value, not a template placeholder like TODO or <your salary>."""
+    return value not in (None, "") and not PLACEHOLDER.match(str(value))
+
+
 def _confirmed(item) -> bool:
     return isinstance(item, dict) and str(item.get("status", "confirmed")).lower() == "confirmed"
 
@@ -41,17 +50,17 @@ def load(path: Path | str | None = None) -> Profile:
     person, contact, facts = raw.get("person") or {}, raw.get("contact") or {}, raw.get("application_facts") or {}
     out = Profile()
     if _confirmed(person):
-        out.full_name = str(person.get("full_name") or "").strip()
+        out.full_name = str(person.get("full_name") or "").strip() if real(person.get("full_name")) else ""
         loc = person.get("location")
         if isinstance(loc, dict):
             out.location = ", ".join(str(loc[k]) for k in ("city", "state", "country") if loc.get(k))
-        elif loc:
+        elif real(loc):
             out.location = str(loc)
     if _confirmed(contact):
-        out.email = str(contact.get("email") or "").strip()
-        out.phone = str(contact.get("phone") or "").strip()
+        out.email = str(contact.get("email")).strip() if real(contact.get("email")) else ""
+        out.phone = str(contact.get("phone")).strip() if real(contact.get("phone")) else ""
         out.links = {k: str(contact[k]).strip() for k in ("linkedin", "github", "portfolio")
                      if str(contact.get(k) or "").startswith("http")}
     if isinstance(facts, dict) and str(facts.get("status", "confirmed")).lower() == "confirmed":
-        out.facts = {k: str(v).strip() for k, v in facts.items() if v not in (None, "") and k not in ("status", "source")}
+        out.facts = {k: str(v).strip() for k, v in facts.items() if real(v) and k not in ("status", "source")}
     return out

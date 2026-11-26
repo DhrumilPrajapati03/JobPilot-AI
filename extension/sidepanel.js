@@ -1,6 +1,7 @@
 // JobDots side panel: capture the job on this page, read the form's questions, review the
-// Answerer's answers (each with where it came from), edit, approve. Nothing here fills or
-// submits the form, and the panel never holds your token (the service worker makes the calls).
+// Answerer's answers (each with where it came from), edit, and fill them into the form. It never
+// submits: you check the form and click Submit yourself. The panel never holds your token (the
+// service worker makes the calls).
 (() => {
   const lib = globalThis.JOBDOTS_PANEL;
   const $ = id => document.getElementById(id);
@@ -8,7 +9,7 @@
   const post = (path, body) => send({ type: 'api', path, method: 'POST', body });
   const PAGES = { origins: ['https://*/*'] };
   // edits and skipped belong to one answer set (editsFor): they survive a tab switch or reload of that set.
-  const state = { tab: null, page: null, set: null, edits: {}, skipped: {}, editsFor: null, approved: false, busy: false, token: 0 };
+  const state = { tab: null, page: null, set: null, edits: {}, skipped: {}, editsFor: null, filled: {}, busy: false, token: 0 };
 
   function status(text, error = false) {
     $('status').textContent = text || '';
@@ -18,18 +19,11 @@
   function busy(on) {
     state.busy = on;
     for (const id of ['capture', 'read', 'grant']) $(id).disabled = on;
-    approveButton();
+    fillButton();
   }
-  // After approving, the button says so until you change an answer.
-  function approveButton() {
-    $('approve').disabled = state.busy || state.approved;
-    $('approve').textContent = state.approved ? 'Approved' : 'Approve and save answers';
-  }
-  function changed() {
-    if (!state.approved) return;
-    state.approved = false;
-    approveButton();
-    $('approve-note').textContent = 'Changed since you approved. Approve again to save it.';
+  function fillButton() {
+    $('approve').disabled = state.busy;
+    $('approve').textContent = state.busy ? 'Filling…' : Object.keys(state.filled).length ? 'Fill again' : 'Fill the form';
   }
   const wait = ms => new Promise(r => setTimeout(r, ms));
 
@@ -133,7 +127,7 @@
   function setAnswers(caseId, data) {
     state.set = { case_id: caseId, id: data.answer_set_id, answers: data.answers || [], counts: data.counts || {}, notes: data.notes || [] };
     if (state.editsFor !== state.set.id) {
-      state.edits = {}; state.skipped = {}; state.editsFor = state.set.id; state.approved = false;
+      state.edits = {}; state.skipped = {}; state.editsFor = state.set.id; state.filled = {};
     }
     renderAnswers();
     status(lib.countsLine(state.set.counts) + (state.set.notes[0] ? `. ${state.set.notes[0]}` : ''));
@@ -153,7 +147,7 @@
   function editor(a) {
     const id = `a-${btoa(unescape(encodeURIComponent(a.key))).replace(/[^a-z0-9]/gi, '')}`;
     const current = Object.prototype.hasOwnProperty.call(state.edits, a.key) ? state.edits[a.key] : a.value;
-    const onchange = e => { state.edits[a.key] = e.target.value; changed(); };
+    const onchange = e => { state.edits[a.key] = e.target.value; };
     if (['select', 'radio'].includes(a.type) && a.options.length) {
       return [id, el('select', { id, onchange }, el('option', { value: '' }, 'Choose…'),
         a.options.map(o => el('option', { value: o, selected: o === lib.asText(current) }, o)))];
@@ -182,13 +176,25 @@
           locked ? null : el('button', { class: 'small', type: 'button', onclick: () => copy(a) }, 'Copy')),
         input,
         a.note ? el('p', { class: 'note' }, a.note) : null,
+        result(state.filled[a.key]),
         !locked && !['vault'].includes(a.badge) ? el('label', { class: 'skip' },
-          el('input', { type: 'checkbox', checked: !!state.skipped[a.key], onchange: e => { state.skipped[a.key] = e.target.checked; changed(); } }),
+          el('input', { type: 'checkbox', checked: !!state.skipped[a.key], onchange: e => { state.skipped[a.key] = e.target.checked; } }),
           "Don't save this one to my answer bank") : null));
     }
-    const need = answers.filter(a => a.badge === 'needs_you').length;
-    $('approve-note').textContent = need ? `${need} still need${need === 1 ? 's' : ''} you on the form itself.` : 'New and edited answers are saved to your answer bank.';
-    approveButton();
+    if (!Object.keys(state.filled).length) {
+      const empty = answers.filter(a => !['legal', 'file'].includes(a.kind) && !lib.asText(a.key in state.edits ? state.edits[a.key] : a.value).trim()).length;
+      $('approve-note').textContent = (empty ? `Fills every answer that has a value; ${empty} empty one${empty === 1 ? '' : 's'} stay${empty === 1 ? 's' : ''} for you. ` : 'Fills these answers into the form. ')
+        + 'You check it and click Submit yourself.';
+    }
+    fillButton();
+  }
+
+  const RESULT = { filled: 'Filled on the form', review: 'Filled; check it on the form', preserved: 'Already filled on the form; left as is',
+    missing: 'Not filled; fill it yourself', invalid: 'The form rejected this value', skipped: 'Not filled' };
+  function result(r) {
+    if (!r) return null;
+    const good = r.outcome === 'filled' || r.outcome === 'preserved';
+    return el('p', { class: `result ${good ? 'ok' : 'check'}` }, RESULT[r.outcome] || r.outcome, r.note && !good ? `: ${r.note}` : '');
   }
 
   async function copy(a) {
@@ -196,19 +202,33 @@
     try { await navigator.clipboard.writeText(value); status('Copied.'); } catch (e) { status("Couldn't copy; select the text instead.", true); }
   }
 
-  async function approve() {
-    if (state.busy || !state.set) return;
-    const answers = lib.approval(state.set.answers, state.edits, state.skipped);
-    if (!answers.length) { status('Nothing to approve yet.'); return; }
+  // Save new and edited answers to your bank, then fill the form in every frame it lives in.
+  async function fill() {
+    if (state.busy || !state.set || !state.tab) return;
+    const plan = lib.fillPlan(state.set.answers, state.edits, state.skipped);
+    if (!Object.keys(plan).length) { status('No answers with a value to fill yet.', true); return; }
     busy(true);
     try {
-      const r = await post('/extension/answer-set/approve', { case_id: state.set.case_id, answer_set_id: state.set.id, answers });
-      if (!r.ok) { status(detail(r, "Couldn't save your answers."), true); return; }
-      state.approved = true;
-      $('approve-note').textContent = r.data.saved
-        ? `Saved ${r.data.saved} answer${r.data.saved === 1 ? '' : 's'} to your answer bank. Copy them into the form yourself.`
-        : 'Already in your answer bank; nothing new to save. Copy the answers into the form yourself.';
-      status('');
+      const approved = lib.approval(state.set.answers, state.edits, state.skipped);
+      const saved = await post('/extension/answer-set/approve', { case_id: state.set.case_id, answer_set_id: state.set.id, answers: approved });
+      const tabId = state.tab.id;
+      await chrome.scripting.executeScript({ target: { tabId, allFrames: true }, files: ['content/form-engine.js'] });
+      const results = [];
+      for (const [frameId, answers] of Object.entries(plan)) {
+        try {
+          const [out] = await chrome.scripting.executeScript({ target: { tabId, frameIds: [Number(frameId)] }, func: lib.fillFrame, args: [answers] });
+          results.push(...((out && out.result) || []));
+        } catch (e) {
+          results.push(...answers.map(a => ({ panelKey: a.panelKey, outcome: 'review', note: 'That part of the form has reloaded. Read the questions again.' })));
+        }
+      }
+      state.filled = Object.fromEntries(results.map(r => [r.panelKey, r]));
+      renderAnswers();
+      const n = saved.ok && saved.data ? saved.data.saved : 0;
+      $('approve-note').textContent = `${lib.fillSummary(results)}. ${n ? `${n} new answer${n === 1 ? '' : 's'} saved to your bank. ` : ''}Check the form and click Submit yourself.`;
+      status(saved.ok ? '' : detail(saved, "Filled, but couldn't save the answers to your bank."), !saved.ok);
+    } catch (e) {
+      status("Chrome doesn't let extensions fill this page.", true);
     } finally { busy(false); }
   }
 
@@ -219,7 +239,7 @@
   });
   $('capture').addEventListener('click', () => capture());
   $('read').addEventListener('click', () => readQuestions());
-  $('approve').addEventListener('click', () => approve());
+  $('approve').addEventListener('click', () => fill());
   chrome.tabs.onActivated.addListener(() => { state.set = null; refresh(); });
   chrome.tabs.onUpdated.addListener((id, info) => { if (state.tab && id === state.tab.id && info.status === 'complete') refresh(); });
 

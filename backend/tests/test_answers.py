@@ -89,6 +89,17 @@ def test_unconfirmed_vault_sections_are_ignored(tmp_path):
     assert p.email == "" and p.full_name == "Ada Example"
 
 
+def test_placeholder_vault_values_are_not_answers(tmp_path):
+    path = tmp_path / "v.yaml"
+    path.write_text("version: 1\ncontact: {email: TODO, phone: '<your phone>'}\n"
+                    "application_facts: {current_ctc: TODO, expected_ctc: TBD, notice_period: 30 days, sponsorship: None}\n",
+                    encoding="utf-8")
+    p = profile_mod.load(path)
+    assert (p.email, p.phone) == ("", "")
+    assert p.facts == {"notice_period": "30 days", "sponsorship": "None"}
+    assert answerer.profile_value("pay", "What's your current salary?", p)[0] == ""
+
+
 def test_fit_puts_text_into_choice_fields_or_says_why_not():
     assert answerer.fit({"type": "radio", "options": ["Yes", "No"]}, "yes") == ("Yes", "")
     assert answerer.fit({"type": "checkbox", "options": ["Python", "Go"]}, "Python") == (["Python"], "")
