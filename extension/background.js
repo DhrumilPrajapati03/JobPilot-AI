@@ -5,7 +5,7 @@
 const DEFAULT_API = 'http://localhost:8000';
 // JobDots side panel routes: capture a job, send a form's questions, review and approve answers.
 // Only the side panel page may call them (never a content script on a web page).
-const PANEL_PATHS = ['/extension/page', '/extension/capture', '/extension/questions', '/extension/answer-set', '/extension/answer-set/approve'];
+const PANEL_PATHS = ['/extension/page', '/extension/capture', '/extension/questions', '/extension/answer-set', '/extension/answer-set/approve', '/extension/case/applied'];
 importScripts('policy.js');
 const policy = globalThis.JOBPILOT_POLICY;
 const storageReady = Promise.all([

@@ -171,4 +171,13 @@ def test_side_panel_capture_questions_review_and_approve(owner, monkeypatch):
     assert twice.json() == {"saved": 0}                    # approving again adds no duplicate version
     saved = bank.list_latest(uid)
     assert [(s["source"], s["company_scope"]) for s in saved] == [("user", "Acme")]
+    applied = client.post("/api/v1/extension/case/applied", json={"case_id": case_id, "seen": True}).json()
+    assert applied["stage"] == "applied" and applied["applied_at"]
+    again = client.post("/api/v1/extension/case/applied", json={"case_id": case_id, "seen": True}).json()
+    assert again["applied_at"] == applied["applied_at"]          # a second confirmation changes nothing
+    submitted = get_db(uid).fetch("""select count(*) from public.case_event where case_id = %s::uuid
+                                     and summary like 'You submitted the application%%'""", [case_id])
+    assert submitted[0][0] == 1
+    undone = client.post("/api/v1/extension/case/applied", json={"case_id": case_id, "applied": False}).json()
+    assert undone == {"stage": "ready", "applied_at": None}
     assert TestClient(app).post("/api/v1/extension/page", json={"url": url}).status_code == 401
