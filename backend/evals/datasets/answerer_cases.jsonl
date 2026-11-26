@@ -22,3 +22,6 @@
 {"label": "Tell us about a time you shipped an ML model to production", "type": "textarea", "kind": "open"}
 {"label": "Describe your experience with retrieval-augmented generation", "type": "textarea", "kind": "open"}
 {"label": "How did you hear about us?", "type": "select", "kind": "short"}
+{"label": "*First name", "type": "text", "kind": "name"}
+{"label": "*Last name", "type": "text", "kind": "name"}
+{"label": "Phone number *", "type": "tel", "kind": "phone"}

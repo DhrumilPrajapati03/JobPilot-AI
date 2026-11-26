@@ -90,10 +90,15 @@ def search(user_id: str, question: str, *, k: int = 3, vector: list[float] | Non
 
 def save(user_id: str, question: str, answer: str, *, source: str, type_: str = "text", company_scope: str = "",
          sensitive: bool = False, approved: bool = True) -> dict:
-    """Store a new version of this question's answer."""
+    """Store a new version of this question's answer (nothing new when it matches the latest version)."""
     if source not in SOURCES:
         raise ValueError(f"unknown source {source!r}")
     norm = normalize(question)
+    latest = get_db(user_id).fetch("""select id::text, version, answer from public.answer_bank where user_id = %s::uuid
+                                      and normalized_question = %s and company_scope = %s
+                                      order by version desc, created_at desc limit 1""", [user_id, norm, company_scope])
+    if latest and latest[0][2].strip() == answer.strip()[:4000]:
+        return {"id": latest[0][0], "version": latest[0][1], "embedded": None, "unchanged": True}
     vector = embed(question)
     model = settings.OLLAMA_EMBED_MODEL.split(":")[0] if vector is not None else None
     rows = get_db(user_id).fetch("""
@@ -106,7 +111,7 @@ def save(user_id: str, question: str, answer: str, *, source: str, type_: str = 
         returning id::text, version""",
         [user_id, question.strip()[:1000], norm, answer.strip()[:4000], type_, str(vector) if vector is not None else None, model,
          source, user_id, norm, company_scope, approved, company_scope, sensitive])
-    return {"id": rows[0][0], "version": rows[0][1], "embedded": vector is not None}
+    return {"id": rows[0][0], "version": rows[0][1], "embedded": vector is not None, "unchanged": False}
 
 
 def history(user_id: str, answer_id: str) -> list[dict]:

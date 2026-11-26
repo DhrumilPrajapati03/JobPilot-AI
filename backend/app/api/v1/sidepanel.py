@@ -168,9 +168,10 @@ async def approve_answers(body: ApproveIn, user: ExtensionUser = Depends(get_ext
             continue                     # already in your vault or bank, unchanged
         source = "user" if approved.edited else SAVE_SOURCE[original["badge"]]
         scope = content.get("company", "") if original["kind"] == "company_specific" else ""
-        await asyncio.to_thread(answer_bank.save, user.id, original["label"], value, source=source, type_=original["kind"],
-                                company_scope=scope, sensitive=original["kind"] in SENSITIVE_KINDS)
-        saved += 1
+        stored = await asyncio.to_thread(answer_bank.save, user.id, original["label"], value, source=source,
+                                         type_=original["kind"], company_scope=scope,
+                                         sensitive=original["kind"] in SENSITIVE_KINDS)
+        saved += not stored["unchanged"]        # approving the same text again adds no version
     await asyncio.to_thread(case_mod.add_event, user.id, str(body.case_id), "note", actor="user",
                             summary=f"You checked {len(body.answers)} answers; {saved} saved to your answer bank",
                             data={"answer_set_id": str(body.answer_set_id), "saved": saved})

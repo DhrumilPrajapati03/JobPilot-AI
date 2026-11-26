@@ -32,6 +32,8 @@ application_facts:
     ("Why do you want to work at Acme?", "textarea", "company_specific"),
     ("Describe a project where you used RAG", "textarea", "open"), ("Anything else we should know?", "textarea", "open"),
     ("Preferred team", "text", "short"), ("Which city are you based in?", "text", "location"),
+    ("*First name", "text", "name"), ("Last name *", "text", "name"), ("✱ Email", "email", "email"),
+    ("Phone (required)", "tel", "phone"),
 ])
 def test_question_kinds(label, ftype, kind):
     assert kind_of(label, ftype, "Acme") == kind
@@ -69,6 +71,7 @@ def profile(tmp_path):
 def test_profile_values_come_from_confirmed_vault_facts(profile, tmp_path):
     assert profile_mod.load(tmp_path / "vault.yaml").location == "Pune, Maharashtra, India"
     assert answerer.profile_value("name", "First name", profile) == ("Ada", "")
+    assert answerer.profile_value("name", "*First name", profile) == ("Ada", "")
     assert answerer.profile_value("name", "Last name", profile) == ("Example", "")
     assert answerer.profile_value("link", "GitHub", profile)[0] == "https://github.com/ada-example"
     assert answerer.profile_value("link", "Portfolio", profile)[0] == ""

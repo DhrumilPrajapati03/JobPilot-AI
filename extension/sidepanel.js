@@ -7,7 +7,8 @@
   const send = message => new Promise(resolve => chrome.runtime.sendMessage(message, r => resolve(r || { ok: false })));
   const post = (path, body) => send({ type: 'api', path, method: 'POST', body });
   const PAGES = { origins: ['https://*/*'] };
-  const state = { tab: null, page: null, set: null, edits: {}, skipped: {}, busy: false, token: 0 };
+  // edits and skipped belong to one answer set (editsFor): they survive a tab switch or reload of that set.
+  const state = { tab: null, page: null, set: null, edits: {}, skipped: {}, editsFor: null, approved: false, busy: false, token: 0 };
 
   function status(text, error = false) {
     $('status').textContent = text || '';
@@ -16,7 +17,19 @@
   const detail = (r, fallback) => (r && r.data && typeof r.data.detail === 'string' ? r.data.detail : fallback);
   function busy(on) {
     state.busy = on;
-    for (const id of ['capture', 'read', 'approve', 'grant']) $(id).disabled = on;
+    for (const id of ['capture', 'read', 'grant']) $(id).disabled = on;
+    approveButton();
+  }
+  // After approving, the button says so until you change an answer.
+  function approveButton() {
+    $('approve').disabled = state.busy || state.approved;
+    $('approve').textContent = state.approved ? 'Approved' : 'Approve and save answers';
+  }
+  function changed() {
+    if (!state.approved) return;
+    state.approved = false;
+    approveButton();
+    $('approve-note').textContent = 'Changed since you approved. Approve again to save it.';
   }
   const wait = ms => new Promise(r => setTimeout(r, ms));
 
@@ -119,7 +132,9 @@
 
   function setAnswers(caseId, data) {
     state.set = { case_id: caseId, id: data.answer_set_id, answers: data.answers || [], counts: data.counts || {}, notes: data.notes || [] };
-    state.edits = {}; state.skipped = {};
+    if (state.editsFor !== state.set.id) {
+      state.edits = {}; state.skipped = {}; state.editsFor = state.set.id; state.approved = false;
+    }
     renderAnswers();
     status(lib.countsLine(state.set.counts) + (state.set.notes[0] ? `. ${state.set.notes[0]}` : ''));
   }
@@ -138,7 +153,7 @@
   function editor(a) {
     const id = `a-${btoa(unescape(encodeURIComponent(a.key))).replace(/[^a-z0-9]/gi, '')}`;
     const current = Object.prototype.hasOwnProperty.call(state.edits, a.key) ? state.edits[a.key] : a.value;
-    const onchange = e => { state.edits[a.key] = e.target.value; };
+    const onchange = e => { state.edits[a.key] = e.target.value; changed(); };
     if (['select', 'radio'].includes(a.type) && a.options.length) {
       return [id, el('select', { id, onchange }, el('option', { value: '' }, 'Choose…'),
         a.options.map(o => el('option', { value: o, selected: o === lib.asText(current) }, o)))];
@@ -168,11 +183,12 @@
         input,
         a.note ? el('p', { class: 'note' }, a.note) : null,
         !locked && !['vault'].includes(a.badge) ? el('label', { class: 'skip' },
-          el('input', { type: 'checkbox', onchange: e => { state.skipped[a.key] = e.target.checked; } }),
+          el('input', { type: 'checkbox', checked: !!state.skipped[a.key], onchange: e => { state.skipped[a.key] = e.target.checked; changed(); } }),
           "Don't save this one to my answer bank") : null));
     }
     const need = answers.filter(a => a.badge === 'needs_you').length;
     $('approve-note').textContent = need ? `${need} still need${need === 1 ? 's' : ''} you on the form itself.` : 'New and edited answers are saved to your answer bank.';
+    approveButton();
   }
 
   async function copy(a) {
@@ -188,7 +204,11 @@
     try {
       const r = await post('/extension/answer-set/approve', { case_id: state.set.case_id, answer_set_id: state.set.id, answers });
       if (!r.ok) { status(detail(r, "Couldn't save your answers."), true); return; }
-      status(r.data.saved ? `Approved. ${r.data.saved} saved to your answer bank.` : 'Approved. Nothing new to save.');
+      state.approved = true;
+      $('approve-note').textContent = r.data.saved
+        ? `Saved ${r.data.saved} answer${r.data.saved === 1 ? '' : 's'} to your answer bank. Copy them into the form yourself.`
+        : 'Already in your answer bank; nothing new to save. Copy the answers into the form yourself.';
+      status('');
     } finally { busy(false); }
   }
 
