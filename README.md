@@ -127,4 +127,4 @@ CI runs the same checks on pushes to `main` and `jobdots` (`.github/workflows/re
 
 ## Frontend work
 
-Load the project skills `frontend-design` and `jobdots-agentic-ui` (in `.claude/skills/`) before designing or building any screen.
+Load the project skills `frontend-design` and `jobdots-agentic-ui` (in `.claude/skills/`) before designing or building any screen. Animated components come from `bot-avatars` (npm) and, for a few named patterns, the React Bits registry (`@react-bits` in `frontend/components.json`; the shadcn MCP server in `.mcp.json` lets the coding agent search it). The skill's section 9 says which ones, and how to add them (licence notice, Lucide icons, reduced motion, one wrapper per component).

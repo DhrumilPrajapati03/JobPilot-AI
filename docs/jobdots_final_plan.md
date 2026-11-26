@@ -1,4 +1,4 @@
-# JobDots — Final End-to-End Plan (v1.6, 26 Nov 2026)
+# JobDots — Final End-to-End Plan (v1.7, 26 Nov 2026)
 
 Owner: Dhrumil. Single-user personal job-hunting assistant. Python backend, React frontend, local-first hosting on his laptop (Render with credit later), Postgres + pgvector (local; Neon in Phase B), Groq + local Ollama models, backups to his Google Drive.
 Status of claims: items marked **[unverified]** come from memory or third-party sources and must be checked before relying on them.
@@ -11,6 +11,11 @@ Status of claims: items marked **[unverified]** come from memory or third-party 
 4. **Per-case concurrency replaces the old one-running-job-per-user lock**, which would have serialised all experts (section 4, Day 2).
 5. LangChain, Chroma, Supabase, Celery/Redis and LangSmith are removed; reuse and removals are listed in section 16 and in `jobdots_codebase_triage.md`.
 6. New **Day 0** (freeze, secret scan, export, legacy snapshot) before Day 1.
+
+### v1.7 changes (26 Nov: React Bits)
+
+1. **React Bits** (reactbits.dev, MIT + Commons Clause: free inside JobDots, never resold or redistributed on its own) is a source registry for three Day 9 patterns: **Stack** for the approval deck, **CountUp** for Pipeline dashboard numbers, **AnimatedList** for the activity stream. Components are copied in through the shadcn registry `@react-bits` (`frontend/components.json`), carry a notice header, are adapted to our tokens and Lucide icons, and are wrapped. Its backgrounds, 3D and glitch effects and Pro tier are not used.
+2. The **shadcn MCP server** (`.mcp.json`, pinned `shadcn@4.23.0`, run from `frontend/`) lets the coding agent search and add registry components. Rules are in the `jobdots-agentic-ui` skill, section 9.
 
 ### v1.6 changes (26 Nov: expert avatars)
 
@@ -421,7 +426,7 @@ Conventions: Pydantic for every agent output; SQLAlchemy 2 + Alembic; routes use
 | Other tools | Hunter and a search API via `httpx`; Playwright (public pages only); Tectonic + Jinja2 (LaTeX); `pypdf` (page-count checks) |
 | Security | `cryptography` (Fernet) for stored tokens, structured logging with redaction (`structlog`) |
 | Auth | Google + GitHub login via Authlib (single-owner allowlist on provider IDs), server-side sessions, bearer token as break-glass, hashed extension token (section 4.1) |
-| Frontend | React 19 + Vite + TypeScript, Tailwind v4, own shadcn-style components, TanStack Query, `EventSource` for SSE, pdf.js, generated API client from FastAPI's OpenAPI schema; `bot-avatars` for the expert avatars, plus the Libraries.dev components named in the `jobdots-agentic-ui` skill (section 9); project skills `frontend-design` + `jobdots-agentic-ui` |
+| Frontend | React 19 + Vite + TypeScript, Tailwind v4, own shadcn-style components, TanStack Query, `EventSource` for SSE, pdf.js, generated API client from FastAPI's OpenAPI schema; `bot-avatars` for the expert avatars, plus the Libraries.dev and React Bits (Stack, CountUp, AnimatedList; via the shadcn registry and MCP) components named in the `jobdots-agentic-ui` skill (section 9); project skills `frontend-design` + `jobdots-agentic-ui` |
 | Extension | Chrome MV3, TypeScript, content scripts + service worker + side panel, built with Vite |
 | Infra | Docker Compose on Windows (WSL2), Ollama on the host; Render blueprint ready for Phase B |
 | Testing / evals | `pytest`, `promptfoo`, JSONL golden datasets (section 8.1) |
@@ -444,7 +449,7 @@ Assumption: coding agents write most code; Dhrumil reviews and tests. Adding the
 | **6 Recon + CRM** | Search-based LinkedIn URL lookup, Hunter, GitHub/X handles, `role_class`, dedupe, caps, cooldowns. |
 | **7 Extension + Answerer** | Capture JD; question detection; answer bank (pgvector); review panel with badges. |
 | **8 Applicant + LinkedIn queue** | Form fill on Greenhouse/Lever/Ashby; extension **send queue** (invite and DM, one click each). |
-| **9 Dashboards + UI** | `frontend-design` plan reviewed against the brief first; expert roster with `ExpertAvatar` states and hover steps; command center, case group threads, approval cards and inbox, activity stream, expert browser preview/takeover, Pipeline and Live Ops dashboards, answer bank sheet. Earlier days build their screens with the same two skills, so Day 9 is polish and dashboards, not a redesign. |
+| **9 Dashboards + UI** | `frontend-design` plan reviewed against the brief first; expert roster with `ExpertAvatar` states and hover steps; command center, case group threads, approval cards and inbox (deck from React Bits `Stack`), activity stream (`AnimatedList`), dashboard numbers (`CountUp`), expert browser preview/takeover, Pipeline and Live Ops dashboards, answer bank sheet. Earlier days build their screens with the same two skills, so Day 9 is polish and dashboards, not a redesign. |
 | **10 Inbox** | Gmail reply classification, **acceptance watcher**, interview-invite detection, Calendar executor (direct API), follow-up routines. |
 | **11 Outreach loop** | Connector + DM Outreach, the full state machine (invite → accept → DM/referral), caps enforcement, end-to-end dry run. |
 | **12 Comp Analyst** | Pay research artifact, salary-field handling (confirm-before-fill), integration with Answerer. |
