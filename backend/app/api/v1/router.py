@@ -16,6 +16,8 @@ from app.api.v1 import (
     experts,
     contacts,
     crm,
+    answer_bank,
+    sidepanel,
     discovery,
     network,
     email,
@@ -67,6 +69,11 @@ api_v1_router.include_router(
     tags=["HR Contacts"],
 )
 api_v1_router.include_router(
+    answer_bank.router,
+    prefix="/answer-bank",
+    tags=["Answer bank"],
+)
+api_v1_router.include_router(
     crm.router,
     prefix="/crm",
     tags=["Contacts CRM"],
@@ -95,6 +102,11 @@ api_v1_router.include_router(
     extension.router,
     prefix="/extension",
     tags=["Chrome extension"],
+)
+api_v1_router.include_router(
+    sidepanel.router,
+    prefix="/extension",
+    tags=["Chrome extension: JobDots side panel"],
 )
 api_v1_router.include_router(
     analytics.router,

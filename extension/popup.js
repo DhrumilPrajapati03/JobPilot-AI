@@ -46,6 +46,13 @@ $('fill').addEventListener('click', async () => {
   }
 });
 
+$('panel').addEventListener('click', async () => {
+  // Capture the job and review the Answerer's answers in Chrome's side panel.
+  const win = await chrome.windows.getCurrent();
+  await chrome.sidePanel.open({ windowId: win.id });
+  window.close();
+});
+
 $('queue').addEventListener('click', async () => {
   const { appUrl } = await send({ type: 'settings' });
   if (appUrl) chrome.tabs.create({ url: `${appUrl.replace(/\/+$/, '')}/apply` });

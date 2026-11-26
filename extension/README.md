@@ -1,4 +1,27 @@
-# JobPilot Autofill (Chrome extension)
+# JobDots (Chrome extension)
+
+## Side panel (JobDots)
+
+Click the extension icon → **Open the JobDots panel**. The first time, allow it to read job
+pages (Chrome asks once; you can revoke it in `chrome://extensions`).
+
+- **Capture this job**: on a job posting, opens a case and Supervisor starts on it (company
+  brief, people, tailored resume, then an email for your approval). Select the job
+  description first if the page has a lot else on it.
+- **Read this form's questions**: on the application form, the Answerer answers each
+  question and says where the answer came from: *From your vault*, *Reused*, *Adapted*,
+  *Drafted* or *Needs you* (legal agreements, consents, files, and anything it couldn't
+  answer from what you've confirmed). Pay and visa answers are always marked to check.
+- Edit anything, then **Approve and save answers**: new and edited answers go to your answer
+  bank (as new versions), so next time they are reused. Tick "Don't save this one" to keep
+  an answer out of the bank. Use **Copy** to paste an answer into the form.
+
+The panel never fills or submits the form and never sees your token; the service worker
+makes every call, and only the panel may call the side panel routes.
+
+---
+
+## Autofill (from JobPilot)
 
 Fills job application forms with your JobPilot data: name and contact details, your
 tailored resume PDF, cover letter, saved screening answers, and AI drafts for open

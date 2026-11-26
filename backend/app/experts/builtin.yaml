@@ -81,10 +81,15 @@
 - id: answerer
   name: Answerer
   role: Answers application questions from your answer bank
-  model: {provider: default}
-  tools: [read_case, save_artifact]
+  description: Answers the questions on an application form from your fact vault and answer bank, adapts or drafts the rest, and marks where each answer came from for your review.
+  instructions: See app/experts/answerer.py (INSTRUCTIONS). Reuse >= 0.9 similarity, adapt 0.75-0.9, else draft; company-specific answers are never reused verbatim.
+  policy_notes: Never answers legal agreements, consents or self-identification without your saved answer. Fills and submits nothing.
+  model: {provider: default, task: quality}
+  tools: [read_case, search_answers, save_artifact]
   outputs: [answer_set]
-  status: draft
+  triggers: [{kind: event, event: form_questions}, {kind: manual}]
+  budgets: {steps: 180, tokens: 60000, seconds: 300}
+  status: active
 
 - id: applicant
   name: Applicant

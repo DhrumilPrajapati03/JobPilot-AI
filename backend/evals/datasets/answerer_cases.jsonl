@@ -1,0 +1,24 @@
+{"label": "By checking this box I consent to the processing of my personal data", "type": "checkbox", "kind": "legal"}
+{"label": "I certify that the information provided is true and complete", "type": "checkbox", "kind": "legal"}
+{"label": "Please sign below (type your full name as your e-signature)", "type": "text", "kind": "legal"}
+{"label": "I acknowledge the arbitration agreement", "type": "radio", "kind": "legal"}
+{"label": "Gender identity", "type": "select", "kind": "eeo"}
+{"label": "Are you a protected veteran?", "type": "select", "kind": "eeo"}
+{"label": "Do you have a disability?", "type": "radio", "kind": "eeo"}
+{"label": "Race/Ethnicity", "type": "select", "kind": "eeo"}
+{"label": "Upload your resume", "type": "file", "kind": "file"}
+{"label": "Last Name", "type": "text", "kind": "name"}
+{"label": "Phone number", "type": "tel", "kind": "phone"}
+{"label": "GitHub profile", "type": "url", "kind": "link"}
+{"label": "What is your expected annual compensation?", "type": "text", "kind": "pay"}
+{"label": "Current CTC (in LPA)", "type": "text", "kind": "pay"}
+{"label": "Do you require visa sponsorship to work in the US?", "type": "radio", "kind": "sponsorship"}
+{"label": "What is your notice period?", "type": "select", "kind": "notice"}
+{"label": "When can you start?", "type": "text", "kind": "start_date"}
+{"label": "Are you open to relocating to Bengaluru?", "type": "radio", "kind": "relocation"}
+{"label": "Years of experience with PyTorch", "type": "select", "kind": "years"}
+{"label": "Why are you interested in joining Acme?", "type": "textarea", "kind": "company_specific"}
+{"label": "What excites you about this role?", "type": "textarea", "kind": "company_specific"}
+{"label": "Tell us about a time you shipped an ML model to production", "type": "textarea", "kind": "open"}
+{"label": "Describe your experience with retrieval-augmented generation", "type": "textarea", "kind": "open"}
+{"label": "How did you hear about us?", "type": "select", "kind": "short"}

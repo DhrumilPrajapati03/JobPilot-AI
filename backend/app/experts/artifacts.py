@@ -124,8 +124,34 @@ class ContactList(Strict):
     notes: list[str] = Field(default_factory=list, max_length=10)
 
 
+class FormAnswer(Strict):
+    """One form question and the Answerer's answer, with where it came from."""
+    key: str = Field(max_length=300)
+    label: str = Field(max_length=1000)
+    type: str = Field(default="text", max_length=20)
+    required: bool = False
+    options: list[str] = Field(default_factory=list, max_length=50)
+    kind: str = Field(default="short", max_length=30)
+    value: str | list[str] | None = None
+    badge: Literal["vault", "reused", "adapted", "generated", "needs_you"]
+    flagged: bool = False
+    note: str = Field(default="", max_length=300)
+    bank_id: str | None = None
+    similarity: float | None = None
+
+
+class AnswerSet(Strict):
+    """Answers to one application form, for review in the extension's side panel."""
+    company: str = Field(min_length=1, max_length=200)
+    role: str = Field(default="", max_length=300)
+    url: str = Field(default="", max_length=2000)
+    answers: list[FormAnswer] = Field(default_factory=list, max_length=150)
+    counts: dict[str, int] = Field(default_factory=dict)
+    notes: list[str] = Field(default_factory=list, max_length=10)
+
+
 KINDS: dict[str, type[BaseModel]] = {"company_brief": CompanyBrief, "resume_version": ResumeVersion, "draft": EmailDraft,
-                                     "contact_list": ContactList}
+                                     "contact_list": ContactList, "answer_set": AnswerSet}
 
 
 class ArtifactError(ValueError):

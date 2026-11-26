@@ -21,6 +21,22 @@ Status of claims: items marked **[unverified]** come from memory or third-party 
 5. Brave's MIT-licensed API reference skills (`brave-web-search`, `brave-llm-context`) are in `.claude/skills/` for the coding agent. The key stays in `.env` and is never put into the agent's environment.
 6. **As built on Day 6:** Recon is **deterministic** (rules, no model). It accepts a person only with evidence that they work at the company now: the result title, the profile's "Experience" line, or a first-person post. It checks the company with an exact match, so "Acme Infotech" is not "Acme AI". A labelled eval (`recon_cases`) requires zero wrong-company people. The local 8B model stays an option for ambiguous titles. Supervisor runs Recon **after Researcher and before Tailor**, so Email Outreach can write to the recruiter or hiring mailbox Recon found. Searches are capped per run and per day (`recon_searches_per_run`, `recon_searches_per_day` in `policy.yaml`).
 
+### As built on Day 7 (26 Nov: extension side panel + Answerer)
+
+1. **Answerer** decides each form answer by question kind (rules, checked by the `answerer_cases` eval):
+   - **From the fact vault:** profile facts. Pay, visa and work-authorization answers are always marked to confirm.
+   - **From the answer bank:** reused at ≥ 0.9 similarity (pgvector, local `embeddinggemma`; word overlap if Ollama is down), adapted at 0.75–0.9, otherwise drafted by the model from vault facts, the brief and the JD.
+   - **Company-specific answers** are never reused verbatim.
+   - **Never answered:** legal agreements, consents and files are always handed to you. Self-identification is answered only from your saved answer; otherwise it is handed to you, with "decline" suggested when the form offers it.
+2. **Answer bank:** approving answers in the side panel saves new and edited ones as new versions. `GET/DELETE /api/v1/answer-bank` serves the Day 9 sheet.
+3. **Extension:**
+   - a Chrome **side panel** (capture JD, read questions, review answers with worded badges, approve)
+   - side panel routes `/extension/page|capture|questions|answer-set|answer-set/approve`, callable only from the panel
+   - page access is an optional `https://*/*` permission you grant once
+4. **Deviations from the plan:**
+   - The side panel is plain MV3 JavaScript, like the existing extension, not a Vite + TypeScript build. This avoids a build step for "load unpacked". The move to Vite + TS can come with Day 8's send queue if it earns its keep.
+   - The panel shows the Answerer's status as a worded step line instead of the `ExpertAvatar`, because bot-avatars needs React and a bundler.
+
 ### v1.7 changes (26 Nov: React Bits)
 
 1. **React Bits** (reactbits.dev, MIT + Commons Clause: free inside JobDots, never resold or redistributed on its own) is a source registry for three Day 9 patterns: **Stack** for the approval deck, **CountUp** for Pipeline dashboard numbers, **AnimatedList** for the activity stream. Components are copied in through the shadcn registry `@react-bits` (`frontend/components.json`), carry a notice header, are adapted to our tokens and Lucide icons, and are wrapped. Its backgrounds, 3D and glitch effects and Pro tier are not used.

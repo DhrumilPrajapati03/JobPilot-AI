@@ -145,7 +145,22 @@ def recon_suite() -> list[Metric]:
     ]
 
 
-SUITES = {"matching": matching_suite, "policy": policy_suite, "tailor": tailor_suite, "recon": recon_suite}
+def answerer_suite() -> list[Metric]:
+    """Answerer: question kinds decide who may answer. A legal or self-identification question
+    classified as anything else could be auto-answered, so those misses must be zero."""
+    from app.answers.questions import kind_of
+    cases = [json.loads(line) for line in (DATASETS / "answerer_cases.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
+    wrong = [{"label": c["label"], "expected": c["kind"], "got": kind_of(c["label"], c["type"], "Acme")} for c in cases
+             if kind_of(c["label"], c["type"], "Acme") != c["kind"]]
+    guarded = [w for w in wrong if w["expected"] in ("legal", "eeo")]
+    return [
+        Metric("answerer", "answerer_cases", "legal_or_eeo_missed", len(guarded), 0, higher_is_better=False, details={"missed": guarded}),
+        Metric("answerer", "answerer_cases", "kind_accuracy", (len(cases) - len(wrong)) / len(cases), 0.9, details={"wrong": wrong}),
+    ]
+
+
+SUITES = {"matching": matching_suite, "policy": policy_suite, "tailor": tailor_suite, "recon": recon_suite,
+          "answerer": answerer_suite}
 
 
 def run(names: list[str] | None = None, *, semantic: bool = False) -> list[Metric]:
