@@ -101,7 +101,30 @@ Anatomy of a draft card (email shown; DM, invite, form answers, resume diff foll
 
 Before adding a control, ask: does it help him delegate, or give him one more thing to manage? Prefer removing panel options, model pickers, run metadata and extra badges. Keep practical limits visible only when hit (for example the outreach caps from `policy.yaml`).
 
-## 9. Checklist for every JobDots screen
+## 9. Libraries.dev components (motion with a job)
+
+[libraries.dev](https://libraries.dev/) publishes small React components for AI interfaces. Its Terms (October 2026) release the **npm libraries under MIT**; its **Models** (Magnetic UI, Voice position, Mood recognition) and anything **Pro** (Studio, presets, Pro skill) are under a separate licence that needs a paid plan for commercial use, so JobDots never uses those. Catalog checked on 26 Nov 2026:
+
+| Library (npm) | Use in JobDots | Rule |
+|---|---|---|
+| `bot-avatars` | **In use**: expert presence via `ExpertAvatar` (section 3) | The only way to draw an expert. |
+| `thinking-orbs` | The one "composing" moment at the end of a thread: the expert has started but no words have streamed yet. Pick the state from the work: `searching` (Researcher/Recon reading), `composing` (drafting), `solving` (Tailor planning), else `working`. Size 20 inline. | Never in the roster, never instead of the avatar's state, never more than one on screen. Gone as soon as text arrives. |
+| `border-beam` | The single approval card waiting for him (top of the deck) or a hand-off card, so the one thing that blocks work is findable. `colorVariant="mono"`, `size="line"`, `strength` low. | At most one beam per screen, only on something that needs his decision; `active={false}` once he opens it. |
+| `distortion-waves` | One orchestrated moment: sign-in → workspace (the team wakes up). | Nowhere else; its built-in `reducedMotion="system"` turns it into a crossfade. |
+| `voice-glow`, `voice-ring` | Not in v1. Only if a voice composer is added later (mic from a user gesture, on localhost/https). | Plan change first. |
+| `liquid-gooey`, `metal-fx`, `img-fx` | Not used: decoration without a job here; `img-fx` also pulls in `three`. | Don't add. |
+| Magnetic UI, Voice position, Mood recognition | Not used: Model License (paid for commercial use), and mood recognition reads his pointer and typing behaviour. | Don't add. |
+
+How to bring one in (the `bot-avatars` adoption is the template):
+
+1. Add it when the screen that needs it is built, not before. Check the package itself, not just the site: `LICENSE` in the tarball says MIT, no install scripts, runtime dependencies, publish date, then `npm install <pkg>@<version> --save-exact` and `npm audit`.
+2. Wrap it in one JobDots component (like `ExpertAvatar`) that owns the props we allow; screens never import the library directly.
+3. Reduced motion: if the library doesn't handle `prefers-reduced-motion` itself (only `bot-avatars` and `distortion-waves` say they do), the wrapper passes `paused`/`active={false}` under reduced motion.
+4. Theme: pass our light/dark theme (`theme` / `dark` props) so it matches the surface.
+5. Motion budget: per screen, the avatars plus at most **one** other moving library element. Spend motion on what needs him (approvals, hand-offs), never on decoration (frontend-design's "one orchestrated moment").
+6. Record it in plan section 6.2/7.1 and in this table.
+
+## 10. Checklist for every JobDots screen
 
 - [ ] `frontend-design` loaded and its two-pass design plan done for new screens.
 - [ ] Agent activity shown by `ExpertAvatar` state, not spinners; hover gives the current step.
@@ -111,3 +134,4 @@ Before adding a control, ask: does it help him delegate, or give him one more th
 - [ ] Empty states tell him what to do next; errors say what happened and how to fix it.
 - [ ] Works at 360 px wide; keyboard focus visible; reduced motion respected; light and dark themes.
 - [ ] No copied code or assets from Grok Bot or OpenBots; avatars only through `ExpertAvatar` (`bot-avatars`).
+- [ ] Any Libraries.dev component is MIT (npm), wrapped, pinned, reduced-motion safe, and within the motion budget (section 9).
