@@ -1,4 +1,4 @@
-# JobDots — Final End-to-End Plan (v1.7, 26 Nov 2026)
+# JobDots — Final End-to-End Plan (v1.8, 26 Nov 2026)
 
 Owner: Dhrumil. Single-user personal job-hunting assistant. Python backend, React frontend, local-first hosting on his laptop (Render with credit later), Postgres + pgvector (local; Neon in Phase B), Groq + local Ollama models, backups to his Google Drive.
 Status of claims: items marked **[unverified]** come from memory or third-party sources and must be checked before relying on them.
@@ -11,6 +11,14 @@ Status of claims: items marked **[unverified]** come from memory or third-party 
 4. **Per-case concurrency replaces the old one-running-job-per-user lock**, which would have serialised all experts (section 4, Day 2).
 5. LangChain, Chroma, Supabase, Celery/Redis and LangSmith are removed; reuse and removals are listed in section 16 and in `jobdots_codebase_triage.md`.
 6. New **Day 0** (freeze, secret scan, export, legacy snapshot) before Day 1.
+
+### v1.8 changes (26 Nov: search provider)
+
+1. The search API is **Brave Search API** (`BRAVE_API_KEY`). Both endpoints JobDots needs were checked live on 26 Nov: **Web Search** (`/res/v1/web/search`) and **LLM Context** (`/res/v1/llm/context`).
+2. **Recon** finds LinkedIn profiles through Web Search with an inline **Goggle** that keeps only `linkedin.com` results (`$discard` then `$site=linkedin.com`) and asks for `extra_snippets`. It reads names and titles from the result title and snippets only and never opens LinkedIn pages.
+3. **Researcher** may add LLM Context results as extra cited sources for a company brief. These are pre-extracted page text with URLs, so the existing citation rules apply unchanged.
+4. **Hunter is optional.** Its signup refuses webmail addresses, so Recon works without it: it uses emails published on company pages, plus a recipient Dhrumil sets himself. When `HUNTER_API_KEY` is present, Hunter is used for email lookup.
+5. Brave's MIT-licensed API reference skills (`brave-web-search`, `brave-llm-context`) are in `.claude/skills/` for the coding agent. The key stays in `.env` and is never put into the agent's environment.
 
 ### v1.7 changes (26 Nov: React Bits)
 
@@ -82,7 +90,7 @@ JobDots does what Dhrumil does by hand: take a job description, tailor the resum
 | 4 | **Tailor** | Edits master `.tex` per JD, compiles PDF, validates facts. | No web, no send. Validator rejects claims not in the fact vault. |
 | 5 | **Answerer** | Application questions from the answer bank; adapts or generates; source badge. For pay fields it uses the Comp Analyst artifact plus his confirmed number. | No legal/EEO/consent answers (hand-off). |
 | 6 | **Applicant** | Maps fields and fills forms via the extension; builds the review panel. | Never submits. |
-| 7 | **Recon** | Finds recruiters/HR, hiring managers, CEO, CTO, and employees (peers). Assigns `role_class`. LinkedIn URL (search-based), email (Hunter), X handle. | Read-only public sources; no logged-in scraping. |
+| 7 | **Recon** | Finds recruiters/HR, hiring managers, CEO, CTO, and employees (peers). Assigns `role_class`. LinkedIn URL (Brave search with a LinkedIn-only Goggle), email (public pages; Hunter if configured), X handle. | Read-only public sources; no logged-in scraping. |
 | 8 | **Connector** *(new)* | Chooses who to invite next, drafts the connection note within channel limits, paces by caps in `policy.yaml`. Output: invite proposals. | Proposals only. |
 | 9 | **Email Outreach** *(split from Networker)* | Cold email to HR/CEO/CTO: subject, personalization, follow-up sequence. | Drafts only. |
 | 10 | **DM Outreach** *(split from Networker)* | After acceptance: cold DM for HR/CEO/CTO, referral ask for employees. Later X/Reddit. | Drafts only. |
@@ -221,7 +229,7 @@ agent_spec:
                                           Courier (deterministic executors)
                           Gmail sender • LinkedIn queue (invite, DM; one click in extension) • Calendar • (X/Reddit, Composio adapter optional)
                                                                |
-      Tools layer: Hunter • search API • public-web fetch/Playwright (public only) • Tectonic • embeddings
+      Tools layer: Hunter (optional) • Brave Search API • public-web fetch/Playwright (public only) • Tectonic • embeddings
       Data: Neon Postgres (+pgvector) • Render disk/object store for PDFs
       Worker (Render background worker, same image): durable queue, leases, checkpoints, routines
 ```
@@ -423,7 +431,7 @@ Conventions: Pydantic for every agent output; SQLAlchemy 2 + Alembic; routes use
 | LLM access | `openai` SDK against OpenAI-compatible endpoints: Groq (`gpt-oss-120b`) and Ollama (local small models and embeddings); thin provider adapter with fallback (keep the old ModelChain cooldown idea); `tenacity` retries; **no LangChain** |
 | Telegram | `python-telegram-bot` or `aiogram`, long polling in Phase A, webhook in Phase B |
 | Google | `google-api-python-client` + `google-auth-oauthlib` (Gmail send/read, Calendar, Drive backup) |
-| Other tools | Hunter and a search API via `httpx`; Playwright (public pages only); Tectonic + Jinja2 (LaTeX); `pypdf` (page-count checks) |
+| Other tools | Brave Search API (Web Search + LLM Context) and optional Hunter via `httpx`; Playwright (public pages only); Tectonic + Jinja2 (LaTeX); `pypdf` (page-count checks) |
 | Security | `cryptography` (Fernet) for stored tokens, structured logging with redaction (`structlog`) |
 | Auth | Google + GitHub login via Authlib (single-owner allowlist on provider IDs), server-side sessions, bearer token as break-glass, hashed extension token (section 4.1) |
 | Frontend | React 19 + Vite + TypeScript, Tailwind v4, own shadcn-style components, TanStack Query, `EventSource` for SSE, pdf.js, generated API client from FastAPI's OpenAPI schema; `bot-avatars` for the expert avatars, plus the Libraries.dev and React Bits (Stack, CountUp, AnimatedList; via the shadcn registry and MCP) components named in the `jobdots-agentic-ui` skill (section 9); project skills `frontend-design` + `jobdots-agentic-ui` |
@@ -446,7 +454,7 @@ Assumption: coding agents write most code; Dhrumil reviews and tests. Adding the
 | **3 Agent runtime** | `agent_spec` format, Supervisor graph, typed artifacts, tool registry + allowlists, Scout (with daily routine and **catch-up-on-wake** scheduler), Researcher. |
 | **4 Tailor** | Structured edits on master `.tex`; Tectonic in Docker; validator; diff card; PDF artifact. |
 | **5 MVP** | Gmail executor, Telegram approvals, Reviewer, Email Outreach. **MVP: paste JD → tailored PDF + recruiter email draft → approve → send.** |
-| **6 Recon + CRM** | Search-based LinkedIn URL lookup, Hunter, GitHub/X handles, `role_class`, dedupe, caps, cooldowns. |
+| **6 Recon + CRM** | LinkedIn URL lookup via Brave Web Search (LinkedIn-only Goggle), optional Hunter, GitHub/X handles, `role_class`, dedupe, caps, cooldowns. |
 | **7 Extension + Answerer** | Capture JD; question detection; answer bank (pgvector); review panel with badges. |
 | **8 Applicant + LinkedIn queue** | Form fill on Greenhouse/Lever/Ashby; extension **send queue** (invite and DM, one click each). |
 | **9 Dashboards + UI** | `frontend-design` plan reviewed against the brief first; expert roster with `ExpertAvatar` states and hover steps; command center, case group threads, approval cards and inbox (deck from React Bits `Stack`), activity stream (`AnimatedList`), dashboard numbers (`CountUp`), expert browser preview/takeover, Pipeline and Live Ops dashboards, answer bank sheet. Earlier days build their screens with the same two skills, so Day 9 is polish and dashboards, not a redesign. |
@@ -537,7 +545,7 @@ Assumption: coding agents write most code; Dhrumil reviews and tests. Adding the
 
 Database moves to Neon (pgvector). Local models are unreachable from Render, so agents fall back to Groq. Telegram switches from long polling to a webhook.
 
-**Environment variables (Render env group, never in repo):** `DATABASE_URL`, `GROQ_API_KEY`, `API_BEARER_TOKEN`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`, `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET` (API connections), `GOOGLE_LOGIN_CLIENT_ID`, `GOOGLE_LOGIN_CLIENT_SECRET`, `GITHUB_OAUTH_CLIENT_ID`, `GITHUB_OAUTH_CLIENT_SECRET`, `SESSION_SECRET`, `HUNTER_API_KEY`, `SEARCH_API_KEY`, `ENCRYPTION_KEY`, `ALLOWED_ORIGINS`, optional `COMPOSIO_API_KEY`.
+**Environment variables (Render env group, never in repo):** `DATABASE_URL`, `GROQ_API_KEY`, `API_BEARER_TOKEN`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`, `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET` (API connections), `GOOGLE_LOGIN_CLIENT_ID`, `GOOGLE_LOGIN_CLIENT_SECRET`, `GITHUB_OAUTH_CLIENT_ID`, `GITHUB_OAUTH_CLIENT_SECRET`, `SESSION_SECRET`, `HUNTER_API_KEY` (optional), `BRAVE_API_KEY`, `ENCRYPTION_KEY`, `ALLOWED_ORIGINS`, optional `COMPOSIO_API_KEY`.
 
 **Domain-dependent settings:** CORS for the frontend `onrender.com` URL plus the extension origin; extension `host_permissions` for the backend URL; Telegram webhook `https://<api>.onrender.com/telegram/webhook/<secret>`; Google redirect URI for the API callback; login callbacks `https://<api>.onrender.com/auth/google/callback` and `/auth/github/callback` (HTTPS required for Google on a non-localhost host). Free Render web services sleep after about 15 minutes, so use paid always-on for api and worker.
 
@@ -614,7 +622,7 @@ Inputs he supplied (third-party trackers; treat as list prices): Render workspac
 | Neon | $0 (Free) | ~$19 (Launch) | **Important:** an always-polling worker keeps compute awake. At an assumed 0.25 CU minimum, 24/7 is about 180 CU-hrs/month, above the 100 free. Either poll the queue sparingly (every few minutes) so it scales to zero, or pay for Launch. Interactive work is woken by Telegram/web requests. |
 | Groq gpt-oss-120b | ~$3–6 | ~$3–6 | $0.15 in / $0.60 out per 1M tokens; more agents now, still small. Measure after 10 cases. |
 | Hunter | Free (50 credits) | Starter $49 if credits run out | |
-| Search API | small | small | pick provider, verify price |
+| Brave Search API | small | small | Per-request pricing; check the plan in the Brave dashboard **[unverified]** |
 | Composio | not used | optional free tier | |
 | X API | off | pay-per-use if enabled | DM price **[unverified]** |
 | **Total** | **~$17–20** | **~$54–57**, up to ~$106 with Hunter Starter | The $100 Render credit covers the Render portion for several months. |
