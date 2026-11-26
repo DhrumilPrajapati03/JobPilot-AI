@@ -36,6 +36,8 @@ class Vault:
     total_years: float | None
     never_claim: list[str]
     employers: list[str]
+    name: str = ""
+    links: dict[str, str] = field(default_factory=dict)   # confirmed linkedin/github/portfolio URLs
 
     def all_skills(self) -> set[str]:
         return {s.lower() for items in self.skills.values() for s in items}
@@ -75,7 +77,16 @@ def load(path: Path | str) -> Vault:
         years = float(facts.get("total_experience_years"))
     except (TypeError, ValueError):
         years = None
-    return Vault(achievements, skills, years, [str(x) for x in raw.get("never_claim") or []], employers)
+    person = raw.get("person") or {}
+    contact = raw.get("contact") or {}
+    links = {}
+    if _confirmed(contact):
+        for key in ("linkedin", "github", "portfolio"):
+            value = str(contact.get(key) or "").strip()
+            if value.startswith("http"):
+                links[key] = value
+    return Vault(achievements, skills, years, [str(x) for x in raw.get("never_claim") or []], employers,
+                 name=str(person.get("full_name") or "") if _confirmed(person) else "", links=links)
 
 
 def match(bullet_text: str, vault: Vault) -> tuple[str | None, float]:

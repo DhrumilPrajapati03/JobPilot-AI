@@ -11,11 +11,15 @@ from app.experts.spec import AgentSpec, SpecError, builtin_specs, validate
 from app.experts.tools import REGISTRY, Tool, ToolBox, ToolDenied
 
 
-def test_builtin_roster_is_valid_and_only_wave_one_is_active():
+def test_builtin_roster_is_valid_and_only_built_experts_are_active():
+    from app.core.policy import load_policy
     specs = builtin_specs()
     assert len(specs) == 14
-    assert {s.id for s in specs.values() if s.status == "active"} == {"supervisor", "scout", "researcher", "tailor"}
-    assert all(not s.action_kinds or s.status == "draft" for s in specs.values())  # nothing that sends is active yet
+    assert {s.id for s in specs.values() if s.status == "active"} == {
+        "supervisor", "scout", "researcher", "tailor", "email_outreach", "reviewer"}
+    modes = load_policy().action_modes
+    # An active expert may only propose outward actions that wait for your approval.
+    assert all(modes[k] == "ask_first" for s in specs.values() if s.status == "active" for k in s.action_kinds)
 
 
 @pytest.mark.parametrize("change,error", [

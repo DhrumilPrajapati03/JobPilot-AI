@@ -105,3 +105,12 @@ async def route_case(ctx, case_id: str, agent: str, reason: str):
 async def compile_resume(ctx, tex: str):
     from app.tailor import compile as tex_compile
     return await asyncio.to_thread(tex_compile.compile_tex, tex)
+
+
+@tool("propose_action", "Propose an outward action (it only runs after review, policy checks and your approval)")
+async def propose_action(ctx, kind: str, payload: dict, idempotency_key: str):
+    from app.core import actions
+    if kind not in ctx.spec.action_kinds:
+        raise ToolDenied(f"{ctx.spec.id} may not propose {kind}")
+    return await asyncio.to_thread(actions.propose, ctx.user_id, kind, payload, agent=ctx.spec.id,
+                                   idempotency_key=idempotency_key, case_id=ctx.case_id)

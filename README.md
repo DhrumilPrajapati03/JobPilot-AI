@@ -13,7 +13,7 @@ JobDots is being rebuilt from the JobPilot AI codebase on this branch (`jobdots`
 
 ## Status
 
-Days 0 and 1 of the plan are done (export, local Postgres + pgvector, Groq/Ollama, owner auth; Supabase and LangChain are gone). Day 2 added the case spine (cases, actions with approvals, the `policy.yaml` engine, budgets, per-case queue concurrency), Google/GitHub login, the JobPilot import, nightly backups and the eval harness. Day 3 added the agent runtime (Supervisor, Scout, Researcher); Day 4 adds the Tailor.
+Days 0 and 1 of the plan are done (export, local Postgres + pgvector, Groq/Ollama, owner auth; Supabase and LangChain are gone). Day 2 added the case spine (cases, actions with approvals, the `policy.yaml` engine, budgets, per-case queue concurrency), Google/GitHub login, the JobPilot import, nightly backups and the eval harness. Day 3 added the agent runtime (Supervisor, Scout, Researcher), Day 4 the Tailor, and Day 5 the MVP: paste a JD, get a tailored PDF and a recruiter email, approve it on Telegram, and Gmail sends it.
 
 ## Local stack
 
@@ -56,6 +56,27 @@ Experts are data: `backend/app/experts/builtin.yaml` holds the roster (synced in
 curl -H "Authorization: Bearer $OWNER_API_TOKEN" http://127.0.0.1:8000/api/v1/experts         # roster with live state
 curl -X POST -H "Authorization: Bearer $OWNER_API_TOKEN" http://127.0.0.1:8000/api/v1/experts/scout/run
 ```
+
+### Approvals on Telegram and sending from Gmail (Day 5)
+
+One-time setup (nothing secret is printed; values go to the root `.env`):
+
+```
+cd backend
+python scripts/connect_telegram.py           # after messaging your bot once (token from @BotFather in .env)
+python scripts/connect_google.py new-key     # ENCRYPTION_KEY for stored OAuth tokens; copy it to your password manager
+python scripts/connect_google.py connect     # pick the Gmail you send from; allow send + read
+docker compose up -d                         # starts the telegram service too
+```
+
+Then paste a job description:
+
+```
+curl -X POST -H "Authorization: Bearer $OWNER_API_TOKEN" -H "Content-Type: application/json"   -d '{"jd_text": "...", "company": "Acme", "role": "ML Engineer"}' http://127.0.0.1:8000/api/v1/experts/cases/quick
+python scripts/set_recipient.py <case id> <recruiter email> "Name"
+```
+
+Researcher, Tailor and Email Outreach run; the Reviewer checks the email (vault facts, numbers, qualifiers, recipient, cooldown, template phrases); Telegram shows the PDF and the email with **Approve and send** / **Reject**. Courier then sends it through `policy.yaml` (caps, quiet hours, kill switch) with a fixed Message-ID, so a retry never sends twice. Gmail's Testing mode ends the connection after 7 days: Telegram warns a day before; run `connect` again.
 
 ### Backups
 

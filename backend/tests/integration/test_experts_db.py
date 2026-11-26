@@ -72,7 +72,7 @@ def test_researcher_writes_a_cited_brief_and_wakes_supervisor(owner, monkeypatch
     assert queued(owner, "supervisor") == [(case["id"], "expert_done")]
 
 
-def test_supervisor_hands_off_once_then_waits_for_outreach(owner):
+def test_supervisor_routes_every_stage_and_waits_once_for_a_paused_expert(owner):
     case = cases.create_case(owner, company="Beta", role="AI Engineer", jd_text="Beta builds agents.")
     asyncio.run(runtime.run_expert(ctx_for(owner, "supervisor", case["id"])))
     assert queued(owner, "researcher") == [(case["id"], "routed")]
@@ -85,12 +85,24 @@ def test_supervisor_hands_off_once_then_waits_for_outreach(owner):
     assert cases.get_case(owner, case["id"])["stage"] == "researched"
     get_db().fetch("""insert into public.artifact (user_id, case_id, kind, content, created_by)
                       values (%s::uuid, %s::uuid, 'resume_version', '{}', 'tailor')""", [owner, case["id"]])
-    for _ in range(2):
-        asyncio.run(runtime.run_expert(ctx_for(owner, "supervisor", case["id"])))
-    after = cases.get_case(owner, case["id"])
-    assert after["stage"] == "tailored"
-    assert [e["kind"] for e in after["events"]].count("waiting") == 1  # not repeated on every wake
-    assert "Email Outreach" in after["events"][-1]["summary"]
+    asyncio.run(runtime.run_expert(ctx_for(owner, "supervisor", case["id"])))
+    assert queued(owner, "email_outreach") == [(case["id"], "routed")]
+    assert cases.get_case(owner, case["id"])["stage"] == "tailored"
+    get_db().fetch("""insert into public.artifact (user_id, case_id, kind, content, created_by)
+                      values (%s::uuid, %s::uuid, 'draft', '{}', 'email_outreach')""", [owner, case["id"]])
+    asyncio.run(runtime.run_expert(ctx_for(owner, "supervisor", case["id"])))
+    assert cases.get_case(owner, case["id"])["stage"] == "ready"
+    # A paused expert makes Supervisor wait, once, instead of handing off.
+    other = cases.create_case(owner, company="Gamma", role="AI Engineer", jd_text="Gamma builds agents.")
+    get_db().fetch("update public.agent_spec set status = 'paused' where id = 'researcher'")
+    try:
+        for _ in range(2):
+            asyncio.run(runtime.run_expert(ctx_for(owner, "supervisor", other["id"])))
+    finally:
+        get_db().fetch("update public.agent_spec set status = 'active' where id = 'researcher'")
+    events = cases.get_case(owner, other["id"])["events"]
+    assert [e["kind"] for e in events].count("waiting") == 1  # not repeated on every wake
+    assert "Researcher" in events[-1]["summary"]
 
 
 def test_supervisor_skips_imported_cases(owner):

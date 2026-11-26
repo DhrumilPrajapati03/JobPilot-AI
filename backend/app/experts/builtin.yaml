@@ -52,9 +52,10 @@
   name: Reviewer
   role: Checks every draft before you see it
   description: Compares claims with your fact vault, checks the recipient and recent contact, and blocks or annotates drafts.
-  model: {provider: default}
+  instructions: Deterministic checks (no model) so a draft can't argue its way past them; see app/experts/reviewer.py.
+  model: {provider: none}
   tools: [read_case]
-  status: draft
+  status: active
 
 - id: comp_analyst
   name: Comp Analyst
@@ -111,12 +112,17 @@
 
 - id: email_outreach
   name: Email Outreach
-  role: Drafts cold emails and follow-ups
-  model: {provider: default}
-  tools: [read_case, save_artifact]
+  role: Drafts cold emails to recruiters
+  description: Writes a short, specific email from the company brief and your fact vault, attaches the tailored resume, and proposes sending it for your approval.
+  instructions: See app/experts/email_outreach.py (INSTRUCTIONS). Drafts only; Courier sends after approval.
+  policy_notes: Proposals only. Every send needs your approval; caps, quiet hours and cooldowns from policy.yaml apply.
+  model: {provider: default, task: quality}
+  tools: [read_case, save_artifact, propose_action]
   outputs: [draft]
   action_kinds: [send_email]
-  status: draft
+  triggers: [{kind: event, event: routed}, {kind: manual}]
+  budgets: {steps: 15, tokens: 40000, seconds: 300}
+  status: active
 
 - id: dm_outreach
   name: DM Outreach

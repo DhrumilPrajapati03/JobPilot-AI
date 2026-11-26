@@ -66,6 +66,16 @@ class Settings(BaseSettings):
     GOOGLE_DRIVE_REFRESH_TOKEN: str = ""
     BACKUP_DRIVE_FOLDER_ID: str = ""  # optional Drive folder for the backups
 
+    # Token broker (plan section 4): OAuth secrets for Courier are stored encrypted with this
+    # Fernet key (scripts/connect_google.py new-key). Agents never see them.
+    ENCRYPTION_KEY: str = ""
+    # Gmail for Courier (send) and later Inbox (read). Same Google API client as backups.
+    GMAIL_SCOPES: str = ("https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.readonly "
+                         "openid https://www.googleapis.com/auth/userinfo.email")
+    # Telegram approvals (long polling; plan section 9.2). Only TELEGRAM_CHAT_ID is answered.
+    TELEGRAM_BOT_TOKEN: str = ""
+    TELEGRAM_CHAT_ID: str = ""
+
     # LLM providers (plan section 7.1): Groq and local Ollama, both OpenAI-compatible.
     GROQ_API_KEY: str = ""
     GROQ_MODEL: str = ""  # override the default Groq model (openai/gpt-oss-120b)

@@ -1,5 +1,12 @@
 # Synthetic fact vault for tests (matches tests/fixtures/resume/master.tex).
 version: 1
+person:
+  full_name: Ada Example
+  status: confirmed
+contact:
+  linkedin: https://www.linkedin.com/in/ada-example
+  github: https://github.com/ada-example
+  status: confirmed
 experience:
   - id: exp.labs
     title: Machine Learning Engineer

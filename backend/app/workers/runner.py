@@ -83,6 +83,9 @@ class Worker:
         db, uid = self.store.client, ctx.run["user_id"]
         email = autopilot.account_email(db, uid)
         kind = ctx.run["kind"]
+        if kind == "courier":
+            from app.courier import runner as courier
+            return await courier.run(ctx)
         if kind == "agent":
             from app.experts import runtime
             return await runtime.execute(ctx)

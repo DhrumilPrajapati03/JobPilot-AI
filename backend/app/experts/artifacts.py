@@ -82,7 +82,21 @@ class ResumeVersion(Strict):
     status: Literal["awaiting_review", "approved", "rejected"] = "awaiting_review"
 
 
-KINDS: dict[str, type[BaseModel]] = {"company_brief": CompanyBrief, "resume_version": ResumeVersion}
+class EmailDraft(Strict):
+    """An email the Email Outreach expert wrote; sending it is a separate, approved action."""
+    channel: Literal["email"] = "email"
+    to: str = Field(default="", max_length=254)
+    to_name: str = Field(default="", max_length=120)
+    subject: str = Field(min_length=1, max_length=120)
+    body: str = Field(min_length=1, max_length=4000)
+    specifics: list[str] = Field(default_factory=list, max_length=6)   # the company details it refers to
+    facts: list[str] = Field(default_factory=list, max_length=8)       # vault ids it relies on
+    attachment_artifact_id: str | None = None
+    action_id: str | None = None
+    review: dict = Field(default_factory=dict)
+
+
+KINDS: dict[str, type[BaseModel]] = {"company_brief": CompanyBrief, "resume_version": ResumeVersion, "draft": EmailDraft}
 
 
 class ArtifactError(ValueError):
