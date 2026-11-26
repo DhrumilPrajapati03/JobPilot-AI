@@ -1,17 +1,33 @@
 {
   "manifest_version": 3,
-  "minimum_chrome_version": "102",
-  "name": "JobPilot Autofill",
-  "version": "1.1.0",
-  "description": "Fills job application forms with your JobPilot resume and saved answers. You review and click Submit yourself.",
-  "permissions": ["storage", "activeTab", "scripting"],
+  "minimum_chrome_version": "116",
+  "name": "JobDots",
+  "version": "1.2.0",
+  "description": "Captures job posts and reviews application answers in a side panel; also fills forms with your saved data. You review and click Submit yourself.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "sidePanel"
+  ],
+  "optional_host_permissions": [
+    "https://*/*"
+  ],
   "host_permissions": [
     "http://localhost:8000/*",
     "http://127.0.0.1:8000/*",
     "https://jobpilot-api.onrender.com/*"
   ],
-  "background": { "service_worker": "background.js" },
-  "action": { "default_title": "JobPilot", "default_popup": "popup.html" },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "JobDots",
+    "default_popup": "popup.html"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
   "content_scripts": [
     {
       "matches": [
@@ -23,13 +39,23 @@
         "https://jobs.ashbyhq.com/*",
         "https://jobs.smartrecruiters.com/*"
       ],
-      "js": ["content/form-engine.js", "content/fill.js"],
+      "js": [
+        "content/form-engine.js",
+        "content/fill.js"
+      ],
       "all_frames": true,
       "run_at": "document_idle"
     },
     {
-      "matches": ["http://localhost:5173/*", "http://127.0.0.1:5173/*", "https://jobpilot-web.onrender.com/*"],
-      "js": ["policy.js", "content/connect.js"],
+      "matches": [
+        "http://localhost:5173/*",
+        "http://127.0.0.1:5173/*",
+        "https://jobpilot-web.onrender.com/*"
+      ],
+      "js": [
+        "policy.js",
+        "content/connect.js"
+      ],
       "run_at": "document_start"
     }
   ]

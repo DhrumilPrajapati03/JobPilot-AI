@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>JobDots</title>
+    <link rel="stylesheet" href="sidepanel.css" />
+  </head>
+  <body>
+    <header class="bar">
+      <span class="mark" aria-hidden="true"><i></i><i></i></span>
+      <span class="brand">JobDots</span>
+      <span id="who" class="who"></span>
+    </header>
+
+    <main>
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+
+      <section id="access" class="block" hidden>
+        <h2>Let JobDots read job pages</h2>
+        <p class="quiet">The panel reads the job description and the form's questions from the page you have open. It never fills or submits anything on its own.</p>
+        <button id="grant" class="primary">Allow on job pages</button>
+      </section>
+
+      <section id="job" class="block" hidden>
+        <div id="job-known" hidden>
+          <p class="company" id="job-company"></p>
+          <p class="quiet" id="job-role"></p>
+        </div>
+        <div id="job-unknown" hidden>
+          <h2>This page isn't a case yet</h2>
+          <p class="quiet">Capture it and Supervisor starts on it: company brief, people, tailored resume, then an email for you to approve. Select the job description first if the page has a lot else on it.</p>
+          <button id="capture" class="primary">Capture this job</button>
+        </div>
+      </section>
+
+      <section id="form" class="block" hidden>
+        <h2>Application questions</h2>
+        <p class="quiet" id="form-hint">Open the application form, then read its questions. Each answer says where it came from.</p>
+        <button id="read">Read this form's questions</button>
+        <ol id="answers" class="answers"></ol>
+      </section>
+    </main>
+
+    <footer id="approve-bar" class="approve" hidden>
+      <p id="approve-note" class="quiet"></p>
+      <button id="approve" class="primary">Approve and save answers</button>
+    </footer>
+
+    <script src="sidepanel-lib.js"></script>
+    <script src="sidepanel.js"></script>
+  </body>
+</html>

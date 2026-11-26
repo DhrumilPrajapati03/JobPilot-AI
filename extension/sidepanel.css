@@ -1,0 +1,92 @@
+/* JobDots side panel. Tokens match the web app (frontend/src/index.css). */
+:root {
+  --bg: #f6f6f2;
+  --ink: #202722;
+  --quiet: #5b6a63;
+  --card: #ffffff;
+  --line: #dbe2d9;
+  --accent: #225dcc;
+  --on-accent: #ffffff;
+  --amber: #8a4a06;
+  --amber-bg: #fdf1df;
+  --vault: #0d6b47;
+  --vault-bg: #e4f4ec;
+  --draft: #4a3aa7;
+  --draft-bg: #ecebfa;
+  --focus: #225dcc;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #101716;
+    --ink: #edf2ee;
+    --quiet: #a8bab0;
+    --card: #18211e;
+    --line: #33463b;
+    --accent: #86bdff;
+    --on-accent: #0c1d35;
+    --amber: #ffc47d;
+    --amber-bg: #33240f;
+    --vault: #7fdcb0;
+    --vault-bg: #12301f;
+    --draft: #b7aef5;
+    --draft-bg: #262147;
+    --focus: #86bdff;
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); }
+body { font: 13px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; min-width: 280px; padding-bottom: 88px; }
+h2 { font-size: 14px; line-height: 1.3; margin: 0 0 4px; font-weight: 650; }
+p { margin: 0 0 8px; }
+.quiet { color: var(--quiet); }
+
+.bar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+.brand { font-weight: 700; letter-spacing: -0.01em; }
+.who { margin-left: auto; color: var(--quiet); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 55%; }
+/* Two dots: the JobDots mark. */
+.mark { display: inline-flex; gap: 3px; }
+.mark i { width: 7px; height: 7px; border-radius: 50%; background: var(--ink); }
+.mark i + i { background: var(--accent); }
+
+main { padding: 12px 14px; display: grid; gap: 12px; }
+.status { margin: 0; color: var(--quiet); }
+.status:empty { display: none; }
+.status.err { color: #c4321f; }
+@media (prefers-color-scheme: dark) { .status.err { color: #ff9e92; } }
+
+.block { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+.company { font-size: 16px; font-weight: 700; margin: 0; line-height: 1.25; }
+
+button { font-family: inherit; font-size: 13px; font-weight: 600; line-height: 1.2; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); width: 100%; }
+button.small { padding: 4px 8px; font-size: 12px; font-weight: 550; }
+button:disabled { opacity: 0.55; cursor: default; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.answers { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 10px; }
+.answer { border-top: 1px solid var(--line); padding-top: 10px; }
+.answer:first-child { border-top: 0; padding-top: 0; }
+.q { font-weight: 600; margin: 0 0 6px; overflow-wrap: anywhere; }
+.q .req { color: var(--quiet); font-weight: 400; }
+.row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.row .spacer { flex: 1; }
+
+/* Source badges: always a word, colour only reinforces it. */
+.badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
+.badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.badge.vault { color: var(--vault); background: var(--vault-bg); }
+.badge.reused { color: var(--vault); background: var(--vault-bg); }
+.badge.adapted, .badge.generated { color: var(--draft); background: var(--draft-bg); }
+.badge.needs_you { color: var(--amber); background: var(--amber-bg); }
+
+textarea, select, input[type=text] { width: 100%; font-family: inherit; font-size: 13px; line-height: 1.45; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 7px 8px; }
+textarea { resize: vertical; min-height: 64px; }
+.note { font-size: 12px; color: var(--quiet); margin: 6px 0 0; }
+.answer.flag .note { color: var(--amber); }
+.skip { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--quiet); margin-top: 6px; }
+
+.approve { position: fixed; inset: auto 0 0 0; background: var(--bg); border-top: 1px solid var(--line); padding: 10px 14px 12px; }
+.approve p { font-size: 12px; margin-bottom: 6px; }

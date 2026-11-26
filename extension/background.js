@@ -3,6 +3,9 @@
 // content scripts never see the token and page CORS rules don't apply.
 
 const DEFAULT_API = 'http://localhost:8000';
+// JobDots side panel routes: capture a job, send a form's questions, review and approve answers.
+// Only the side panel page may call them (never a content script on a web page).
+const PANEL_PATHS = ['/extension/page', '/extension/capture', '/extension/questions', '/extension/answer-set', '/extension/answer-set/approve'];
 importScripts('policy.js');
 const policy = globalThis.JOBPILOT_POLICY;
 const storageReady = Promise.all([
@@ -19,7 +22,7 @@ async function settings() {
 async function api(path, { method = 'GET', body } = {}) {
   const { apiBase, token } = await settings();
   if (!policy.apiBase(apiBase)) return { ok: false, status: 400, data: { detail: 'API origin is not allowed. Check extension/policy.js.' } };
-  const allowed = { GET: ['/extension/me', '/extension/queue'], POST: ['/extension/match', '/extension/fill', '/extension/applied', '/extension/answers', '/extension/sessions', '/extension/document', '/extension/events'] };
+  const allowed = { GET: ['/extension/me', '/extension/queue'], POST: ['/extension/match', '/extension/fill', '/extension/applied', '/extension/answers', '/extension/sessions', '/extension/document', '/extension/events', ...PANEL_PATHS] };
   if (!(allowed[method] || []).includes(path)) return { ok: false, status: 403, data: { detail: 'Extension action is not allowed.' } };
   if (!token) return { ok: false, status: 401, data: { detail: 'Not connected. Open JobPilot → Settings → Connect extension.' } };
   try {
@@ -128,7 +131,15 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
   (async () => {
     if (sender.id !== chrome.runtime.id) return reply({ ok: false });
     const popup = sender.url === chrome.runtime.getURL('popup.html');
+    const panel = sender.url === chrome.runtime.getURL('sidepanel.html');
     const origin = policy.origin(sender.url);
+    if (panel) {
+      // The side panel calls its own routes (and /extension/me); nothing else, and never raw credentials.
+      if (message.type === 'api' && (PANEL_PATHS.includes(message.path) && message.method === 'POST' || message.path === '/extension/me' && !message.method))
+        return reply(await api(message.path, message));
+      return reply({ ok: false });
+    }
+    if (PANEL_PATHS.includes(message.path)) return reply({ ok: false });
     if (!popup && (!sender.tab || !origin || !/^https?:/.test(origin))) return reply({ ok: false });
     if (['execution-event','execution-context'].includes(message.type)) return reply(!popup ? await lockedExecution(message,sender) : {ok:false});
     if (message.type === 'api') {

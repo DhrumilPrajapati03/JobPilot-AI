@@ -149,3 +149,12 @@ async def save_contact(ctx, **fields):
     from app.core import contacts
     saved = await asyncio.to_thread(contacts.upsert, ctx.user_id, **fields)
     return {"id": saved["id"], "created": saved["created"]}
+
+
+# --- Answerer (Day 7) ------------------------------------------------------------------------------
+
+@tool("search_answers", "Search your answer bank for saved answers to a similar question")
+async def search_answers(ctx, question: str):
+    from app.answers import bank
+    hits, vectors = await asyncio.to_thread(bank.search, ctx.user_id, question)
+    return {"vectors": vectors, "hits": [h.__dict__ for h in hits]}
