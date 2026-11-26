@@ -83,6 +83,8 @@ def test_bank_search_versions_and_delete(owner):
     second = bank.save(uid, "What is your notice period?", "15 days", source="user")
     bank.save(uid, "Describe a RAG project", "I built a RAG service.", source="user")
     assert (first["version"], second["version"]) == (1, 2) and first["embedded"]
+    again = bank.save(uid, "What is your notice period?", " 15 days ", source="user")
+    assert again["unchanged"] and (again["id"], again["version"]) == (second["id"], 2)   # same text: no new version
     hits, vectors = bank.search(uid, "Notice period?")
     assert vectors and hits[0].answer == "15 days" and 0.6 < hits[0].similarity < 0.9   # latest version, by meaning
     assert bank.search(uid, "What is your notice period")[0][0].similarity >= 0.99      # same wording: a reuse
@@ -164,6 +166,9 @@ def test_side_panel_capture_questions_review_and_approve(owner, monkeypatch):
         {"key": "why", "value": "Acme's RAG work on pgvector matches what I built at Example Labs.", "edited": True},
         {"key": "name", "value": "Ada Example"}]})
     assert ok.json() == {"saved": 1}                       # the vault answer is not copied into the bank
+    twice = client.post("/api/v1/extension/answer-set/approve", json={"case_id": case_id, "answer_set_id": ready["answer_set_id"], "answers": [
+        {"key": "why", "value": "Acme's RAG work on pgvector matches what I built at Example Labs.", "edited": True}]})
+    assert twice.json() == {"saved": 0}                    # approving again adds no duplicate version
     saved = bank.list_latest(uid)
     assert [(s["source"], s["company_scope"]) for s in saved] == [("user", "Acme")]
     assert TestClient(app).post("/api/v1/extension/page", json={"url": url}).status_code == 401

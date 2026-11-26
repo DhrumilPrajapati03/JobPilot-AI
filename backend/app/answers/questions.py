@@ -60,8 +60,11 @@ def company_specific(label: str, company: str) -> bool:
                           r"\b(our|this) (company|mission|product|team|role)\b", l))
 
 
+REQUIRED_MARK = re.compile(r"^[\s*✱]+|[\s*✱]+$|\s*\((required|optional)\)\s*$", re.I)
+
+
 def kind_of(label: str, field_type: str = "text", company: str = "") -> str:
-    label = (label or "").strip()
+    label = REQUIRED_MARK.sub("", (label or "").strip())    # forms put "*" before or after a required label
     if field_type == "file":
         return "file"
     if LEGAL.search(label):
