@@ -81,3 +81,20 @@ test('manifest declares the side panel with page access only on request', () => 
   assert.deepEqual(m.optional_host_permissions, ['https://*/*']);
   assert.ok(!m.host_permissions.some(h => h.includes('*://*') || h === 'https://*/*'));
 });
+
+test('fill plan: grouped by frame, frame prefix dropped, no consents, files or empty answers', () => {
+  const { fillPlan, fillSummary } = lib();
+  const answers = [
+    { key: 'f0:jp-1', label: 'First name', kind: 'name', value: 'Ada', required: true },
+    { key: 'f0:jp-2', label: 'I agree', kind: 'legal', value: 'Yes' },
+    { key: 'f0:jp-3', label: 'Resume', kind: 'file', value: null },
+    { key: 'f2:jp-1', label: 'Salary', kind: 'pay', value: '9 LPA', flagged: true },
+    { key: 'f2:jp-2', label: 'Why us?', kind: 'open', value: null },
+  ];
+  const plan = JSON.parse(JSON.stringify(fillPlan(answers, { 'f2:jp-2': 'Your RAG work.' }, {})));
+  assert.deepEqual(Object.keys(plan), ['0', '2']);
+  assert.deepEqual(plan['0'], [{ key: 'jp-1', panelKey: 'f0:jp-1', label: 'First name', value: 'Ada', required: true, flagged: false }]);
+  assert.deepEqual(plan['2'].map(a => [a.key, a.value, a.flagged]), [['jp-1', '9 LPA', true], ['jp-2', 'Your RAG work.', false]]);
+  assert.equal(fillSummary([{ outcome: 'filled' }, { outcome: 'filled' }, { outcome: 'review' }, { outcome: 'preserved' }]),
+    '2 filled, 1 to check, 1 already filled (left as is)');
+});

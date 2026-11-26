@@ -12,11 +12,14 @@ pages (Chrome asks once; you can revoke it in `chrome://extensions`).
   question and says where the answer came from: *From your vault*, *Reused*, *Adapted*,
   *Drafted* or *Needs you* (legal agreements, consents, files, and anything it couldn't
   answer from what you've confirmed). Pay and visa answers are always marked to check.
-- Edit anything, then **Approve and save answers**: new and edited answers go to your answer
-  bank (as new versions), so next time they are reused. Tick "Don't save this one" to keep
-  an answer out of the bank. Use **Copy** to paste an answer into the form.
+- Edit anything, then **Fill the form**: every answer with a value goes into the form (in
+  every frame), and each answer then says whether it was filled, needs checking (pay, visa,
+  anything the form changed), or was already filled and left as is. New and edited answers
+  also go to your answer bank (as new versions), so next time they are reused. Tick "Don't
+  save this one" to keep an answer out of the bank.
 
-The panel never fills or submits the form and never sees your token; the service worker
+The panel never ticks consents, never attaches files yet, and never submits: you check the
+form and click Submit yourself. It never sees your token; the service worker
 makes every call, and only the panel may call the side panel routes.
 
 ---
