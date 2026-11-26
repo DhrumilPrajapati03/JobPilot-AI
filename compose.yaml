@@ -31,6 +31,10 @@ x-backend: &backend
     GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_OAUTH_CLIENT_SECRET:-}
     GOOGLE_DRIVE_REFRESH_TOKEN: ${GOOGLE_DRIVE_REFRESH_TOKEN:-}
     BACKUP_DRIVE_FOLDER_ID: ${BACKUP_DRIVE_FOLDER_ID:-}
+    # Token broker key, Telegram approvals (scripts/connect_google.py and connect_telegram.py write these).
+    ENCRYPTION_KEY: ${ENCRYPTION_KEY:-}
+    TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+    TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
   volumes:
     - files:/app/data/files
     # Encrypted backups waiting for (or instead of) Drive; on the host in ./data/backups.
@@ -94,6 +98,12 @@ services:
     command: ["python", "-m", "app.workers.runner"]
     restart: unless-stopped
     stop_grace_period: 120s
+
+  # Telegram approvals (long polling: no public URL needed). Answers only TELEGRAM_CHAT_ID.
+  telegram:
+    <<: *backend
+    command: ["python", "-m", "app.telegram.bot"]
+    restart: unless-stopped
 
 volumes:
   pgdata:

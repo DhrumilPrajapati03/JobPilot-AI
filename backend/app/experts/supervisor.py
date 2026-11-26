@@ -115,6 +115,6 @@ async def run(ctx) -> dict:
                                     summary=f"Next: {ask}. Waiting for {route.agent.replace('_', ' ').title()}.",
                                     data={"agent": route.agent})
         return {"action": "wait", "agent": route.agent, "stage": decision.stage}
-    handed = await ctx.tools.call("route_case", f"Asked {route.agent.title()} to {ask}", case_id=case_id,
+    handed = await ctx.tools.call("route_case", f"Asked {route.agent.replace('_', ' ').title()} to {ask}", case_id=case_id,
                                   agent=route.agent, reason=f"Supervisor asked {route.agent.replace('_', ' ').title()} to {ask}")
     return {"action": "route", **handed}

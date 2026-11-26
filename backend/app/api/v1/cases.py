@@ -77,10 +77,14 @@ async def pending_actions(user: CurrentUser = Depends(get_current_user)):
 @router.post("/actions/{action_id}/approve")
 async def approve_action(action_id: str, body: ApproveIn, user: CurrentUser = Depends(get_current_user)):
     try:
-        return await asyncio.to_thread(actions.approve, user.id, action_id, payload_sha256=body.payload_sha256,
-                                       channel="web", note=body.note)
+        approved = await asyncio.to_thread(actions.approve, user.id, action_id, payload_sha256=body.payload_sha256,
+                                           channel="web", note=body.note)
     except actions.ActionError as exc:
         raise _action_error(exc) from None
+    from app.courier import runner as courier
+    if approved["kind"] in courier.SENDERS:
+        await asyncio.to_thread(courier.dispatch, user.id, action_id)
+    return approved
 
 
 @router.post("/actions/{action_id}/reject")

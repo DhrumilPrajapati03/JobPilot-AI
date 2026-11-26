@@ -21,6 +21,7 @@ INPUT_FIELDS = {
     "company_research": {"application_id", "urls"},
     "backup": {"scheduled_on"},
     "agent": {"agent", "case_id", "trigger", "scheduled_on", "urls"},
+    "courier": {"action_id"},
 }
 current_execution: ContextVar = ContextVar("current_execution", default=None)
 

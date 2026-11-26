@@ -157,3 +157,78 @@ async def toggle_routine(routine_id: str, body: RoutineIn, user: CurrentUser = D
     if not rows:
         raise HTTPException(404, "Routine not found")
     return {"key": rows[0][0], "enabled": rows[0][1]}
+
+
+# --- MVP: paste a JD, get a tailored PDF and a recruiter email to approve -------------------
+
+class QuickCaseIn(BaseModel):
+    jd_text: str = Field(default="", max_length=60_000)
+    source_url: HttpUrl | None = None
+    company: str = Field(default="", max_length=200)
+    role: str = Field(default="", max_length=200)
+    recipient_email: str = Field(default="", max_length=254)
+    recipient_name: str = Field(default="", max_length=120)
+
+
+class RecipientIn(BaseModel):
+    email: str = Field(min_length=3, max_length=254)
+    name: str = Field(default="", max_length=120)
+
+
+@router.post("/cases/quick", status_code=202)
+async def quick_case(body: QuickCaseIn, user: CurrentUser = Depends(get_current_user)):
+    """Paste a job description (or its URL): Researcher -> Tailor -> Email Outreach -> Reviewer -> your approval."""
+    _require_worker()
+    from app.agents.jd_parser import JDParserAgent
+    from app.core import cases as case_mod
+    from app.experts.email_outreach import set_recipient
+    from app.experts.reviewer import EMAIL
+    if body.recipient_email and not EMAIL.match(body.recipient_email.strip()):
+        raise HTTPException(422, "The recipient email doesn't look valid.")
+    if not body.jd_text.strip() and not body.source_url:
+        raise HTTPException(422, "Paste the job description or its URL.")
+    company, role, text, analysis = body.company.strip(), body.role.strip(), body.jd_text.strip(), None
+    if not (company and role and text):
+        parser = JDParserAgent()
+        analysis = await parser.parse(jd_url=str(body.source_url) if body.source_url and not text else None, jd_text=text or None)
+        text = text or getattr(parser, "source_text", "")
+        company, role = company or analysis.company, role or analysis.role
+    case = await asyncio.to_thread(case_mod.create_case, user.id, company=company, role=role, jd_text=text,
+                                   source_url=str(body.source_url or ""), actor="user")
+    if analysis is not None:
+        await asyncio.to_thread(get_db(user.id).fetch, "update public.job_case set jd_analysis = %s where id = %s::uuid",
+                                [analysis.model_dump_json(), case["id"]])
+    if body.recipient_email:
+        await asyncio.to_thread(set_recipient, user.id, case["id"], body.recipient_email, body.recipient_name, company)
+    run = await asyncio.to_thread(runtime.enqueue_expert, user.id, "supervisor", case_id=case["id"],
+                                  key=f"supervisor:{case['id']}:created", trigger="case_created")
+    return {"case_id": case["id"], "company": company, "role": role, "run_id": run["id"]}
+
+
+@router.post("/cases/{case_id}/recipient", status_code=202)
+async def add_recipient(case_id: str, body: RecipientIn, user: CurrentUser = Depends(get_current_user)):
+    """Set who the email goes to; Email Outreach drafts again for that person."""
+    _require_worker()
+    from app.core import cases as case_mod
+    from app.experts.email_outreach import set_recipient
+    from app.experts.reviewer import EMAIL
+    if not EMAIL.match(body.email.strip()):
+        raise HTTPException(422, "The recipient email doesn't look valid.")
+    case = await asyncio.to_thread(case_mod.get_case, user.id, case_id)
+    if case is None:
+        raise HTTPException(404, "Case not found")
+    await asyncio.to_thread(set_recipient, user.id, case_id, body.email, body.name, case.get("company") or "")
+    run = await asyncio.to_thread(runtime.enqueue_expert, user.id, "email_outreach", case_id=case_id, trigger="manual")
+    return {"run_id": run["id"]}
+
+
+@router.get("/connections/status")
+async def connections_status(user: CurrentUser = Depends(get_current_user)):
+    """Gmail and Telegram, as status only (never secrets)."""
+    from app.config import settings
+    from app.courier import connections
+    conn = await asyncio.to_thread(connections.get_google, user.id)
+    return {"gmail": None if conn is None else {"status": conn.status, "account": conn.account_email,
+                                                 "expires_hint": conn.expires_hint,
+                                                 "can_send": any(s.endswith("gmail.send") for s in conn.scopes)},
+            "telegram": {"configured": bool(settings.TELEGRAM_BOT_TOKEN), "linked": bool(settings.TELEGRAM_CHAT_ID)}}

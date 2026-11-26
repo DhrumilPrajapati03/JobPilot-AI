@@ -301,11 +301,11 @@ def auto_approval_allowed(user_id: str, kind: str, *, policy: Policy | None = No
     def work(conn):
         rows = conn.execute("""select a.revision from public.approval p join public.action a on a.id = p.action_id
                                where p.user_id = %s::uuid and a.kind = %s and p.channel <> 'auto'
-                               order by p.decided_at desc limit %s""",
+                               order by p.seq desc limit %s""",
                             [user_id, kind, rule["auto_after_clean_approvals"]]).fetchall()
         rejected = conn.execute("""select count(*) from (select p.decision from public.approval p
                                      join public.action a on a.id = p.action_id where p.user_id = %s::uuid and a.kind = %s
-                                     and p.channel <> 'auto' order by p.decided_at desc limit %s) recent
+                                     and p.channel <> 'auto' order by p.seq desc limit %s) recent
                                    where decision = 'rejected'""",
                                 [user_id, kind, rule["auto_after_clean_approvals"]]).fetchone()[0]
         if len(rows) < rule["auto_after_clean_approvals"] or rejected or any(r[0] != 1 for r in rows):
