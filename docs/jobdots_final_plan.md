@@ -16,6 +16,7 @@ Status of claims: items marked **[unverified]** come from memory or third-party 
 
 1. Expert avatars use **`bot-avatars`** (Libraries.dev, MIT licence, `npm install bot-avatars`, pinned 0.2.2, no runtime dependencies, React 18+): lit, rounded canvas bodies that look around, hop and sleep. It replaces the plan for an in-house inline SVG kit, and bloub is no longer a reference (its licence was never confirmed).
 2. Each expert gets its own body shape (and a few an accessory); the library's three motion states (`default`, `working`, `sleeping`) carry idle, working and paused, and a small worded badge carries the other states (section 6.2).
+3. Other **Libraries.dev** components (MIT npm packages only) have narrow, named jobs: `thinking-orbs` for the one "composing" moment in a thread, `border-beam` on the single approval card waiting for him, `distortion-waves` for the sign-in → workspace transition. Its Models and Pro content are not used (paid licence for commercial use). Rules and the motion budget are in the `jobdots-agentic-ui` skill, section 9.
 
 ### v1.5 changes (25 Nov: agentic UI)
 
@@ -420,7 +421,7 @@ Conventions: Pydantic for every agent output; SQLAlchemy 2 + Alembic; routes use
 | Other tools | Hunter and a search API via `httpx`; Playwright (public pages only); Tectonic + Jinja2 (LaTeX); `pypdf` (page-count checks) |
 | Security | `cryptography` (Fernet) for stored tokens, structured logging with redaction (`structlog`) |
 | Auth | Google + GitHub login via Authlib (single-owner allowlist on provider IDs), server-side sessions, bearer token as break-glass, hashed extension token (section 4.1) |
-| Frontend | React 19 + Vite + TypeScript, Tailwind v4, own shadcn-style components, TanStack Query, `EventSource` for SSE, pdf.js, generated API client from FastAPI's OpenAPI schema; `bot-avatars` for the expert avatars; project skills `frontend-design` + `jobdots-agentic-ui` |
+| Frontend | React 19 + Vite + TypeScript, Tailwind v4, own shadcn-style components, TanStack Query, `EventSource` for SSE, pdf.js, generated API client from FastAPI's OpenAPI schema; `bot-avatars` for the expert avatars, plus the Libraries.dev components named in the `jobdots-agentic-ui` skill (section 9); project skills `frontend-design` + `jobdots-agentic-ui` |
 | Extension | Chrome MV3, TypeScript, content scripts + service worker + side panel, built with Vite |
 | Infra | Docker Compose on Windows (WSL2), Ollama on the host; Render blueprint ready for Phase B |
 | Testing / evals | `pytest`, `promptfoo`, JSONL golden datasets (section 8.1) |
