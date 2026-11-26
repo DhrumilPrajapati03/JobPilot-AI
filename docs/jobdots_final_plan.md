@@ -1,4 +1,4 @@
-# JobDots — Final End-to-End Plan (v1.5, 25 Nov 2026)
+# JobDots — Final End-to-End Plan (v1.6, 26 Nov 2026)
 
 Owner: Dhrumil. Single-user personal job-hunting assistant. Python backend, React frontend, local-first hosting on his laptop (Render with credit later), Postgres + pgvector (local; Neon in Phase B), Groq + local Ollama models, backups to his Google Drive.
 Status of claims: items marked **[unverified]** come from memory or third-party sources and must be checked before relying on them.
@@ -11,6 +11,11 @@ Status of claims: items marked **[unverified]** come from memory or third-party 
 4. **Per-case concurrency replaces the old one-running-job-per-user lock**, which would have serialised all experts (section 4, Day 2).
 5. LangChain, Chroma, Supabase, Celery/Redis and LangSmith are removed; reuse and removals are listed in section 16 and in `jobdots_codebase_triage.md`.
 6. New **Day 0** (freeze, secret scan, export, legacy snapshot) before Day 1.
+
+### v1.6 changes (26 Nov: expert avatars)
+
+1. Expert avatars use **`bot-avatars`** (Libraries.dev, MIT licence, `npm install bot-avatars`, pinned 0.2.2, no runtime dependencies, React 18+): lit, rounded canvas bodies that look around, hop and sleep. It replaces the plan for an in-house inline SVG kit, and bloub is no longer a reference (its licence was never confirmed).
+2. Each expert gets its own body shape (and a few an accessory); the library's three motion states (`default`, `working`, `sleeping`) carry idle, working and paused, and a small worded badge carries the other states (section 6.2).
 
 ### v1.5 changes (25 Nov: agentic UI)
 
@@ -43,7 +48,7 @@ JobDots does what Dhrumil does by hand: take a job description, tailor the resum
 | Integrations | Composio for everything | **Hybrid**: direct Gmail, Calendar, Hunter, search; Composio optional for long-tail with minimal payloads | Spike: Composio's Calendar tool needs broader scopes than the raw API; free-plan logs keep payloads up to a year. |
 | LinkedIn rules | Prompt knowledge of policy | Prompt policy file **and** `policy.yaml` limits enforced by Courier | Prompts help drafting; only code enforces. |
 | Autonomy | Auto-apply | Approve first; autonomy loosens per proven action kind | A wrong send cannot be unsent. |
-| UI | OpenClaw/OpenBots-style | OpenBots layout plus **persistent-agent patterns** (expert roster, animated avatars as status, status/preview/takeover, typed cards), **reimplemented** | OpenBots repo has no LICENSE file → don't copy code. Patterns learned from the Grok Bot design write-up and bloub avatars; no copied code or assets. |
+| UI | OpenClaw/OpenBots-style | OpenBots layout plus **persistent-agent patterns** (expert roster, animated avatars as status, status/preview/takeover, typed cards), **reimplemented** | OpenBots repo has no LICENSE file → don't copy code. Patterns learned from the Grok Bot design write-up; avatars from the MIT-licensed `bot-avatars` package (v1.6). |
 | Timeline | 14 weeks | 10 days core + 4 days hardening/custom agents | Coding agents; he has build time. |
 | Background engine | Trigger.dev-style | Existing Postgres durable queue (leases, checkpoints, idempotency) | Already built; better than restart-from-scratch runs. |
 | Durability layer | LangGraph with a Postgres checkpointer | **The queue's per-stage checkpoints with lease fencing**; LangGraph only where branching helps | The audit showed the queue already survives crashes at stage level; two checkpoint systems would be redundant. |
@@ -313,21 +318,42 @@ Reference only: layout and patterns from OpenBots (activity-stream grouping, she
 
 **Roster, not history.** Experts are persistent: returning tomorrow means returning to the same expert with the same memory. Memory and routines belong to an expert; tools belong to the account. Supervisor (the Chief of Staff) coordinates experts, so there are no assignment boards or manual hand-off controls.
 
-**Avatars show state.** One `ExpertAvatar` component: soft shape + two expressive eyes, varied by shape and colour per expert, readable at 24 px. State comes from run and action data:
+**Avatars show state.** One `ExpertAvatar` component (`frontend/src/components/experts/`) wraps **`bot-avatars`** (Libraries.dev, MIT, pinned 0.2.2; docs: libraries.dev/bots): a lit, rounded 2D-canvas body per expert that looks around, hops and sleeps, readable at 24 px. Identity is a body shape per expert, plus an accessory for a few:
 
-| State | Expression | Motion |
+| Expert | Body | Accessory |
 |---|---|---|
-| idle | neutral | slow breathing |
-| acknowledged | attentive | one hop |
-| working | focused | steady loop (the only continuous motion) |
-| waiting for approval | curious | gentle tilt + approval count badge |
-| needs hand-off | surprised | single pulse |
-| blocked (policy, budget) | confused | still |
-| failed | sad | still |
-| done | happy | one settle, then idle |
-| paused (kill switch) | sleepy | eyes closed |
+| Supervisor | star | bow tie |
+| Scout | clover | |
+| Researcher | hexagon | round glasses |
+| Comp Analyst | square | |
+| Tailor | flower | beret |
+| Answerer | blob (with mouth) | |
+| Applicant | pill | |
+| Recon | ghost | shades |
+| Connector | circle | |
+| Email Outreach | cloud | |
+| DM Outreach | drop | |
+| Inbox | pebble | headphones |
+| Interview Buddy | cat (with mouth) | |
+| Reviewer | droid | square glasses |
+| Custom experts | triangle, mech, alien or puddle (from the expert's id) | |
 
-Hover shows the current step in plain words from the latest `run_step`. Reduced motion keeps expressions and drops movement. Built as our own inline SVG kit animated with CSS or the `motion` library. **bloub** (bloub.vercel.app, animated SVG blob avatars: shapes such as circle, pebble, squircle, capsule, hexagon, cloud, droplet; expressions such as neutral, attentive, curious, happy, sad, confused, sleepy) is the reference and may be used to design the base avatars only if its licence allows **[verify licence; not found on the site]**.
+The library animates three states; the rest add one small badge with an icon **and words**, so state is never colour alone. State comes from run and action data (`/api/v1/experts`):
+
+| State | Library state | Badge |
+|---|---|---|
+| idle | `default` (looks around, jumps now and then) | none |
+| acknowledged (queued) | `default` | Queued |
+| working | `working` (hops and spins; the only continuous activity) | none |
+| waiting for approval | `default` | "N to approve" (the one extra indicator allowed, because approvals block work) |
+| needs hand-off | `default` | Your turn |
+| blocked (policy, budget) | `default` | Blocked |
+| failed | `default` | Failed |
+| done | `default` | Done (for ten minutes) |
+| paused (kill switch) | `sleeping` | none |
+| not built yet (draft spec) | `sleeping`, dimmed | none |
+
+Hover and focus show the current step in plain words from the latest `run_step`; that text is also the accessible label. Below 32 px the badge becomes a dot and the hover text carries the words. In the roster a click opens the thread, so the library's pointer play (`interactive`) is off there; it stays on in larger, decorative uses. The library respects `prefers-reduced-motion` (still pose) and pauses offscreen; seeds per expert keep a row from blinking in unison.
 
 **The expert's browser: status → preview → takeover.** Status: browser icon in the thread header turns active while Researcher, Recon or Applicant use a browser. Preview: a pinned right panel with the latest screenshot, URL and step list, while chatting continues. Takeover: only for the `hand off` tier (CAPTCHA, 2FA, legal attestations), via a hand-off card with "Open in my Chrome" and "Hand back". The UI does not encourage watching the expert work.
 
@@ -394,7 +420,7 @@ Conventions: Pydantic for every agent output; SQLAlchemy 2 + Alembic; routes use
 | Other tools | Hunter and a search API via `httpx`; Playwright (public pages only); Tectonic + Jinja2 (LaTeX); `pypdf` (page-count checks) |
 | Security | `cryptography` (Fernet) for stored tokens, structured logging with redaction (`structlog`) |
 | Auth | Google + GitHub login via Authlib (single-owner allowlist on provider IDs), server-side sessions, bearer token as break-glass, hashed extension token (section 4.1) |
-| Frontend | React 19 + Vite + TypeScript, Tailwind v4, own shadcn-style components, TanStack Query, `EventSource` for SSE, pdf.js, generated API client from FastAPI's OpenAPI schema; inline SVG avatar kit animated with CSS or `motion`; project skills `frontend-design` + `jobdots-agentic-ui` |
+| Frontend | React 19 + Vite + TypeScript, Tailwind v4, own shadcn-style components, TanStack Query, `EventSource` for SSE, pdf.js, generated API client from FastAPI's OpenAPI schema; `bot-avatars` for the expert avatars; project skills `frontend-design` + `jobdots-agentic-ui` |
 | Extension | Chrome MV3, TypeScript, content scripts + service worker + side panel, built with Vite |
 | Infra | Docker Compose on Windows (WSL2), Ollama on the host; Render blueprint ready for Phase B |
 | Testing / evals | `pytest`, `promptfoo`, JSONL golden datasets (section 8.1) |

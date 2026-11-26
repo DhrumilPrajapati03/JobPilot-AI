@@ -31,13 +31,6 @@
   --ring: #225dcc;
   --sidebar: #151d1c;
 
-  /* Expert identity colours (the avatars carry the colour; chrome stays neutral). */
-  --team-1: #3f6fd8;
-  --team-2: #2f9e72;
-  --team-3: #d1883a;
-  --team-4: #8a5cc9;
-  --team-5: #d65c7a;
-  --team-eye: #1c2420;
 
   /* Status: chart marks (validated categorical set) + pill text/fill */
   --status-saved: #2a78d6;
@@ -407,10 +400,19 @@
 }
 .login-panel h1 { font-size: 28px; line-height: 1.2; letter-spacing: -.03em; font-weight: 600; margin: 28px 0 8px; }
 .login-lede { color: var(--color-muted-foreground); line-height: 1.6; margin-bottom: 28px; max-width: 34ch; }
-.login-team { display: flex; gap: 6px; list-style: none; padding: 0; margin: 0; }
-.login-team li { animation: login-breathe 5s ease-in-out infinite; transform-origin: 50% 90%; }
-@keyframes login-breathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.03, .97); } }
-@media (prefers-reduced-motion: reduce) { .login-team li { animation: none; } }
+.login-team { display: flex; gap: 2px; list-style: none; padding: 0; margin: 0 0 0 -6px; }
+
+/* ExpertAvatar (bot-avatars body + one badge for states the library doesn't animate) */
+.expert-avatar { position: relative; display: inline-block; flex: none; line-height: 0; }
+.expert-avatar canvas { display: block; }
+.expert-avatar-badge { position: absolute; right: -6px; bottom: -4px; display: inline-flex; align-items: center; gap: 3px;
+  padding: 1px 5px; border-radius: 999px; font-size: 10px; line-height: 14px; font-weight: 600; white-space: nowrap;
+  color: var(--foreground); background: var(--card); border: 1px solid var(--border); }
+.expert-avatar-badge[data-kind="inbox"], .expert-avatar-badge[data-kind="hand"] { border-color: var(--primary); color: var(--primary); }
+.expert-avatar-badge[data-kind="ban"], .expert-avatar-badge[data-kind="x"] { border-color: var(--destructive); color: var(--destructive); }
+.expert-avatar-dot { position: absolute; right: -1px; bottom: -1px; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--primary); box-shadow: 0 0 0 2px var(--background); }
+.expert-avatar-dot[data-kind="ban"], .expert-avatar-dot[data-kind="x"] { background: var(--destructive); }
 .login-form { display: flex; flex-direction: column; gap: 10px; }
 .login-provider { height: 46px; justify-content: center; gap: 10px; font-weight: 500; }
 .login-token { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; padding-top: 18px; border-top: 1px solid var(--color-border); }
