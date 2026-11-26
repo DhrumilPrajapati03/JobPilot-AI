@@ -9,7 +9,7 @@ JobDots is not a chat app with a history list. It is a small team of persistent 
 
 **Always load `frontend-design` too.** That skill decides the visual identity (palette, type, layout, critique pass). This skill decides the product objects and the agent-specific patterns. Where they disagree, the plan (`docs/jobdots_final_plan.md`, section 6) wins, then this skill.
 
-Sources of these patterns: xAI's write-up on designing Grok Bot, the OpenBots layout, and bloub (animated blob avatars). Learn the patterns; **do not copy their code, assets, names or exact look.** OpenBots has no licence; bloub's licence is unverified.
+Sources of these patterns: xAI's write-up on designing Grok Bot and the OpenBots layout. Learn the patterns; **do not copy their code, assets, names or exact look.** OpenBots has no licence. Avatars are the one library we use as is: `bot-avatars` (Libraries.dev, MIT, pinned 0.2.2).
 
 ## 1. The five objects (nothing else surfaces unless the user needs it)
 
@@ -34,26 +34,28 @@ Words to keep beneath the UI: model, context window, run id, lease, checkpoint, 
 
 One component, `<ExpertAvatar expert state size />`, carries identity and state. No separate spinner, status dot or "three dots" for agent activity.
 
-**Identity:** same construction for all (simple soft shape + two expressive eyes), varied by shape and colour per expert, with an optional small accessory. Must be recognisable at 24 px in the sidebar.
+**Identity:** `ExpertAvatar` (`frontend/src/components/experts/ExpertAvatar.tsx`) wraps `BotAvatar` from **`bot-avatars`** (MIT; docs at libraries.dev/bots): a lit, rounded canvas body per expert, recognisable at 24 px. Each expert has its own body shape (and a few an accessory); the mapping lives in `presence.ts` (`IDENTITY`) and in plan section 6.2. Never pick a shape another expert already uses; custom experts get a spare shape (triangle, mech, alien, puddle).
 
-**State → expression → motion** (one motion per state, calm by default):
+**State → library motion → badge.** The library animates three states; the others add one small badge with an icon and words:
 
-| Agent state (from run/action data) | Expression | Motion |
+| Agent state (from `/api/v1/experts`) | `BotAvatar state` | Badge |
 |---|---|---|
-| `idle` | neutral | slow breathing, occasional blink |
-| `acknowledged` (task queued) | attentive | one small hop, then hold |
-| `working` | focused | steady loop (orbit or bob); the only continuous motion |
-| `waiting_approval` | curious | gentle tilt every few seconds + count badge (the one extra indicator allowed, because approvals block work) |
-| `needs_hand_off` (CAPTCHA, 2FA, attestation) | surprised | single attention pulse, then still |
-| `blocked` (policy refused, budget hit) | confused | still |
-| `failed` | sad | still |
-| `done` | happy | one settle bounce, then return to idle |
-| `paused` (kill switch, routine paused) | sleepy | eyes closed, no motion |
+| `idle` | `default` (looks around, jumps now and then) | none |
+| `acknowledged` (task queued) | `default` | Queued |
+| `working` | `working` (hops and spins; the only continuous activity) | none |
+| `waiting_approval` | `default` | "N to approve" (the one extra indicator allowed, because approvals block work) |
+| `needs_hand_off` (CAPTCHA, 2FA, attestation) | `default` | Your turn |
+| `blocked` (policy refused, budget hit) | `default` | Blocked |
+| `failed` | `default` | Failed |
+| `done` | `default` | Done |
+| `paused` (kill switch, routine paused) | `sleeping` | none |
+| `draft` (expert not built yet) | `sleeping`, dimmed | none |
 
-- **Hover / focus** on an avatar shows the current step in plain words ("Reading Acme's careers page", "Waiting for your approval on 2 emails"), taken from the latest `run_step`. Click opens the thread.
-- `prefers-reduced-motion`: keep the expressions, drop the motion.
-- State must never be conveyed by colour alone; the expression and the hover text carry it too.
-- Build the avatars as **our own inline SVG kit** (shape path + eye set + accessory), animated with CSS or the `motion` library. Use bloub only as a reference or a design-time tool, and only after its licence allows it.
+- **Hover / focus** on an avatar shows the current step in plain words ("Reading Acme's careers page", "Waiting for your approval on 2 emails"), taken from the latest `run_step`; it is also the accessible label (the canvas itself is `aria-hidden`). Click opens the thread.
+- Where a click opens the thread (the roster), pass `interactive={false}` so the library's click-hop doesn't fight the navigation. Keep it on in large, decorative uses.
+- Below 32 px the badge becomes a dot; the hover text carries the words. State is never conveyed by colour alone.
+- Reduced motion and offscreen pausing come from the library; don't add CSS animation around the avatar.
+- Use the library's props (`type`, `state`, `face`, `hat`, `glasses`, `headphones`, `bowTie`, `seed`, `size`, `interactive`) through `ExpertAvatar`; don't render `BotAvatar` directly in screens.
 
 ## 4. The expert's browser: status, preview, takeover
 
@@ -108,4 +110,4 @@ Before adding a control, ask: does it help him delegate, or give him one more th
 - [ ] Internal words (run, lease, token, model) kept out of the main view.
 - [ ] Empty states tell him what to do next; errors say what happened and how to fix it.
 - [ ] Works at 360 px wide; keyboard focus visible; reduced motion respected; light and dark themes.
-- [ ] No copied code or assets from Grok Bot, OpenBots or bloub.
+- [ ] No copied code or assets from Grok Bot or OpenBots; avatars only through `ExpertAvatar` (`bot-avatars`).
