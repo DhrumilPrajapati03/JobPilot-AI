@@ -81,8 +81,12 @@ def test_supervisor_routes_every_stage_and_waits_once_for_a_paused_expert(owner)
     get_db().fetch("""insert into public.artifact (user_id, case_id, kind, content, created_by)
                       values (%s::uuid, %s::uuid, 'company_brief', '{}', 'researcher')""", [owner, case["id"]])
     asyncio.run(runtime.run_expert(ctx_for(owner, "supervisor", case["id"])))
-    assert queued(owner, "tailor") == [(case["id"], "routed")]
+    assert queued(owner, "recon") == [(case["id"], "routed")]
     assert cases.get_case(owner, case["id"])["stage"] == "researched"
+    get_db().fetch("""insert into public.artifact (user_id, case_id, kind, content, created_by)
+                      values (%s::uuid, %s::uuid, 'contact_list', '{}', 'recon')""", [owner, case["id"]])
+    asyncio.run(runtime.run_expert(ctx_for(owner, "supervisor", case["id"])))
+    assert queued(owner, "tailor") == [(case["id"], "routed")]
     get_db().fetch("""insert into public.artifact (user_id, case_id, kind, content, created_by)
                       values (%s::uuid, %s::uuid, 'resume_version', '{}', 'tailor')""", [owner, case["id"]])
     asyncio.run(runtime.run_expert(ctx_for(owner, "supervisor", case["id"])))

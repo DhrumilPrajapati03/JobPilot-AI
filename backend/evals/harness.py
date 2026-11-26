@@ -118,7 +118,34 @@ def tailor_suite() -> list[Metric]:
     ]
 
 
-SUITES = {"matching": matching_suite, "policy": policy_suite, "tailor": tailor_suite}
+def recon_suite() -> list[Metric]:
+    """Recon: labelled LinkedIn search results (fictional people). A wrong-company person is
+    the costly mistake (an email to a stranger), so it must be zero."""
+    from app.recon.people import parse_result
+    cases = [json.loads(line) for line in (DATASETS / "recon_cases.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
+    wrong, accepted_bad, role_ok, role_total = [], [], 0, 0
+    for case in cases:
+        person = parse_result(case["url"], case["title"], case["snippets"], case["company"])
+        expect = case["expect"]
+        if expect is None:
+            if person is not None:
+                accepted_bad.append({"id": case["id"], "got": person.title})
+            continue
+        role_total += 1
+        if person is None:
+            wrong.append({"id": case["id"], "got": None})
+        elif person.role_class == expect["role_class"] and person.title == expect.get("title", person.title):
+            role_ok += 1
+        else:
+            wrong.append({"id": case["id"], "got": [person.role_class, person.title]})
+    return [
+        Metric("recon", "recon_cases", "wrong_people_accepted", len(accepted_bad), 0, higher_is_better=False,
+               details={"accepted": accepted_bad}),
+        Metric("recon", "recon_cases", "role_and_title_accuracy", role_ok / role_total, 0.9, details={"wrong": wrong}),
+    ]
+
+
+SUITES = {"matching": matching_suite, "policy": policy_suite, "tailor": tailor_suite, "recon": recon_suite}
 
 
 def run(names: list[str] | None = None, *, semantic: bool = False) -> list[Metric]:

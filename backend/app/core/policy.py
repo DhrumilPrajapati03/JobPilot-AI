@@ -38,6 +38,9 @@ DAILY_CAPS = {"send_email": "emails_per_day", "send_linkedin_invite": "linkedin_
 WEEKLY_CAPS = {"send_linkedin_invite": "linkedin_invites_per_week"}
 PEOPLE_KINDS = {"send_email", "send_linkedin_invite", "send_linkedin_dm", "referral_request"}
 
+# Caps added after the first policy.yaml; older files get these defaults.
+OPTIONAL_CAPS = {"recon_searches_per_run": 6, "recon_searches_per_day": 40}
+
 DEFAULT_BUDGETS = {
     "per_case": {"steps": 200, "tokens": 500_000, "seconds": 3600},
     "monthly_usd": 10.0,
@@ -129,6 +132,10 @@ def _parse(raw: dict) -> Policy:
                  "linkedin_dms_per_day", "max_people_per_company", "min_hours_accept_to_dm",
                  "no_contact_if_touched_within_days"):
         value = caps.get(name)
+        if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+            raise PolicyError(f"caps.{name} must be a whole number >= 0")
+    for name, default in OPTIONAL_CAPS.items():
+        value = caps.setdefault(name, default)
         if not isinstance(value, int) or isinstance(value, bool) or value < 0:
             raise PolicyError(f"caps.{name} must be a whole number >= 0")
     try:

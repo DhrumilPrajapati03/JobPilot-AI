@@ -35,6 +35,9 @@ x-backend: &backend
     ENCRYPTION_KEY: ${ENCRYPTION_KEY:-}
     TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
     TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+    # Recon: Brave Search (people lookups); Hunter is optional.
+    BRAVE_API_KEY: ${BRAVE_API_KEY:-}
+    HUNTER_API_KEY: ${HUNTER_API_KEY:-}
   volumes:
     - files:/app/data/files
     # Encrypted backups waiting for (or instead of) Drive; on the host in ./data/backups.

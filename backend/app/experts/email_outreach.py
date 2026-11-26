@@ -55,17 +55,24 @@ def recipient(user_id: str, case_id: str) -> dict | None:
     return rows[0][0] if rows else None
 
 
-def set_recipient(user_id: str, case_id: str, email: str, name: str = "", company: str = "") -> dict:
-    """Record who the email goes to, as a contact (dedupe by address) linked from the case timeline."""
+def set_recipient(user_id: str, case_id: str, email: str, name: str = "", company: str = "", *,
+                  contact_id: str | None = None, actor: str = "user", actor_name: str | None = None) -> dict:
+    """Record who the email goes to, as a contact (merged by address) linked from the case timeline.
+
+    You (actor 'user') can name anyone; the address is stored as yours. Recon (actor 'agent')
+    passes a contact it already saved, with an address from the JD or Hunter."""
+    from app.core import contacts
     email = email.strip().lower()
-    rows = get_db(user_id).fetch("""
-        insert into public.contact (user_id, company, name, email, role_class, stage, source, dedupe_key)
-        values (%s::uuid, %s, %s, %s, 'recruiter', 'discovered', 'you', %s)
-        on conflict (user_id, dedupe_key) do update set name = case when excluded.name <> '' then excluded.name
-          else public.contact.name end returning id::text""",
-        [user_id, company, name, email, f"email:{email}"])
-    data = {"contact_id": rows[0][0], "email": email, "name": name}
-    cases.add_event(user_id, case_id, "recipient", actor="user", summary=f"Recipient: {name + ' ' if name else ''}<{email}>", data=data)
+    if contact_id is None:
+        saved = contacts.upsert(user_id, company=company, name=name, email=email, role_class="recruiter",
+                                email_source="you" if actor == "user" else "job_description",
+                                source="you" if actor == "user" else "recon", stage="discovered",
+                                evidence=["You set this recipient" if actor == "user" else "Recipient"])
+        contact_id = saved["id"]
+    data = {"contact_id": contact_id, "email": email, "name": name}
+    who = "" if actor == "user" else f"{(actor_name or 'agent').replace('_', ' ').title()} picked the recipient: "
+    cases.add_event(user_id, case_id, "recipient", actor=actor, actor_name=actor_name or "",
+                    summary=f"{who or 'Recipient: '}{name + ' ' if name else ''}<{email}>", data=data)
     return data
 
 

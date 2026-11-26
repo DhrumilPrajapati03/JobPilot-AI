@@ -45,6 +45,10 @@ def _record_touch(user_id: str, action: dict) -> None:
         get_db(user_id).fetch("""insert into public.contact_touch (contact_id, user_id, case_id, channel, action_id, sent_at, outcome)
                                  values (%s::uuid, %s::uuid, %s::uuid, 'email', %s::uuid, now(), 'sent')""",
                               [contact, user_id, action.get("case_id"), action["id"]])
+        # The outreach state machine (plan 2.4): an email is the first message to this person.
+        get_db(user_id).fetch("""update public.contact set stage = 'message_sent' where id = %s::uuid and user_id = %s::uuid
+                                 and stage in ('unknown','discovered','classified','message_proposed','message_approved')""",
+                              [contact, user_id])
 
 
 def _next_local_morning(now: datetime) -> datetime:

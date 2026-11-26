@@ -24,6 +24,8 @@ from pathlib import Path
 
 from psycopg.types.json import Jsonb
 
+from app.recon.people import classify_role  # role_class for imported contacts (shared with Recon)
+
 # Legacy status -> (stage, status) on job_case.
 STAGE = {"saved": ("found", "open"), "applied": ("applied", "open"), "interviewing": ("interview", "open"),
          "offer": ("offer", "open"), "rejected": ("closed", "closed"), "archived": ("closed", "closed")}
@@ -44,22 +46,6 @@ def derived_id(*parts: str) -> str:
 
 def canonical(row: dict) -> str:
     return json.dumps(row, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
-
-
-def classify_role(title: str) -> str:
-    """First-pass role_class from a job title (rules; a local model can refine it later)."""
-    t = f" {(title or '').lower()} "
-    if re.search(r"recruit|talent|\bhr\b|human resources|people (partner|ops|operations)|sourcer", t):
-        return "recruiter"
-    if re.search(r"\bceo\b|chief executive|founder", t):
-        return "ceo"
-    if re.search(r"\bcto\b|chief technology", t):
-        return "cto"
-    if re.search(r"engineering manager|head of|director|\bvp\b|vice president|hiring manager", t):
-        return "hiring_manager"
-    if t.strip():
-        return "employee"
-    return "unknown"
 
 
 @dataclass

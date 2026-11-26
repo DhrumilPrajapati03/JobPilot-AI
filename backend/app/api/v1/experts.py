@@ -121,6 +121,19 @@ async def research_case(case_id: str, body: ResearchIn, user: CurrentUser = Depe
     return {"run_id": run["id"]}
 
 
+@router.post("/cases/{case_id}/recon", status_code=202)
+async def recon_case(case_id: str, user: CurrentUser = Depends(get_current_user)):
+    """Find the people at the case's company again (public sources; caps from policy.yaml)."""
+    _require_worker()
+    try:
+        run = await asyncio.to_thread(runtime.enqueue_expert, user.id, "recon", case_id=case_id, trigger="manual")
+    except Exception as exc:
+        if "case_not_found" in str(exc):
+            raise HTTPException(404, "Case not found") from None
+        raise
+    return {"run_id": run["id"]}
+
+
 @router.post("/cases/{case_id}/tailor", status_code=202)
 async def tailor_case(case_id: str, user: CurrentUser = Depends(get_current_user)):
     """Ask Tailor for a new resume version of this case (each run is a new, reviewable version)."""
@@ -171,8 +184,10 @@ class QuickCaseIn(BaseModel):
 
 
 class RecipientIn(BaseModel):
-    email: str = Field(min_length=3, max_length=254)
+    """An address you type, or a contact from the case's contact list (its stored address)."""
+    email: str = Field(default="", max_length=254)
     name: str = Field(default="", max_length=120)
+    contact_id: str | None = Field(default=None, max_length=36)
 
 
 @router.post("/cases/quick", status_code=202)
@@ -210,14 +225,27 @@ async def add_recipient(case_id: str, body: RecipientIn, user: CurrentUser = Dep
     """Set who the email goes to; Email Outreach drafts again for that person."""
     _require_worker()
     from app.core import cases as case_mod
+    from app.core import contacts
     from app.experts.email_outreach import set_recipient
     from app.experts.reviewer import EMAIL
-    if not EMAIL.match(body.email.strip()):
-        raise HTTPException(422, "The recipient email doesn't look valid.")
     case = await asyncio.to_thread(case_mod.get_case, user.id, case_id)
     if case is None:
         raise HTTPException(404, "Case not found")
-    await asyncio.to_thread(set_recipient, user.id, case_id, body.email, body.name, case.get("company") or "")
+    email, name, contact_id = body.email.strip(), body.name, None
+    if body.contact_id:
+        contact = await asyncio.to_thread(contacts.get_contact, user.id, body.contact_id)
+        if contact is None:
+            raise HTTPException(404, "Contact not found")
+        if contact["do_not_contact"]:
+            raise HTTPException(409, "That contact is marked do not contact.")
+        email, name, contact_id = email or contact["email"], name or contact["name"], contact["id"]
+        if not email:
+            raise HTTPException(422, "That contact has no email address yet; add one first.")
+        if email.lower() != contact["email"]:
+            await asyncio.to_thread(contacts.update_contact, user.id, contact_id, {"email": email})
+    if not EMAIL.match(email):
+        raise HTTPException(422, "The recipient email doesn't look valid.")
+    await asyncio.to_thread(set_recipient, user.id, case_id, email, name, case.get("company") or "", contact_id=contact_id)
     run = await asyncio.to_thread(runtime.enqueue_expert, user.id, "email_outreach", case_id=case_id, trigger="manual")
     return {"run_id": run["id"]}
 

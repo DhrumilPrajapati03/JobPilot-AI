@@ -3,8 +3,10 @@
 No model calls. Each route says which expert does the next piece of work and how to tell it
 is done (an artifact exists). Supervisor walks the routes in order:
 
-    found --Researcher(company_brief)--> researched --Tailor(resume_version)--> tailored
-          --Email Outreach(draft)--> ready
+    found --Researcher(company_brief)--> researched --Recon(contact_list)--> researched
+          --Tailor(resume_version)--> tailored --Email Outreach(draft)--> ready
+
+Recon runs before Email Outreach so the draft can go to the recruiter it found.
 
 * A finished route advances the case stage (never backwards).
 * The first unfinished route is handed to its expert, unless that expert is paused or not
@@ -35,6 +37,7 @@ class Route:
 
 GRAPH: tuple[Route, ...] = (
     Route("research", "researcher", "company_brief", "researched", "research {company}"),
+    Route("recon", "recon", "contact_list", "researched", "find the people at {company}"),
     Route("tailor", "tailor", "resume_version", "tailored", "tailor your resume for {role} at {company}"),
     Route("outreach", "email_outreach", "draft", "ready", "draft outreach to {company}"),
 )

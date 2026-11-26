@@ -45,7 +45,7 @@ class ToolBox:
         self.spec, self.log = spec, step_log
         self.allowed = {n: REGISTRY[n] for n in spec.tools if n in REGISTRY}
 
-    async def call(self, name: str, summary: str = "", **kwargs):
+    async def call(self, name: str, summary: str = "", /, **kwargs):
         if name not in self.allowed:
             await self.log.add("blocked", name, f"{self.spec.name} is not allowed to use {name}", {"tool": name})
             raise ToolDenied(f"{self.spec.id} may not call {name}")
@@ -114,3 +114,38 @@ async def propose_action(ctx, kind: str, payload: dict, idempotency_key: str):
         raise ToolDenied(f"{ctx.spec.id} may not propose {kind}")
     return await asyncio.to_thread(actions.propose, ctx.user_id, kind, payload, agent=ctx.spec.id,
                                    idempotency_key=idempotency_key, case_id=ctx.case_id)
+
+
+# --- Recon (Day 6): public lookups only; nothing here contacts anyone -------------------------------
+
+@tool("search_people", "Search public LinkedIn results (Brave Search) for people at a company")
+async def search_people(ctx, company: str, query: str, role_class: str = ""):
+    from app.recon import people
+    from app.services import brave
+    results = await brave.web_search(query, goggles=brave.LINKEDIN_ONLY, count=10, extra_snippets=True)
+    found = []
+    for r in results:
+        person = people.parse_result(r.url, r.title, [r.description, *r.extra_snippets], company)
+        if person:
+            found.append(person.__dict__)
+    return {"results": len(results), "people": found}
+
+
+@tool("find_work_email", "Find a verified work email with Hunter (only when HUNTER_API_KEY is set)")
+async def find_work_email(ctx, domain: str, name: str):
+    from app.recon import emails
+    return {"email": await emails.hunter_find(domain, name)}
+
+
+@tool("lookup_handles", "Find a person's GitHub and X handles from their public GitHub profile")
+async def lookup_handles(ctx, name: str, company: str):
+    from app.recon import handles
+    found = await handles.lookup(name, company)
+    return found.__dict__ if found else None
+
+
+@tool("save_contact", "Save or merge one person in your contacts (never overwrites what you typed)")
+async def save_contact(ctx, **fields):
+    from app.core import contacts
+    saved = await asyncio.to_thread(contacts.upsert, ctx.user_id, **fields)
+    return {"id": saved["id"], "created": saved["created"]}
