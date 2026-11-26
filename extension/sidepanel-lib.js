@@ -96,5 +96,15 @@
       ...mapped.filter(a => !done.has(a.panelKey)).map(a => ({ panelKey: a.panelKey, outcome: 'review', note: 'This field is gone from the form. Read the questions again.' }))];
   }
 
-  globalThis.JOBDOTS_PANEL = Object.freeze({ BADGES, mergeFrames, countsLine, approval, fillPlan, fillSummary, fillFrame, extractJob, asText });
+  // Runs inside the page: is this the employer's "application submitted" confirmation?
+  // Needs confirmation wording and no visible form left to fill, so a form that merely says
+  // "thank you for your interest" next to its fields is not taken as submitted.
+  function submittedPage() {
+    const said = /\b(?:(?:your )?application (?:has been |was )?(?:successfully )?(?:submitted|received|sent)|thank you for (?:applying|your application|submitting)|we(?:'|’)ve received your application)\b/i;
+    if (!said.test(String(document.body && document.body.innerText || ''))) return false;
+    const fields = [...document.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio]):not([type=submit]):not([type=button]), textarea, select')];
+    return !fields.some(n => n.getClientRects().length > 0 && getComputedStyle(n).visibility !== 'hidden' && !n.disabled);
+  }
+
+  globalThis.JOBDOTS_PANEL = Object.freeze({ BADGES, mergeFrames, countsLine, approval, fillPlan, fillSummary, fillFrame, submittedPage, extractJob, asText });
 })();

@@ -9,7 +9,7 @@
   const post = (path, body) => send({ type: 'api', path, method: 'POST', body });
   const PAGES = { origins: ['https://*/*'] };
   // edits and skipped belong to one answer set (editsFor): they survive a tab switch or reload of that set.
-  const state = { tab: null, page: null, set: null, edits: {}, skipped: {}, editsFor: null, filled: {}, busy: false, token: 0 };
+  const state = { tab: null, page: null, set: null, edits: {}, skipped: {}, editsFor: null, filled: {}, busy: false, token: 0, noAuto: {}, checking: false };
 
   function status(text, error = false) {
     $('status').textContent = text || '';
@@ -59,6 +59,8 @@
     if (known) {
       $('job-company').textContent = page.data.case.company;
       $('job-role').textContent = page.data.case.role || '';
+      showApplied(page.data.case.stage);
+      checkSubmitted();
       if (page.data.answer_set_id && (!state.set || state.set.case_id !== page.data.case.id)) await loadAnswers(page.data.case.id);
     } else {
       state.set = null; renderAnswers();
@@ -231,6 +233,42 @@
       status("Chrome doesn't let extensions fill this page.", true);
     } finally { busy(false); }
   }
+
+  // Applied: the panel marks the case when it sees the employer's confirmation page, or when you say so.
+  const APPLIED = ['applied', 'replied', 'interview', 'offer', 'closed'];
+  const caseNow = () => state.page && state.page.case;
+  function showApplied(stage) {
+    const applied = APPLIED.includes(stage);
+    $('job-applied').textContent = applied ? 'Applied. JobDots tracks it from here.' : '';
+    $('job-applied').className = applied ? 'quiet done' : 'quiet';
+    $('mark-applied').hidden = applied;
+    $('undo-applied').hidden = stage !== 'applied';
+  }
+  async function markApplied(applied, seen) {
+    const c = caseNow();
+    if (!c) return;
+    const r = await post('/extension/case/applied', { case_id: c.id, applied, seen });
+    if (!r.ok) { status(detail(r, "Couldn't update the case."), true); return; }
+    c.stage = r.data.stage;
+    showApplied(c.stage);
+    if (!applied) state.noAuto[c.id] = true;      // you said no: stop marking it from the page
+    status(applied ? (seen ? 'You submitted it: JobDots saw the confirmation page and marked the case applied.' : 'Marked as applied.')
+      : 'Back to ready; not marked as applied.');
+  }
+  async function checkSubmitted() {
+    const c = caseNow();
+    if (!c || !state.tab || state.checking || APPLIED.includes(c.stage) || state.noAuto[c.id]) return;
+    state.checking = true;
+    try {
+      const frames = await chrome.scripting.executeScript({ target: { tabId: state.tab.id, allFrames: true }, func: lib.submittedPage });
+      if ((frames || []).some(f => f && f.result === true) && caseNow() === c) await markApplied(true, true);
+    } catch (e) { /* the page can't be read right now; try again on the next check */ }
+    finally { state.checking = false; }
+  }
+  // After a fill, watch for the confirmation (single-page forms swap content without loading a page).
+  setInterval(() => { if (!document.hidden && Object.keys(state.filled).length) checkSubmitted(); }, 3000);
+  $('mark-applied').addEventListener('click', () => markApplied(true, false));
+  $('undo-applied').addEventListener('click', () => markApplied(false, false));
 
   $('grant').addEventListener('click', async () => {
     const granted = await chrome.permissions.request(PAGES).catch(() => false);

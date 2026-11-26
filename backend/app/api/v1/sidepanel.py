@@ -176,3 +176,28 @@ async def approve_answers(body: ApproveIn, user: ExtensionUser = Depends(get_ext
                             summary=f"You checked {len(body.answers)} answers; {saved} saved to your answer bank",
                             data={"answer_set_id": str(body.answer_set_id), "saved": saved})
     return {"saved": saved}
+
+
+class AppliedIn(BaseModel):
+    case_id: uuid.UUID
+    applied: bool = True
+    seen: bool = False          # True when the panel saw the employer's confirmation page
+
+
+BEFORE_APPLIED = ("found", "researched", "tailored", "ready")
+
+
+@router.post("/case/applied")
+async def case_applied(body: AppliedIn, user: ExtensionUser = Depends(get_extension_user)):
+    """You submitted this application (or undo that). Moves the case to applied and stamps the date."""
+    case = await asyncio.to_thread(case_mod.get_case, user.id, str(body.case_id))
+    if case is None:
+        raise HTTPException(404, "Case not found")
+    if body.applied and case["stage"] in BEFORE_APPLIED:
+        case = await asyncio.to_thread(case_mod.set_stage, user.id, case["id"], "applied", actor="user")
+        await asyncio.to_thread(case_mod.add_event, user.id, case["id"], "note", actor="user",
+                                summary="You submitted the application" + (" (JobDots saw the confirmation page)" if body.seen else ""),
+                                data={"evidence": "confirmation_page" if body.seen else "you"})
+    elif not body.applied and case["stage"] == "applied":
+        case = await asyncio.to_thread(case_mod.set_stage, user.id, case["id"], "ready", actor="user")
+    return {"stage": case["stage"], "applied_at": case.get("applied_at")}

@@ -54,9 +54,12 @@ def set_stage(user_id: str, case_id: str, stage: str, *, actor: str = "user", ac
                               [case_id, user_id]).fetchone()
         if not before:
             raise LookupError("case_not_found")
+        early = STAGES.index(stage) < STAGES.index("applied")      # moving back before applied clears the date
         case = _rows(conn, f"""update public.job_case set stage = %s,
-                                   status = case when %s = 'closed' then 'closed' else status end
-                               where id = %s::uuid returning {_CASE}""", [stage, stage, case_id])[0]
+                                   status = case when %s = 'closed' then 'closed' else status end,
+                                   applied_at = case when %s = 'applied' then coalesce(applied_at, now())
+                                                     when %s then null else applied_at end
+                               where id = %s::uuid returning {_CASE}""", [stage, stage, stage, early, case_id])[0]
         if before[0] != stage:
             conn.execute("""insert into public.case_event (case_id, user_id, kind, actor, actor_name, summary, data)
                             values (%s::uuid, %s::uuid, 'stage_changed', %s, %s, %s, %s)""",

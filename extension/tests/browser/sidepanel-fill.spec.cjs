@@ -22,6 +22,7 @@ async function openPanel(page) {
       if (message.path === '/extension/page') return {ok: true, data: {case: {id: 'c1', company: 'Acme', role: 'Engineer'}, answer_set_id: 's1'}};
       if (message.path === '/extension/answer-set') return {ok: true, data: {status: 'ready', answer_set_id: 's1', answers, counts: {needs_you: 3, vault: 2}, notes: []}};
       if (message.path === '/extension/answer-set/approve') return {ok: true, data: {saved: 1}};
+      if (message.path === '/extension/case/applied') return {ok: true, data: {stage: message.body.applied === false ? 'ready' : 'applied'}};
       return {ok: false, data: {}};
     };
     window.chrome = {
@@ -36,6 +37,7 @@ async function openPanel(page) {
         executeScript: async ({target, files, args}) => {
           injected.push({target, files, args});
           if (files) return [];
+          if (!args) return [{frameId: 0, result: !!window.__submitted}];   // the confirmation-page check
           return [{frameId: 0, result: args[0].map(a => ({panelKey: a.panelKey, outcome: a.flagged ? 'review' : 'filled', note: ''}))}];
         },
       },
@@ -93,4 +95,38 @@ test('fillFrame fills the form by key, falls back to the label after a re-render
   await expect(page.locator('#consent')).not.toBeChecked();
   expect(await page.evaluate(() => submits)).toBe(0);
   expect(Object.fromEntries(results.map(r => [r.panelKey, r.outcome]))).toEqual({'f0:a': 'filled', 'f0:b': 'filled', 'f0:c': 'review', 'f0:d': 'review'});
+});
+
+test('after filling, the panel sees the confirmation page, marks the case applied, and Undo stops it', async ({page}) => {
+  await openPanel(page);
+  await page.locator('#approve').click();
+  await expect(page.locator('#approve')).toHaveText('Fill again');
+  await expect(page.locator('#mark-applied')).toBeVisible();
+  await page.evaluate(() => { window.__submitted = true; });     // you click Submit; the page shows "Thank you"
+  await expect(page.locator('#job-applied')).toHaveText('Applied. JobDots tracks it from here.', {timeout: 8000});
+  await expect(page.locator('#status')).toContainText('saw the confirmation page');
+  await expect(page.locator('#mark-applied')).toBeHidden();
+  const marked = await page.evaluate(() => window.__calls.filter(c => c.path === '/extension/case/applied').map(c => c.body));
+  expect(marked).toEqual([{case_id: 'c1', applied: true, seen: true}]);
+
+  await page.locator('#undo-applied').click();
+  await expect(page.locator('#mark-applied')).toBeVisible();
+  await page.waitForTimeout(3500);                                // one more watch tick: not marked again
+  const after = await page.evaluate(() => window.__calls.filter(c => c.path === '/extension/case/applied').length);
+  expect(after).toBe(2);
+});
+
+test('submittedPage needs confirmation wording and no form left', async ({page}) => {
+  const check = async html => {
+    await page.route('https://jobs.example.invalid/**', route => route.fulfill({contentType: 'text/html', body: html}));
+    await page.goto('https://jobs.example.invalid/apply');
+    await page.addScriptTag({path: path.resolve(__dirname, '../../sidepanel-lib.js')});
+    const result = await page.evaluate(() => JOBDOTS_PANEL.submittedPage());
+    await page.unroute('https://jobs.example.invalid/**');
+    return result;
+  };
+  expect(await check(fixtures.shell('<h2>Thank you!</h2><p>Your application has been submitted successfully.</p>'))).toBe(true);
+  expect(await check(fixtures.shell('<p>We’ve received your application for Engineer.</p><button>View jobs</button>'))).toBe(true);
+  expect(await check(fixtures.native)).toBe(false);
+  expect(await check(fixtures.shell('<p>Thank you for applying! Just a few questions.</p><label>Phone<input></label>'))).toBe(false);
 });

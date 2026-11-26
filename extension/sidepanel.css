@@ -94,3 +94,5 @@ textarea { resize: vertical; min-height: 64px; }
 .result { font-size: 12px; margin-top: 6px; font-weight: 600; }
 .result.ok { color: var(--vault); }
 .result.check { color: var(--amber); }
+.applied-row { margin-top: 8px; align-items: center; }
+#job-applied.done { color: var(--vault); font-weight: 600; }
