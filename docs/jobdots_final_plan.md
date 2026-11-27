@@ -21,6 +21,25 @@ Status of claims: items marked **[unverified]** come from memory or third-party 
 5. Brave's MIT-licensed API reference skills (`brave-web-search`, `brave-llm-context`) are in `.claude/skills/` for the coding agent. The key stays in `.env` and is never put into the agent's environment.
 6. **As built on Day 6:** Recon is **deterministic** (rules, no model). It accepts a person only with evidence that they work at the company now: the result title, the profile's "Experience" line, or a first-person post. It checks the company with an exact match, so "Acme Infotech" is not "Acme AI". A labelled eval (`recon_cases`) requires zero wrong-company people. The local 8B model stays an option for ambiguous titles. Supervisor runs Recon **after Researcher and before Tailor**, so Email Outreach can write to the recruiter or hiring mailbox Recon found. Searches are capped per run and per day (`recon_searches_per_run`, `recon_searches_per_day` in `policy.yaml`).
 
+### As built on Day 10 (27 Nov: Inbox and Calendar)
+
+1. **Inbox** (active) runs as two routines. Interval routines are new (`{"kind": "every", "minutes": 30}`), as is routine kind `expert` with a `task` (migration 0008).
+   - `poll` every 30 minutes: Gmail read-only searches limited to the people and company domains you emailed through JobDots, plus LinkedIn's "accepted your invitation" notifications. Other mail is never fetched, and bodies are never stored (`inbox_message` keeps a snippet).
+   - Messages are matched to a case by Gmail thread (Courier now saves `action.thread_id`), then by sender, then by company domain (webmail never counts as a company).
+   - Rules classify each message (`app/inbox/classify.py`); only the new part of a reply counts, not the quoted history:
+     - reply: the case moves to Replied and the contact to replied;
+     - interview: the case moves to Interviewing; the model reads a specific time, if there is one, and a `create_calendar_event` is proposed for approval;
+     - rejection: a note only; the case stays open;
+     - auto-reply: noted;
+     - accepted: `contact.accepted_at` is set and the contact becomes `accepted`, which is what DMs wait for.
+   - A reply withdraws pending follow-ups to that email.
+   - `follow_up` daily at 10:00: one templated follow-up in the same Gmail thread (`threadId`, `In-Reply-To`), after `follow_up_after_days` (default 5) without a reply. Reviewer checks it and it needs your approval.
+2. **Follow-ups are policed in Courier's gate, not just in Inbox.** A payload with `follow_up_of` may skip the 14-day cooldown only when the original is a sent email to the same address and no follow-up to it has gone out. Anything else is refused, so an agent can't use "follow-up" to dodge the cooldown.
+3. **Calendar executor** (Courier): approved events go on your primary Google Calendar with no attendees. The event id is derived from the action, so retries and crash recovery never create a second event.
+   - It needs the `calendar.events` scope: reconnect with `python scripts/connect_google.py connect`, with the Google Calendar API enabled in the same Google Cloud project.
+   - Until then, approved events wait with "Not added yet: …" on the case.
+4. Telegram and the web show calendar cards ("Approve and add").
+
 ### As built on Day 9 (27 Nov: command center and dashboards)
 
 1. **Web app is now JobDots-first.** The left rail is the **expert roster**: live `ExpertAvatar` and one line of what each expert last did. Below it: Command, Cases, Approvals (with a count), Contacts, Answer bank and Dashboard. The JobPilot pages stay under "More".

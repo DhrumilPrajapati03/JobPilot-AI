@@ -154,9 +154,15 @@
 - id: inbox
   name: Inbox
   role: Reads replies, acceptances and interview invites
+  description: Checks Gmail (read-only) every 30 minutes for mail from the people and companies you emailed, and for LinkedIn's acceptance notifications. Moves cases to Replied or Interviewing, proposes calendar events for interviews with a time, and drafts one follow-up when an email gets no reply.
+  instructions: Rules classify mail (app/inbox/classify.py); the model only reads an interview time. See app/experts/inbox.py.
+  policy_notes: Read-only on Gmail. Never fetches mail you didn't exchange through JobDots, never stores bodies. Calendar events and follow-ups need your approval.
   model: {provider: default}
   tools: [read_case]
-  status: draft
+  action_kinds: [send_email, create_calendar_event]
+  triggers: [{kind: routine}, {kind: manual}]
+  budgets: {steps: 200, tokens: 40000, seconds: 600}
+  status: active
 
 - id: interview_buddy
   name: Interview Buddy

@@ -58,9 +58,23 @@ def linkedin_card(action: dict) -> str:
     return "\n".join(lines)
 
 
+def calendar_card(action: dict) -> str:
+    p = action["payload"]
+    lines = [f"<b>Calendar event for {esc(p.get('company') or 'an interview')}</b> (Inbox)", f"<b>{esc(p.get('summary'))}</b>",
+             f"{esc(p.get('start'))} to {esc(p.get('end'))} ({esc(p.get('timezone'))})"]
+    if p.get("location"):
+        lines.append(esc(p["location"]))
+    notes = (action.get("review") or {}).get("notes") or []
+    if notes:
+        lines += ["", "<b>Reviewer:</b> " + esc("; ".join(notes))]
+    return "\n".join(lines)
+
+
 def card(action: dict) -> str:
     if action.get("kind") in LINKEDIN_KINDS:
         return linkedin_card(action)
+    if action.get("kind") == "create_calendar_event":
+        return calendar_card(action)
     p = action["payload"]
     to = f"{esc(p.get('to_name'))} &lt;{esc(p.get('to'))}&gt;" if p.get("to_name") else esc(p.get("to") or "(no recipient)")
     review = action.get("review") or {}
@@ -78,7 +92,8 @@ def card(action: dict) -> str:
 
 def buttons(action: dict) -> list[list[dict]]:
     tag = f"{action['id']}:{action['payload_sha256'][:8]}"
-    verb = "Approve and queue" if action.get("kind") in LINKEDIN_KINDS else "Approve and send"
+    verb = ("Approve and queue" if action.get("kind") in LINKEDIN_KINDS else
+            "Approve and add" if action.get("kind") == "create_calendar_event" else "Approve and send")
     return [[{"text": verb, "callback_data": f"ap:{tag}"}, {"text": "Reject", "callback_data": f"rj:{tag}"}]]
 
 
@@ -153,7 +168,7 @@ class Bot:
     def notify_new(self) -> int:
         rows = self.db.fetch("""select to_jsonb(a) from public.action a where a.user_id = %s::uuid
                                 and a.status in ('reviewed', 'blocked')
-                                and a.kind in ('send_email', 'send_linkedin_invite', 'send_linkedin_dm')
+                                and a.kind in ('send_email', 'send_linkedin_invite', 'send_linkedin_dm', 'create_calendar_event')
                                 and not exists (select 1 from public.telegram_message t where t.action_id = a.id)
                                 order by a.created_at limit 5""", [self.user_id])
         for (action,) in rows:

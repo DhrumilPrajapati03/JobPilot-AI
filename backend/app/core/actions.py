@@ -218,6 +218,15 @@ def _usage(conn, user_id: str, action: dict, policy: Policy, now: datetime) -> U
                                    and contact_id::text = %s))""",
                            [user_id, action["id"], str(contact), user_id, str(contact)]).fetchone()
         usage.last_touch_at = row[0]
+    original = payload.get("follow_up_of")
+    if original:
+        row = conn.execute("""select lower(payload->>'to'), status from public.action where id = %s::uuid and user_id = %s::uuid
+                                and kind = 'send_email' and payload->>'follow_up_of' is null""", [str(original), user_id]).fetchone()
+        again = conn.execute("""select count(*) from public.action where user_id = %s::uuid and id <> %s::uuid
+                                  and payload->>'follow_up_of' = %s and executing_at is not null""",
+                             [user_id, action["id"], str(original)]).fetchone()[0]
+        usage.follow_up_ok = bool(row and row[1] in ("provider_accepted", "delivered") and not again
+                                  and row[0] == str(payload.get("to") or "").strip().lower())
     accepted = payload.get("accepted_at")
     if accepted:
         try:

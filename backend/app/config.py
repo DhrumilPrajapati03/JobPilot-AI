@@ -69,9 +69,10 @@ class Settings(BaseSettings):
     # Token broker (plan section 4): OAuth secrets for Courier are stored encrypted with this
     # Fernet key (scripts/connect_google.py new-key). Agents never see them.
     ENCRYPTION_KEY: str = ""
-    # Gmail for Courier (send) and later Inbox (read). Same Google API client as backups.
+    # Gmail for Courier (send) and Inbox (read), and Calendar for interview events Courier adds
+    # after your approval. Same Google API client as backups.
     GMAIL_SCOPES: str = ("https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.readonly "
-                         "openid https://www.googleapis.com/auth/userinfo.email")
+                         "https://www.googleapis.com/auth/calendar.events openid https://www.googleapis.com/auth/userinfo.email")
     # Telegram approvals (long polling; plan section 9.2). Only TELEGRAM_CHAT_ID is answered.
     TELEGRAM_BOT_TOKEN: str = ""
     TELEGRAM_CHAT_ID: str = ""
