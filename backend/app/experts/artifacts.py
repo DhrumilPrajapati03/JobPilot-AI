@@ -170,6 +170,36 @@ class InviteSet(Strict):
     notes: list[str] = Field(default_factory=list, max_length=10)
 
 
+class PayRange(Strict):
+    low: float = Field(gt=0)
+    high: float = Field(gt=0)
+    currency: Literal["INR", "USD", "EUR", "GBP"]
+    basis: str = Field(default="", max_length=200)     # what it describes ("ML Engineer, Bangalore")
+    quote: str = Field(min_length=1, max_length=400)   # the words in the source that state it
+    source: int = Field(ge=1, le=20)
+
+
+class PayBand(Strict):
+    low: float = Field(gt=0)
+    high: float = Field(gt=0)
+    currency: str = Field(max_length=3)
+    n: int = 1
+
+
+class CompReport(Strict):
+    """Pay research for one role (Comp Analyst). Every range cites a source and quotes it."""
+    company: str = Field(min_length=1, max_length=200)
+    role: str = Field(default="", max_length=300)
+    jd_range: PayBand | None = None                 # what the job description itself says
+    ranges: list[PayRange] = Field(default_factory=list, max_length=12)
+    market: PayBand | None = None                   # medians across the ranges, one currency
+    suggested: dict | None = None                   # {low, high, currency, rationale}
+    yours: dict = Field(default_factory=dict)       # {current, expected_floor} from your vault (text)
+    sources: list[Source] = Field(default_factory=list, max_length=20)
+    confidence: Literal["low", "medium", "high"] = "low"
+    notes: list[str] = Field(default_factory=list, max_length=10)
+
+
 class DmDraft(Strict):
     """One LinkedIn message (after an accepted invitation) or referral ask DM Outreach proposed."""
     contact_id: str
@@ -192,7 +222,7 @@ class DmSet(Strict):
 
 KINDS: dict[str, type[BaseModel]] = {"company_brief": CompanyBrief, "resume_version": ResumeVersion, "draft": EmailDraft,
                                      "contact_list": ContactList, "answer_set": AnswerSet, "invite_set": InviteSet,
-                                     "dm_set": DmSet}
+                                     "dm_set": DmSet, "comp_report": CompReport}
 
 
 class ArtifactError(ValueError):

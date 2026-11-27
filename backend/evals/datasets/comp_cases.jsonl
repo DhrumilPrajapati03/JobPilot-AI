@@ -1,0 +1,15 @@
+{"type": "parse", "text": "Salary range: 15 - 22 LPA", "expect": [[1500000, 2200000, "INR"]]}
+{"type": "parse", "text": "CTC up to ₹35,00,000 per annum; range ₹25,00,000 - ₹35,00,000", "expect": [[2500000, 3500000, "INR"]]}
+{"type": "parse", "text": "Stipend ₹40,000 - ₹50,000 per month", "expect": [[480000, 600000, "INR"]]}
+{"type": "parse", "text": "Base salary $140,000 - $180,000 USD", "expect": [[140000, 180000, "USD"]]}
+{"type": "parse", "text": "Comp: 1 - 1.5 Cr", "expect": [[10000000, 15000000, "INR"]]}
+{"type": "parse", "text": "3 to 5 years of experience with Python", "expect": []}
+{"type": "parse", "text": "Team of 10-15 engineers", "expect": []}
+{"type": "quote", "source": "AI Engineer salaries at Globex range between 20 LPA and 32 LPA.", "quote": "AI Engineer salaries at Globex range between 20 LPA and 32 LPA", "low": 2000000, "high": 3200000, "currency": "INR", "expect": "accept"}
+{"type": "quote", "source": "AI Engineer salaries at Globex range between 20 LPA and 32 LPA.", "quote": "AI Engineer salaries at Globex range between 20 LPA and 42 LPA", "low": 2000000, "high": 4200000, "currency": "INR", "expect": "reject", "why": "figure changed"}
+{"type": "quote", "source": "AI Engineer salaries at Globex range between 20 LPA and 32 LPA.", "quote": "Globex pays AI Engineers 25-40 LPA", "low": 2500000, "high": 4000000, "currency": "INR", "expect": "reject", "why": "not in the source"}
+{"type": "quote", "source": "Average base pay is $150k-$190k for ML engineers in Seattle.", "quote": "Average base pay is $150k-$190k for ML engineers", "low": 150000, "high": 190000, "currency": "USD", "expect": "accept"}
+{"type": "quote", "source": "Average base pay is $150k-$190k for ML engineers in Seattle.", "quote": "Average base pay is $150k-$190k for ML engineers", "low": 150000, "high": 190000, "currency": "INR", "expect": "reject", "why": "wrong currency"}
+{"type": "parse", "text": "The lowest salary for a Lead AI Engineer is ₹17,00,000 per year, ₹1,41,667 per month or ₹817 per hour.", "expect": [[1700000, 1700000, "INR"]]}
+{"type": "parse", "text": "The average annual pay is about ₹ 24,03,573 a year, an approximate hourly rate of ₹ 1,156, a monthly salary of about ₹ 2,00,298.", "expect": [[2403573, 2403573, "INR"]]}
+{"type": "parse", "text": "Lead ML Engineer salary in India ranges between ₹28.5 Lakhs to ₹33.2 Lakhs.", "expect": [[2850000, 3320000, "INR"]]}

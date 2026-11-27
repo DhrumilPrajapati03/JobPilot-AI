@@ -37,6 +37,7 @@ class Route:
 
 GRAPH: tuple[Route, ...] = (
     Route("research", "researcher", "company_brief", "researched", "research {company}"),
+    Route("comp", "comp_analyst", "comp_report", "researched", "research pay for {role} at {company}"),
     Route("recon", "recon", "contact_list", "researched", "find the people at {company}"),
     Route("tailor", "tailor", "resume_version", "tailored", "tailor your resume for {role} at {company}"),
     Route("outreach", "email_outreach", "draft", "ready", "draft outreach to {company}"),

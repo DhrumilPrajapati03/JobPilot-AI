@@ -104,6 +104,21 @@ def profile_value(kind: str, label: str, p: profile_mod.Profile) -> tuple[str, s
     return "", ""
 
 
+def pay_context(report: dict | None, band_text) -> str:
+    """One line of the Comp Analyst's research for pay questions (empty without a report)."""
+    if not report:
+        return ""
+    parts = []
+    if report.get("jd_range"):
+        parts.append(f"the JD's band is {band_text(report['jd_range'])}")
+    if report.get("market"):
+        n = report["market"]["n"]
+        parts.append(f"market {band_text(report['market'])} ({n} source{'s' if n > 1 else ''})")
+    if report.get("suggested"):
+        parts.append(f"suggested ask {band_text(report['suggested'])}")
+    return ("Comp Analyst: " + "; ".join(parts) + ".") if parts else ""
+
+
 def item(field: dict, kind: str, value, badge: str, *, flagged: bool = False, note: str = "", hit: bank.Hit | None = None) -> dict:
     return {"key": field["key"][:300], "label": field["label"][:1000], "type": field.get("type") or "text",
             "required": bool(field.get("required")), "options": list(field.get("options") or [])[:50], "kind": kind,
@@ -135,8 +150,10 @@ async def run(ctx) -> dict:
         brief_text = " ".join([c.get("summary") or ""] + [x["text"] for k in ("product", "recent_news", "tech_stack")
                                                           for x in c.get(k) or []])
 
-    from app.experts import applicant
+    from app.experts import applicant, comp_analyst
     resume = await asyncio.to_thread(applicant.resume_file, ctx.user_id, ctx.case_id)
+    comp = await asyncio.to_thread(artifacts.latest, ctx.user_id, ctx.case_id, "comp_report")
+    pay_note = pay_context((comp or {}).get("content"), comp_analyst.band_text)
     file_labels = [f["label"].strip() for f in fields if (f.get("type") or "") == "file"]
 
     results: dict[str, dict] = {}
@@ -164,11 +181,18 @@ async def run(ctx) -> dict:
                 results[key] = item(field, kind, None, "needs_you", note="Attach this file yourself.")
             continue
         value, note = profile_value(kind, label, p)
+        if kind == "pay" and pay_note:
+            note = f"{note} {pay_note}".strip()
         if value:
             fitted, problem = fit(field, value)
             confirm = kind in ("pay", "dob", "sponsorship", "work_auth")
             results[key] = item(field, kind, fitted, "vault" if fitted is not None else "needs_you",
-                                flagged=confirm or fitted is None, note=problem or note)
+                                flagged=confirm or fitted is None, note=(f"{problem} {pay_note}".strip() if problem and kind == "pay" else problem) or note)
+            continue
+        if kind == "pay":
+            # Never a model's number for pay: your confirmed figure, or you decide (with the research beside it).
+            results[key] = item(field, kind, None, "needs_you", flagged=True,
+                                note=("No confirmed pay figure in your vault. " + pay_note).strip()[:300])
             continue
         found = await ctx.tools.call("search_answers", f'Looking up "{label[:60]}" in your answer bank', question=label)
         vectors_used &= found["vectors"]

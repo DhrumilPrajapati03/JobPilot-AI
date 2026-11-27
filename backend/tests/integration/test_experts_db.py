@@ -81,6 +81,10 @@ def test_supervisor_routes_every_stage_and_waits_once_for_a_paused_expert(owner)
     get_db().fetch("""insert into public.artifact (user_id, case_id, kind, content, created_by)
                       values (%s::uuid, %s::uuid, 'company_brief', '{}', 'researcher')""", [owner, case["id"]])
     asyncio.run(runtime.run_expert(ctx_for(owner, "supervisor", case["id"])))
+    assert queued(owner, "comp_analyst") == [(case["id"], "routed")]
+    get_db().fetch("""insert into public.artifact (user_id, case_id, kind, content, created_by)
+                      values (%s::uuid, %s::uuid, 'comp_report', '{}', 'comp_analyst')""", [owner, case["id"]])
+    asyncio.run(runtime.run_expert(ctx_for(owner, "supervisor", case["id"])))
     assert queued(owner, "recon") == [(case["id"], "routed")]
     assert cases.get_case(owner, case["id"])["stage"] == "researched"
     get_db().fetch("""insert into public.artifact (user_id, case_id, kind, content, created_by)
@@ -169,8 +173,8 @@ def test_paused_and_draft_experts_do_not_run_and_roster_shows_state(owner):
         with pytest.raises(Exception, match="paused"):
             asyncio.run(runtime.run_expert(ctx_for(owner, "scout")))
         with pytest.raises(Exception, match="draft"):
-            asyncio.run(runtime.run_expert(ctx_for(owner, "comp_analyst")))
+            asyncio.run(runtime.run_expert(ctx_for(owner, "interview_buddy")))
         states = {e["id"]: e["state"] for e in roster(owner)}
-        assert states["scout"] == "paused" and states["comp_analyst"] == "draft" and states["researcher"] == "idle"
+        assert states["scout"] == "paused" and states["interview_buddy"] == "draft" and states["researcher"] == "idle"
     finally:
         get_db().fetch("update public.agent_spec set status = 'active' where id = 'scout'")

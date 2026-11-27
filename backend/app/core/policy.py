@@ -39,7 +39,8 @@ WEEKLY_CAPS = {"send_linkedin_invite": "linkedin_invites_per_week"}
 PEOPLE_KINDS = {"send_email", "send_linkedin_invite", "send_linkedin_dm", "referral_request"}
 
 # Caps added after the first policy.yaml; older files get these defaults.
-OPTIONAL_CAPS = {"recon_searches_per_run": 6, "recon_searches_per_day": 40, "follow_up_after_days": 5}
+OPTIONAL_CAPS = {"recon_searches_per_run": 6, "recon_searches_per_day": 40, "follow_up_after_days": 5,
+                 "comp_searches_per_run": 3, "comp_searches_per_day": 15}
 
 DEFAULT_BUDGETS = {
     "per_case": {"steps": 200, "tokens": 500_000, "seconds": 3600},
