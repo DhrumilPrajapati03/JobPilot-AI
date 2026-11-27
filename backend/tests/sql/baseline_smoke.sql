@@ -4,8 +4,8 @@ do $$ begin
   assert exists(select 1 from pg_extension where extname='vector'), 'pgvector missing';
   assert exists(select 1 from pg_extension where extname='pgcrypto'), 'pgcrypto missing';
   assert public.release_schema_ready(), 'release_schema_ready() is false';
-  -- 31 tables from 0001, resume_sections (0002), 16 spine tables (0003), 3 runtime tables (0004), 3 courier tables (0005).
-  assert (select count(*) from pg_tables where schemaname='public' and tablename<>'alembic_version')=54, 'unexpected table count';
+  -- 31 tables from 0001, resume_sections (0002), 16 spine tables (0003), 3 runtime tables (0004), 3 courier tables (0005), inbox_message (0008).
+  assert (select count(*) from pg_tables where schemaname='public' and tablename<>'alembic_version')=55, 'unexpected table count';
   assert (select format_type(atttypid, atttypmod) from pg_attribute where attrelid='public.resume_sections'::regclass and attname='embedding')='vector';
   assert not exists(select 1 from pg_tables where schemaname='public' and rowsecurity), 'RLS still enabled';
   assert not exists(select 1 from pg_policies), 'policies still present';

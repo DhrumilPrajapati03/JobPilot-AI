@@ -23,7 +23,7 @@ from app.courier import connections, gmail
 from app.db import get_db
 from app.services.runs import PermanentRunError, RunStore
 
-SENDERS = {"send_email"}
+SENDERS = {"send_email", "create_calendar_event"}
 
 
 def dispatch(user_id: str, action_id: str, *, available_at: datetime | None = None, store: RunStore | None = None) -> dict:
@@ -33,9 +33,9 @@ def dispatch(user_id: str, action_id: str, *, available_at: datetime | None = No
     return store.enqueue(user_id, "courier", {"action_id": action_id}, key, available_at=available_at)
 
 
-def _event(user_id: str, action: dict, kind: str, summary: str, data: dict | None = None) -> None:
+def _event(user_id: str, action: dict, kind: str, summary: str, data: dict | None = None, *, actor_name: str = "gmail") -> None:
     if action.get("case_id"):
-        cases.add_event(user_id, action["case_id"], kind, actor="courier", actor_name="gmail", summary=summary,
+        cases.add_event(user_id, action["case_id"], kind, actor="courier", actor_name=actor_name, summary=summary,
                         data={"action_id": action["id"], **(data or {})})
 
 
@@ -74,6 +74,8 @@ def execute(user_id: str, action_id: str, *, now: datetime | None = None, client
     if status in ("provider_accepted", "delivered", "failed", "send_unknown", "cancelled"):
         return {"status": status, "skipped": "already settled"}
     if status == "executing":
+        if kind == "create_calendar_event":
+            return _recover_calendar(user_id, action_id, client=client)
         return _recover(user_id, action_id, client=client)
     own = client is None
     client = client or httpx.Client(timeout=httpx.Timeout(60.0, connect=15.0))
@@ -86,6 +88,8 @@ def execute(user_id: str, action_id: str, *, now: datetime | None = None, client
 
 def _execute(user_id: str, action_id: str, now: datetime, client: httpx.Client) -> dict:
     pending = get_db(user_id).fetch("select to_jsonb(a) from public.action a where id = %s::uuid", [action_id])[0][0]
+    if pending["kind"] == "create_calendar_event":
+        return _execute_calendar(user_id, pending, now, client)
     try:
         token, sender, attachment = _prepare(user_id, pending["payload"], client)
     except (connections.ConnectionError_, FileNotFoundError, ValueError) as exc:
@@ -106,8 +110,10 @@ def _execute(user_id: str, action_id: str, now: datetime, client: httpx.Client) 
                {"reasons": reasons, "retry_at": later.isoformat() if later else None})
         return {"status": "approved", "held": reasons, "retry_at": later.isoformat() if later else None}
     msg = gmail.build(action["payload"], sender, action["payload"].get("from_name", ""), action["id"], attachment)
-    result = gmail.send(client, token, msg)
+    result = gmail.send(client, token, msg, thread_id=action["payload"].get("thread_id"))
     actions.record_outcome(user_id, action_id, result.status, provider_ref=result.provider_ref, error=result.error)
+    if result.thread_id:
+        get_db(user_id).fetch("update public.action set thread_id = %s where id = %s::uuid", [result.thread_id, action_id])
     if result.status == "provider_accepted":
         _record_touch(user_id, action)
         _event(user_id, action, "email_sent", f"Email sent to {action['payload'].get('to')}", {"gmail_id": result.provider_ref})
@@ -115,6 +121,53 @@ def _execute(user_id: str, action_id: str, now: datetime, client: httpx.Client) 
     else:
         _event(user_id, action, "email_" + result.status, result.error or result.status)
     return {"status": result.status, "provider_ref": result.provider_ref, "error": result.error}
+
+
+def _execute_calendar(user_id: str, pending: dict, now: datetime, client: httpx.Client) -> dict:
+    """An approved event on your own Google Calendar (no guests are invited)."""
+    from app.courier import calendar
+    try:
+        token, _ = connections.google_access_token(user_id, need=calendar.SCOPE, client=client)
+    except connections.ConnectionError_ as exc:
+        reason = (f"{exc} Run: python scripts/connect_google.py connect" if "lacks" in str(exc) else str(exc))
+        _event(user_id, pending, "held", f"Not added yet: {reason}", {"reasons": [reason]}, actor_name="calendar")
+        return {"status": "approved", "held": [reason]}
+    try:
+        gate = actions.start_execution(user_id, pending["id"], now=now)
+    except actions.ActionError as exc:
+        raise PermanentRunError(str(exc)) from None
+    if not gate.run:
+        later = gate.verdict.retry_at
+        if later:
+            dispatch(user_id, pending["id"], available_at=later)
+        _event(user_id, gate.action, "held", "Not added yet: " + "; ".join(gate.verdict.reasons), actor_name="calendar")
+        return {"status": "approved", "held": gate.verdict.reasons}
+    result = calendar.insert(client, token, gate.action["id"], gate.action["payload"])
+    actions.record_outcome(user_id, pending["id"], result.status, provider_ref=result.provider_ref, error=result.error)
+    if result.status == "provider_accepted":
+        _event(user_id, gate.action, "calendar_added", f"Added to your calendar: {gate.action['payload'].get('summary')}",
+               {"event_id": result.provider_ref}, actor_name="calendar")
+    else:
+        _event(user_id, gate.action, "calendar_" + result.status, result.error or result.status, actor_name="calendar")
+    return {"status": result.status, "provider_ref": result.provider_ref, "error": result.error}
+
+
+def _recover_calendar(user_id: str, action_id: str, *, client: httpx.Client | None = None) -> dict:
+    """A crash mid-insert: inserting again with the same event id is safe (409 means it exists)."""
+    from app.courier import calendar
+    action = get_db(user_id).fetch("select to_jsonb(a) from public.action a where id = %s::uuid", [action_id])[0][0]
+    own = client is None
+    client = client or httpx.Client(timeout=30)
+    try:
+        token, _ = connections.google_access_token(user_id, need=calendar.SCOPE, client=client)
+        result = calendar.insert(client, token, action_id, action["payload"])
+    except connections.ConnectionError_ as exc:
+        result = gmail.SendResult("send_unknown", error=f"Couldn't check the calendar after a restart: {exc}")
+    finally:
+        if own:
+            client.close()
+    actions.record_outcome(user_id, action_id, result.status, provider_ref=result.provider_ref, error=result.error)
+    return {"status": result.status, "provider_ref": result.provider_ref}
 
 
 def _recover(user_id: str, action_id: str, *, client: httpx.Client | None = None) -> dict:

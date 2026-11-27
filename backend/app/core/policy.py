@@ -39,7 +39,7 @@ WEEKLY_CAPS = {"send_linkedin_invite": "linkedin_invites_per_week"}
 PEOPLE_KINDS = {"send_email", "send_linkedin_invite", "send_linkedin_dm", "referral_request"}
 
 # Caps added after the first policy.yaml; older files get these defaults.
-OPTIONAL_CAPS = {"recon_searches_per_run": 6, "recon_searches_per_day": 40}
+OPTIONAL_CAPS = {"recon_searches_per_run": 6, "recon_searches_per_day": 40, "follow_up_after_days": 5}
 
 DEFAULT_BUDGETS = {
     "per_case": {"steps": 200, "tokens": 500_000, "seconds": 3600},
@@ -108,6 +108,7 @@ class Usage:
     company_people: set[str] = field(default_factory=set)  # contacts already reached at the payload's company
     last_touch_at: datetime | None = None    # latest touch of the payload's contact, any channel
     accepted_at: datetime | None = None      # when the contact accepted the invite (DMs only)
+    follow_up_ok: bool | None = None         # follow-ups only: the original was sent by you, to this person, not followed up yet
 
 
 @dataclass
@@ -229,7 +230,9 @@ def check_execution(policy: Policy, kind: str, payload: dict, usage: Usage, now:
             reasons.append(f"Already reached {len(usage.company_people)} people at this company "
                            f"(max_people_per_company = {policy.caps['max_people_per_company']}).")
         days = policy.caps["no_contact_if_touched_within_days"]
-        if kind in OPENERS and usage.last_touch_at and now - usage.last_touch_at < timedelta(days=days):
+        if payload.get("follow_up_of") and usage.follow_up_ok is not True:
+            reasons.append("A follow-up must answer an email you sent to the same person, once.")
+        if kind in OPENERS and not payload.get("follow_up_of") and usage.last_touch_at and now - usage.last_touch_at < timedelta(days=days):
             reasons.append(f"This person was contacted in the last {days} days.")
         if kind == "send_linkedin_dm":
             hours = policy.caps["min_hours_accept_to_dm"]

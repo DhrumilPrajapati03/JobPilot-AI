@@ -46,12 +46,22 @@ export function when(iso: string | null | undefined) {
 
 const KIND_WORDS: Record<string, string> = {
   send_email: 'Email', send_linkedin_invite: 'LinkedIn invitation', send_linkedin_dm: 'LinkedIn message',
+  create_calendar_event: 'Calendar event',
 };
+
+function whenRange(start?: string, end?: string) {
+  if (!start) return '';
+  const s = new Date(start), e = end ? new Date(end) : null;
+  const day = s.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short' });
+  const t = (d: Date) => d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  return `${day}, ${t(s)}${e ? ` to ${t(e)}` : ''}`;
+}
 
 export function ApprovalCard({ action, showCase = false, company }: { action: Action; showCase?: boolean; company?: string }) {
   const { approve, reject, edit } = useActionMutations();
   const p = action.payload;
-  const linkedin = action.kind !== 'send_email';
+  const calendar = action.kind === 'create_calendar_event';
+  const linkedin = action.kind === 'send_linkedin_invite' || action.kind === 'send_linkedin_dm';
   const textKey = action.kind === 'send_linkedin_invite' ? 'note' : 'body';
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<string>(p[textKey] ?? '');
@@ -76,7 +86,11 @@ export function ApprovalCard({ action, showCase = false, company }: { action: Ac
         <Chip tone={label}>{status}</Chip>
       </header>
       <dl className="jd-fields">
-        {linkedin ? <>
+        {calendar ? <>
+          <dt>What</dt><dd>{p.summary}</dd>
+          <dt>When</dt><dd>{whenRange(p.start, p.end)}</dd>
+          {p.location && <><dt>Where</dt><dd>{p.location}</dd></>}
+        </> : linkedin ? <>
           <dt>To</dt><dd>{p.name}{p.title ? `, ${p.title}` : ''} {p.profile_url && <a href={p.profile_url} target="_blank" rel="noreferrer" className="jd-inline-link">profile <ExternalLink size={12} /></a>}</dd>
         </> : <>
           <dt>From</dt><dd>{p.from_name || 'You'}</dd>
@@ -84,11 +98,11 @@ export function ApprovalCard({ action, showCase = false, company }: { action: Ac
           <dt>Subject</dt><dd>{editing ? <input className="jd-input" value={subject} onChange={e => setSubject(e.target.value)} aria-label="Subject" /> : p.subject}</dd>
         </>}
       </dl>
-      {editing
+      {calendar ? <p className="jd-note">Goes on your own Google Calendar only; nobody else is invited.</p> : editing
         ? <><textarea className="jd-textarea" rows={linkedin ? 4 : 10} value={draft} onChange={e => setDraft(e.target.value)} aria-label="Message" />
             {action.kind === 'send_linkedin_invite' && <p className={`jd-count${over ? ' jd-over' : ''}`}>{draft.length} of 200 characters</p>}</>
         : <p className="jd-body">{p[textKey] || <em>No note</em>}</p>}
-      {p.attachment && !linkedin && <p className="jd-attach"><FileText size={14} />{p.attachment.filename}</p>}
+      {p.attachment && !linkedin && !calendar && <p className="jd-attach"><FileText size={14} />{p.attachment.filename}</p>}
       {action.block_reason && <p className="jd-note jd-warn">Reviewer: {action.block_reason}</p>}
       {!action.block_reason && notes.length > 0 && <p className="jd-note">Reviewer: {notes.join(' ')}</p>}
       {action.status === 'approved' && linkedin && <p className="jd-note">Waiting in the LinkedIn queue in the side panel. You send it yourself.</p>}
@@ -99,8 +113,8 @@ export function ApprovalCard({ action, showCase = false, company }: { action: Ac
           <button className="jd-btn" disabled={busy} onClick={() => { setEditing(false); setDraft(p[textKey] ?? ''); setSubject(p.subject ?? ''); }}>Cancel</button>
         </> : <>
           {action.status === 'reviewed' && <button className="jd-btn jd-primary" disabled={busy} onClick={() => approve.mutate(action)}>
-            {linkedin ? 'Approve and queue' : 'Approve and send'}</button>}
-          {action.status !== 'blocked' && <button className="jd-btn" disabled={busy} onClick={() => setEditing(true)}>Edit</button>}
+            {calendar ? 'Approve and add' : linkedin ? 'Approve and queue' : 'Approve and send'}</button>}
+          {action.status !== 'blocked' && !calendar && <button className="jd-btn" disabled={busy} onClick={() => setEditing(true)}>Edit</button>}
           <button className="jd-btn" disabled={busy} onClick={() => reject.mutate(action)}>{action.status === 'blocked' ? 'Discard' : 'Reject'}</button>
         </>}
       </footer>}

@@ -33,6 +33,12 @@ def ensure_defaults(user_id: str) -> None:
         db.fetch("""insert into public.routine (user_id, key, agent, name, kind, schedule, enabled)
                     values (%s::uuid, %s, %s, %s, %s, %s, %s) on conflict (user_id, key) do nothing""",
                  [user_id, key, agent, name, kind, Jsonb({"kind": "daily", "hour": at_hour}), enabled])
+    # Inbox (Day 10): Gmail every 30 minutes, follow-up drafts each morning.
+    for key, name, task, schedule in [("inbox_poll", "Check Gmail for replies", "poll", {"kind": "every", "minutes": 30}),
+                                      ("follow_ups", "Draft follow-ups", "follow_up", {"kind": "daily", "hour": 10})]:
+        db.fetch("""insert into public.routine (user_id, key, agent, name, kind, task, schedule, enabled)
+                    values (%s::uuid, %s, 'inbox', %s, 'expert', %s, %s, true) on conflict (user_id, key) do nothing""",
+                 [user_id, key, name, task, Jsonb(schedule)])
 
 
 def _local(now: datetime):
@@ -50,6 +56,13 @@ def due_routines(user_id: str, now: datetime) -> list[dict]:
                                     order by key""", [user_id])
     due = []
     for (routine,) in rows:
+        schedule = routine.get("schedule") or {}
+        if schedule.get("kind") == "every":          # interval routines: due when the interval has passed
+            last_run = routine.get("last_run_at")
+            minutes = max(int(schedule.get("minutes", 30)), 5)
+            if not last_run or now - datetime.fromisoformat(last_run) >= timedelta(minutes=minutes):
+                due.append(routine)
+            continue
         last = routine.get("last_due_on")
         last_day = datetime.fromisoformat(last).date() if last else None
         hour = int((routine.get("schedule") or {}).get("hour", 0))
@@ -62,10 +75,15 @@ def due_routines(user_id: str, now: datetime) -> list[dict]:
     return due
 
 
-def _enqueue(store, user_id: str, routine: dict, day: str) -> dict:
+def _enqueue(store, user_id: str, routine: dict, day: str, now: datetime | None = None) -> dict:
     if routine["kind"] == "backup":
         return store.enqueue(user_id, "backup", {"scheduled_on": day}, f"backup:{day}")
     from app.experts.runtime import enqueue_expert
+    if routine["kind"] == "expert":
+        every = (routine.get("schedule") or {}).get("kind") == "every"
+        slot = (now or datetime.now(timezone.utc)).strftime("%Y%m%dT%H%M") if every else day
+        return enqueue_expert(user_id, routine["agent"], store=store, key=f"routine:{routine['key']}:{slot}",
+                              trigger="routine", scheduled_on=day, task=routine.get("task") or "")
     return enqueue_expert(user_id, routine["agent"], store=store, key=f"routine:{routine['key']}:{day}",
                           trigger="routine", scheduled_on=day)
 
@@ -80,7 +98,7 @@ async def tick(store, user_id: str, *, now: datetime | None = None, waking: bool
     queued, missed = [], 0
     for routine in due:
         try:
-            run = await asyncio.to_thread(_enqueue, store, user_id, routine, day)
+            run = await asyncio.to_thread(_enqueue, store, user_id, routine, day, now)
             status = "queued"
         except Exception as exc:
             run, status = None, f"failed to queue ({type(exc).__name__})"
@@ -88,8 +106,9 @@ async def tick(store, user_id: str, *, now: datetime | None = None, waking: bool
             update public.routine set last_due_on = %s, last_run_at = now(), last_run_id = %s::uuid, last_status = %s
             where id = %s::uuid""", [day, run and run.get("id"), status, routine["id"]])
         queued.append(routine["key"])
-    # On the first tick after start, everything due was missed while the worker was down.
-    missed = len(queued) if waking else 0
+    # On the first tick after start, everything due was missed while the worker was down
+    # (interval routines like Gmail checks aren't "missed": they simply run again).
+    missed = len([k for k in queued if k not in ("inbox_poll",)]) if waking else 0
     if missed:
         await note(user_id, "supervisor", f"JobDots woke up and ran {missed} missed routine{'s' if missed > 1 else ''}",
                    detail={"routines": queued})

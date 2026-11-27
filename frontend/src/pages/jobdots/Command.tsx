@@ -6,7 +6,7 @@ import { ExpertAvatar } from '../../components/experts/ExpertAvatar';
 import { useCaseMutations, useCases, usePending, useRoster } from '../../jobdots/api';
 import { ApprovalDeck, Chip, STAGE_WORDS, when } from '../../jobdots/cards';
 
-const KIND_ORDER = ['send_email', 'send_linkedin_invite', 'send_linkedin_dm'];
+const KIND_ORDER = ['create_calendar_event', 'send_email', 'send_linkedin_invite', 'send_linkedin_dm'];
 
 export default function Command() {
   const navigate = useNavigate();

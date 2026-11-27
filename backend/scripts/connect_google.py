@@ -114,7 +114,8 @@ def status(_args) -> int:
     left = (conn.expires_hint - datetime.now(timezone.utc)) if conn.expires_hint else None
     print(f"Gmail: {conn.status}, {conn.account_email}" + (f", about {left.days}d {left.seconds // 3600}h left" if left else ""))
     print("Can send: " + str(any(s.endswith("gmail.send") for s in conn.scopes)) +
-          "; can read: " + str(any(s.endswith("gmail.readonly") for s in conn.scopes)))
+          "; can read: " + str(any(s.endswith("gmail.readonly") for s in conn.scopes)) +
+          "; can add calendar events: " + str(any(s.endswith("calendar.events") for s in conn.scopes)))
     return 0
 
 

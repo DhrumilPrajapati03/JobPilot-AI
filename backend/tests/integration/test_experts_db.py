@@ -136,6 +136,8 @@ def test_scout_opens_one_case_per_strong_posting(owner, monkeypatch):
 
 def test_routines_run_daily_and_catch_up_after_the_laptop_was_off(owner):
     routines.ensure_defaults(owner)
+    # Inbox's routines have their own test (test_inbox_db); this one is about the daily two.
+    get_db().fetch("update public.routine set enabled = false where user_id = %s::uuid and agent = 'inbox'", [owner])
     store = RunStore(get_db())
     noon = datetime(2026, 11, 25, 6, 30, tzinfo=timezone.utc)  # 12:00 in Kolkata
     first = asyncio.run(routines.tick(store, owner, now=noon))
