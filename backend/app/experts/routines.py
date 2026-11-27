@@ -39,6 +39,10 @@ def ensure_defaults(user_id: str) -> None:
         db.fetch("""insert into public.routine (user_id, key, agent, name, kind, task, schedule, enabled)
                     values (%s::uuid, %s, 'inbox', %s, 'expert', %s, %s, true) on conflict (user_id, key) do nothing""",
                  [user_id, key, name, task, Jsonb(schedule)])
+    # DM Outreach (Day 11): messages to people who accepted your invitation, each morning.
+    db.fetch("""insert into public.routine (user_id, key, agent, name, kind, task, schedule, enabled)
+                values (%s::uuid, 'accepted_dms', 'dm_outreach', 'Message people who accepted', 'expert', 'after_accept', %s, true)
+                on conflict (user_id, key) do nothing""", [user_id, Jsonb({"kind": "daily", "hour": 11})])
 
 
 def _local(now: datetime):

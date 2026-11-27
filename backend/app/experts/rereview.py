@@ -9,7 +9,7 @@ from app.core import actions, cases
 from app.core.policy import load_policy
 from app.experts import artifacts, reviewer
 
-LINKEDIN = ("send_linkedin_invite", "send_linkedin_dm")
+LINKEDIN = ("send_linkedin_invite", "send_linkedin_dm", "referral_request")
 
 
 def edit_and_review(user_id: str, action_id: str, payload: dict) -> dict:

@@ -11,3 +11,7 @@
 {"note": "Hi Jane, I applied for the ML Engineer role at Acme. I built RAG on pgvector.", "url": "https://www.linkedin.com/company/acme/", "expect": "block", "why": "a company page, not a person"}
 {"note": "Hi Jane, I applied for the ML Engineer role at Acme. I built RAG on pgvector.", "url": "https://linkedin.example.com/in/jane/", "expect": "block", "why": "not linkedin.com"}
 {"note": "Hi Jane, I applied at Acme. I trained models on 500 GPUs at Example Labs.", "expect": "block", "why": "invented number"}
+{"kind": "send_linkedin_dm", "note": "Hi Jane, thanks for connecting. I applied for the ML Engineer role at Acme; I built a RAG service on PostgreSQL and pgvector at Example Labs. Who on the team would be best to talk to?", "expect": "pass"}
+{"kind": "send_linkedin_dm", "note": "Hi Jane, thanks for connecting. I led the search team at Google for 6 years. Could you refer me?", "expect": "block", "why": "employer and years not in the vault"}
+{"kind": "send_linkedin_dm", "note": "", "expect": "block", "why": "a message needs words"}
+{"kind": "referral_request", "note": "Hi Jane, I applied for the ML Engineer role at Acme. Would you be comfortable referring me, or pointing me to the hiring manager? No worries if not.", "expect": "pass"}

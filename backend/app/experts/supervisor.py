@@ -41,6 +41,7 @@ GRAPH: tuple[Route, ...] = (
     Route("tailor", "tailor", "resume_version", "tailored", "tailor your resume for {role} at {company}"),
     Route("outreach", "email_outreach", "draft", "ready", "draft outreach to {company}"),
     Route("connect", "connector", "invite_set", "ready", "propose LinkedIn invitations at {company}"),
+    Route("refer", "dm_outreach", "dm_set", "ready", "ask your connections at {company} for a referral"),
 )
 
 

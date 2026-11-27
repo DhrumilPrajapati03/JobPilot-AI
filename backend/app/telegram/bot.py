@@ -36,7 +36,7 @@ STATUS_LINE = {
 }
 
 
-LINKEDIN_KINDS = ("send_linkedin_invite", "send_linkedin_dm")
+LINKEDIN_KINDS = ("send_linkedin_invite", "send_linkedin_dm", "referral_request")
 LINKEDIN_STATUS = {"approved": "✅ Approved. Waiting in your LinkedIn queue.", "executing": "🔗 Opened from the queue.",
                    "provider_accepted": "📬 You sent it on LinkedIn.", "failed": "✖️ Not sent (you skipped it)."}
 
@@ -45,7 +45,8 @@ def linkedin_card(action: dict) -> str:
     p = action["payload"]
     invite = action["kind"] == "send_linkedin_invite"
     who = esc(p.get("name") or "someone") + (f", {esc(p.get('title'))}" if p.get("title") else "")
-    lines = [f"<b>LinkedIn {'invitation' if invite else 'message'} at {esc(p.get('company') or 'a company')}</b> "
+    what = "invitation" if invite else "referral ask" if action["kind"] == "referral_request" else "message"
+    lines = [f"<b>LinkedIn {what} at {esc(p.get('company') or 'a company')}</b> "
              f"({'Connector' if invite else 'DM Outreach'})", f"<b>To:</b> {who}", esc(p.get("profile_url") or ""), "",
              esc(p.get("note") or p.get("body") or "(no note)")[:1500]]
     notes = (action.get("review") or {}).get("notes") or []
@@ -168,7 +169,7 @@ class Bot:
     def notify_new(self) -> int:
         rows = self.db.fetch("""select to_jsonb(a) from public.action a where a.user_id = %s::uuid
                                 and a.status in ('reviewed', 'blocked')
-                                and a.kind in ('send_email', 'send_linkedin_invite', 'send_linkedin_dm', 'create_calendar_event')
+                                and a.kind in ('send_email', 'send_linkedin_invite', 'send_linkedin_dm', 'referral_request', 'create_calendar_event')
                                 and not exists (select 1 from public.telegram_message t where t.action_id = a.id)
                                 order by a.created_at limit 5""", [self.user_id])
         for (action,) in rows:

@@ -46,7 +46,7 @@ export function when(iso: string | null | undefined) {
 
 const KIND_WORDS: Record<string, string> = {
   send_email: 'Email', send_linkedin_invite: 'LinkedIn invitation', send_linkedin_dm: 'LinkedIn message',
-  create_calendar_event: 'Calendar event',
+  create_calendar_event: 'Calendar event', referral_request: 'Referral ask',
 };
 
 function whenRange(start?: string, end?: string) {
@@ -61,7 +61,7 @@ export function ApprovalCard({ action, showCase = false, company }: { action: Ac
   const { approve, reject, edit } = useActionMutations();
   const p = action.payload;
   const calendar = action.kind === 'create_calendar_event';
-  const linkedin = action.kind === 'send_linkedin_invite' || action.kind === 'send_linkedin_dm';
+  const linkedin = ['send_linkedin_invite', 'send_linkedin_dm', 'referral_request'].includes(action.kind);
   const textKey = action.kind === 'send_linkedin_invite' ? 'note' : 'body';
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<string>(p[textKey] ?? '');
@@ -207,6 +207,16 @@ function InvitesCard({ a }: { a: Artifact }) {
   </>;
 }
 
+function MessagesCard({ a }: { a: Artifact }) {
+  const messages: any[] = a.content.messages ?? [];
+  if (!messages.length) return <p>{a.content.notes?.[0] ?? 'Nobody to message.'}</p>;
+  return <ul className="jd-invites">{messages.map(m => <li key={m.contact_id}>
+    <strong>{m.name}</strong> <span className="jd-meta">{m.title}{m.purpose === 'referral' ? ', referral ask' : ', after they accepted'}</span>
+    <p className="jd-body">{m.text}</p>
+    {m.status === 'blocked' ? <p className="jd-note jd-warn">Reviewer blocked it: {m.review?.blocks?.join(' ')}</p> : <p className="jd-meta">Approve it in the approval card on this case.</p>}
+  </li>)}</ul>;
+}
+
 const BADGE_WORDS: Record<string, string> = { vault: 'From your vault', reused: 'Reused', adapted: 'Adapted', generated: 'Drafted', needs_you: 'Needs you' };
 
 function AnswersCard({ a }: { a: Artifact }) {
@@ -228,13 +238,13 @@ function DraftCard({ a }: { a: Artifact }) {
 
 const ARTIFACT_WORDS: Record<string, string> = {
   company_brief: 'Company brief', resume_version: 'Tailored resume', draft: 'Email draft', contact_list: 'People at the company',
-  answer_set: 'Application answers', invite_set: 'LinkedIn invitations', comp_report: 'Pay research', interview_prep: 'Interview prep',
+  answer_set: 'Application answers', invite_set: 'LinkedIn invitations', dm_set: 'LinkedIn messages', comp_report: 'Pay research', interview_prep: 'Interview prep',
 };
 
 export function ArtifactCard({ a, caseId }: { a: Artifact; caseId: string }) {
   const body = a.kind === 'company_brief' ? <BriefCard a={a} /> : a.kind === 'resume_version' ? <ResumeCard a={a} caseId={caseId} />
     : a.kind === 'contact_list' ? <PeopleCard a={a} /> : a.kind === 'invite_set' ? <InvitesCard a={a} />
-    : a.kind === 'answer_set' ? <AnswersCard a={a} /> : a.kind === 'draft' ? <DraftCard a={a} /> : <pre className="jd-json">{JSON.stringify(a.content, null, 2).slice(0, 2000)}</pre>;
+    : a.kind === 'dm_set' ? <MessagesCard a={a} /> : a.kind === 'answer_set' ? <AnswersCard a={a} /> : a.kind === 'draft' ? <DraftCard a={a} /> : <pre className="jd-json">{JSON.stringify(a.content, null, 2).slice(0, 2000)}</pre>;
   return (
     <article className="jd-card" data-kind={a.kind}>
       <header className="jd-card-head">

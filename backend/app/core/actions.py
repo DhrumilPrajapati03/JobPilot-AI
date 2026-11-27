@@ -198,9 +198,11 @@ def edit(user_id: str, action_id: str, payload: dict) -> dict:
 def _usage(conn, user_id: str, action: dict, policy: Policy, now: datetime) -> Usage:
     kind, payload = action["kind"], action["payload"]
     today, week = policy.day_start(now), policy.week_start(now)
+    # LinkedIn messages and referral asks are both messages: they share linkedin_dms_per_day.
+    kinds = ["send_linkedin_dm", "referral_request"] if kind in ("send_linkedin_dm", "referral_request") else [kind]
     counts = conn.execute("""select count(*) filter (where executing_at >= %s), count(*) filter (where executing_at >= %s)
-                             from public.action where user_id = %s::uuid and kind = %s and executing_at is not null
-                             and id <> %s::uuid""", [today, week, user_id, kind, action["id"]]).fetchone()
+                             from public.action where user_id = %s::uuid and kind = any(%s) and executing_at is not null
+                             and id <> %s::uuid""", [today, week, user_id, kinds, action["id"]]).fetchone()
     usage = Usage(executed_today=counts[0], executed_this_week=counts[1])
     company = str(payload.get("company") or "").strip().lower()
     if company:

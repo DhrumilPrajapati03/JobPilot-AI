@@ -80,7 +80,7 @@ def summary(user_id: str) -> dict:
             "sent_today": {
                 "emails": [sent.get("send_email", 0), caps.get("emails_per_day")],
                 "invites": [sent.get("send_linkedin_invite", 0), caps.get("linkedin_invites_per_day")],
-                "dms": [sent.get("send_linkedin_dm", 0), caps.get("linkedin_dms_per_day")],
+                "dms": [sent.get("send_linkedin_dm", 0) + sent.get("referral_request", 0), caps.get("linkedin_dms_per_day")],
             },
         },
     }

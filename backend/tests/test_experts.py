@@ -17,7 +17,7 @@ def test_builtin_roster_is_valid_and_only_built_experts_are_active():
     assert len(specs) == 14
     assert {s.id for s in specs.values() if s.status == "active"} == {
         "supervisor", "scout", "researcher", "recon", "tailor", "answerer", "email_outreach", "reviewer",
-        "applicant", "connector", "inbox"}
+        "applicant", "connector", "inbox", "dm_outreach"}
     modes = load_policy().action_modes
     # An active expert may only propose outward actions that wait for your approval.
     assert all(modes[k] == "ask_first" for s in specs.values() if s.status == "active" for k in s.action_kinds)
@@ -77,7 +77,9 @@ def test_supervisor_routes_research_then_recon_then_waits_for_tailor():
     assert later.action == "wait" and later.route.agent == "email_outreach" and later.stage == "tailored"
     connect = supervisor.decide(case(stage="tailored"), {"company_brief", "contact_list", "resume_version", "draft"}, ACTIVE)
     assert connect.action == "wait" and connect.route.agent == "connector" and connect.stage == "ready"
-    done = supervisor.decide(case(stage="tailored"), {"company_brief", "contact_list", "resume_version", "draft", "invite_set"}, ACTIVE)
+    refer = supervisor.decide(case(stage="tailored"), {"company_brief", "contact_list", "resume_version", "draft", "invite_set"}, ACTIVE)
+    assert refer.action == "wait" and refer.route.agent == "dm_outreach"
+    done = supervisor.decide(case(stage="tailored"), {"company_brief", "contact_list", "resume_version", "draft", "invite_set", "dm_set"}, ACTIVE)
     assert done.action == "done" and done.stage == "ready"
 
 

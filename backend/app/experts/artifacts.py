@@ -170,8 +170,29 @@ class InviteSet(Strict):
     notes: list[str] = Field(default_factory=list, max_length=10)
 
 
+class DmDraft(Strict):
+    """One LinkedIn message (after an accepted invitation) or referral ask DM Outreach proposed."""
+    contact_id: str
+    name: str = Field(max_length=120)
+    title: str = Field(default="", max_length=160)
+    purpose: Literal["after_accept", "referral"]
+    profile_url: HttpUrl
+    text: str = Field(max_length=2000)
+    action_id: str | None = None
+    status: str = Field(default="proposed", max_length=30)
+    review: dict = Field(default_factory=dict)
+
+
+class DmSet(Strict):
+    """DM Outreach's messages for one case."""
+    company: str = Field(min_length=1, max_length=200)
+    messages: list[DmDraft] = Field(default_factory=list, max_length=10)
+    notes: list[str] = Field(default_factory=list, max_length=10)
+
+
 KINDS: dict[str, type[BaseModel]] = {"company_brief": CompanyBrief, "resume_version": ResumeVersion, "draft": EmailDraft,
-                                     "contact_list": ContactList, "answer_set": AnswerSet, "invite_set": InviteSet}
+                                     "contact_list": ContactList, "answer_set": AnswerSet, "invite_set": InviteSet,
+                                     "dm_set": DmSet}
 
 
 class ArtifactError(ValueError):

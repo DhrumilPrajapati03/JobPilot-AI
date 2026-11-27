@@ -145,11 +145,16 @@
 - id: dm_outreach
   name: DM Outreach
   role: Drafts DMs and referral asks after an invite is accepted
-  model: {provider: default}
+  description: Writes one LinkedIn message to each person who accepted your invitation (after the wait in policy.yaml), and referral asks to your existing connections at a company you applied to. Each passes the Reviewer and waits for your approval; you send it from the side panel's LinkedIn queue.
+  instructions: See app/experts/dm_outreach.py (INSTRUCTIONS). Proposals only.
+  policy_notes: Every message needs your approval; the daily message cap, the accept-to-DM wait, cooldowns and max people per company from policy.yaml apply.
+  model: {provider: default, task: quality}
   tools: [read_case, save_artifact]
-  outputs: [draft]
+  outputs: [dm_set]
   action_kinds: [send_linkedin_dm, referral_request]
-  status: draft
+  triggers: [{kind: event, event: routed}, {kind: routine}, {kind: manual}]
+  budgets: {steps: 30, tokens: 40000, seconds: 300}
+  status: active
 
 - id: inbox
   name: Inbox

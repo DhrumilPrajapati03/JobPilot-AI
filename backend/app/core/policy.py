@@ -33,7 +33,7 @@ OUTWARD = {"send_email", "send_linkedin_invite", "send_linkedin_dm", "referral_r
            "submit_application", "create_calendar_event"}
 # Kinds that open a conversation with someone (the recent-touch cooldown applies).
 OPENERS = {"send_email", "send_linkedin_invite", "referral_request"}
-DAILY_CAPS = {"send_email": "emails_per_day", "send_linkedin_invite": "linkedin_invites_per_day",
+DAILY_CAPS = {"send_email": "emails_per_day", "send_linkedin_invite": "linkedin_invites_per_day", "referral_request": "linkedin_dms_per_day",
               "send_linkedin_dm": "linkedin_dms_per_day"}
 WEEKLY_CAPS = {"send_linkedin_invite": "linkedin_invites_per_week"}
 PEOPLE_KINDS = {"send_email", "send_linkedin_invite", "send_linkedin_dm", "referral_request"}

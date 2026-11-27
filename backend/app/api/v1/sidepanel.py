@@ -245,7 +245,7 @@ async def fill_report(body: FillReportIn, user: ExtensionUser = Depends(get_exte
 
 # --- LinkedIn queue: approved invitations and DMs, sent by you one at a time ---------------------
 
-LINKEDIN = ("send_linkedin_invite", "send_linkedin_dm")
+LINKEDIN = ("send_linkedin_invite", "send_linkedin_dm", "referral_request")
 
 
 def _queue(user_id: str) -> dict:
@@ -263,7 +263,7 @@ def _queue(user_id: str) -> dict:
                     [user_id, list(LINKEDIN)])
     used = db.fetch("""select count(*) filter (where kind = 'send_linkedin_invite' and executing_at >= %s),
                               count(*) filter (where kind = 'send_linkedin_invite' and executing_at >= %s),
-                              count(*) filter (where kind = 'send_linkedin_dm' and executing_at >= %s)
+                              count(*) filter (where kind in ('send_linkedin_dm', 'referral_request') and executing_at >= %s)
                        from public.action where user_id = %s::uuid and kind = any(%s) and executing_at is not null""",
                     [policy.day_start(now), policy.week_start(now), policy.day_start(now), user_id, list(LINKEDIN)])[0]
     caps = policy.caps
@@ -387,7 +387,8 @@ async def linkedin_done(body: QueueDoneIn, user: ExtensionUser = Depends(get_ext
         if p.get("contact_id"):
             await asyncio.to_thread(db.fetch, """insert into public.contact_touch (contact_id, user_id, case_id, channel, action_id,
                                                   sent_at, outcome) values (%s::uuid, %s::uuid, %s::uuid, %s, %s::uuid, now(), 'sent')""",
-                                    [p["contact_id"], user.id, action["case_id"], "linkedin_invite" if invite else "linkedin_dm",
+                                    [p["contact_id"], user.id, action["case_id"], "linkedin_invite" if invite
+                                     else "referral" if action["kind"] == "referral_request" else "linkedin_dm",
                                      action["id"]])
             before = ["unknown", "discovered", "classified", "invite_proposed", "invite_approved"] if invite \
                 else ["accepted", "message_proposed", "message_approved"]
