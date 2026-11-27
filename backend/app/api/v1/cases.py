@@ -97,8 +97,9 @@ async def reject_action(action_id: str, body: RejectIn, user: CurrentUser = Depe
 
 @router.put("/actions/{action_id}")
 async def edit_action(action_id: str, body: EditIn, user: CurrentUser = Depends(get_current_user)):
+    from app.experts.rereview import edit_and_review
     try:
-        return await asyncio.to_thread(actions.edit, user.id, action_id, body.payload)
+        return await asyncio.to_thread(edit_and_review, user.id, action_id, body.payload)
     except actions.ActionError as exc:
         raise _action_error(exc) from None
 

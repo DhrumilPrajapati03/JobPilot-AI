@@ -29,6 +29,14 @@ export const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8
 
 // --- Routes ---
 export const ROUTES = {
+  HOME: '/',
+  CASES: '/cases',
+  CASE: '/cases/:id',
+  APPROVALS: '/approvals',
+  CONTACTS: '/contacts',
+  ANSWERS: '/answers',
+  DASHBOARD: '/dashboard',
+  EXPERT: '/experts/:id',
   LOGIN: '/login',
   CHAT: '/chat',
   OVERVIEW: '/workspace',
@@ -95,6 +103,6 @@ export const KANBAN_COLUMNS = [
 ] as const;
 
 // --- App Info ---
-export const APP_NAME = 'JobPilot';
+export const APP_NAME = 'JobDots';
 export const APP_DESCRIPTION = 'AI job application assistant';
 export const APP_VERSION = '2.0.0';
