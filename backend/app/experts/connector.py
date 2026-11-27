@@ -106,7 +106,7 @@ def revise(user_id: str, action_id: str, text: str) -> dict:
     from app.experts.tailor import load_inputs
     rows = get_db(user_id).fetch("""select kind, payload, case_id::text from public.action
                                     where id = %s::uuid and user_id = %s::uuid""", [action_id, user_id])
-    if not rows or rows[0][0] not in ("send_linkedin_invite", "send_linkedin_dm"):
+    if not rows or rows[0][0] not in ("send_linkedin_invite", "send_linkedin_dm", "referral_request"):
         raise actions.ActionError("action_not_found", "Not a LinkedIn draft.")
     kind, payload, case_id = rows[0]
     from app.tailor.texdoc import normalize

@@ -21,6 +21,20 @@ Status of claims: items marked **[unverified]** come from memory or third-party 
 5. Brave's MIT-licensed API reference skills (`brave-web-search`, `brave-llm-context`) are in `.claude/skills/` for the coding agent. The key stays in `.env` and is never put into the agent's environment.
 6. **As built on Day 6:** Recon is **deterministic** (rules, no model). It accepts a person only with evidence that they work at the company now: the result title, the profile's "Experience" line, or a first-person post. It checks the company with an exact match, so "Acme Infotech" is not "Acme AI". A labelled eval (`recon_cases`) requires zero wrong-company people. The local 8B model stays an option for ambiguous titles. Supervisor runs Recon **after Researcher and before Tailor**, so Email Outreach can write to the recruiter or hiring mailbox Recon found. Searches are capped per run and per day (`recon_searches_per_run`, `recon_searches_per_day` in `policy.yaml`).
 
+### As built on Day 11 (27 Nov: the outreach loop)
+
+1. **DM Outreach** (active), the second half of the LinkedIn loop: invite (Connector) → you send it → accepted (Inbox reads LinkedIn's email) → wait `min_hours_accept_to_dm` → message (DM Outreach) → you send it from the queue.
+   - **Routine `after_accept`** (daily 11:00): one message to each person who accepted long enough ago and hasn't had one.
+   - **On a case** (a Supervisor route after Connector, producing `dm_set`, migration 0009): referral asks (`referral_request`) to people Recon found who are already your connections there, within `max_people_per_company`.
+   - Reviewer checks every message, and only those it passes become actions. All of them go through the side panel's LinkedIn queue and Telegram.
+2. **Caps:** DMs and referral asks share `linkedin_dms_per_day`, counted together in Courier's gate. A DM never goes out without a recorded acceptance and the wait. The cooldown still applies to referral asks, but not to the thank-you after an acceptance you asked for.
+3. **End-to-end dry run** (`tests/integration/test_outreach_loop_db.py`): a fictional case runs through every step, with the model and Gmail faked:
+   - Recon's list → Connector invitations → approve, open, send → a third invitation refused by the daily cap;
+   - LinkedIn acceptance email → Inbox → no DM before 24 hours → one DM after;
+   - the shared message cap holds back the referral ask;
+   - contact stages and `contact_touch` rows are checked at every step.
+4. The `connector_notes` eval now includes DMs and referral asks.
+
 ### As built on Day 10 (27 Nov: Inbox and Calendar)
 
 1. **Inbox** (active) runs as two routines. Interval routines are new (`{"kind": "every", "minutes": 30}`), as is routine kind `expert` with a `task` (migration 0008).

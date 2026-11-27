@@ -172,8 +172,8 @@ def connector_suite() -> list[Metric]:
     wrong = []
     for c in cases:
         payload = {"contact_id": "c1", "name": "Jane Example", "title": "Recruiter", "company": "Acme", "role": "ML Engineer",
-                   "profile_url": c.get("url", "https://www.linkedin.com/in/jane-example/"), "note": c["note"]}
-        review = reviewer.check_linkedin(payload, kind="send_linkedin_invite", company="Acme", role="ML Engineer", job=job,
+                   "profile_url": c.get("url", "https://www.linkedin.com/in/jane-example/"), "note": c["note"], "body": c["note"]}
+        review = reviewer.check_linkedin(payload, kind=c.get("kind", "send_linkedin_invite"), company="Acme", role="ML Engineer", job=job,
                                          brief=brief, vault=vault)
         if review.ok != (c["expect"] == "pass"):
             wrong.append({"note": c["note"][:80], "expected": c["expect"], "blocks": review.blocks})

@@ -2,7 +2,7 @@
 import { usePending } from '../../jobdots/api';
 import { ApprovalDeck } from '../../jobdots/cards';
 
-const GROUPS: [string, string][] = [['create_calendar_event', 'Calendar events'], ['send_email', 'Emails'], ['send_linkedin_invite', 'LinkedIn invitations'], ['send_linkedin_dm', 'LinkedIn messages']];
+const GROUPS: [string, string][] = [['create_calendar_event', 'Calendar events'], ['send_email', 'Emails'], ['send_linkedin_invite', 'LinkedIn invitations'], ['send_linkedin_dm', 'LinkedIn messages'], ['referral_request', 'Referral asks']];
 
 export default function Approvals() {
   const pending = usePending();
