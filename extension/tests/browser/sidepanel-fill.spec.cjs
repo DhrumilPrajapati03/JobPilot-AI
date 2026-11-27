@@ -4,8 +4,8 @@ const {pathToFileURL} = require('node:url');
 const fixtures = require('./fixtures.cjs');
 
 // The panel page with a stand-in chrome API: one captured job, its answers, and a form in frame 0.
-async function openPanel(page) {
-  await page.addInitScript(() => {
+async function openPanel(page, {resume = false} = {}) {
+  await page.addInitScript(({resume}) => {
     const listeners = {activated: [], updated: []};
     const calls = window.__calls = [];
     const injected = window.__injected = [];
@@ -16,12 +16,16 @@ async function openPanel(page) {
       {key: 'f0:jp-4', label: 'I agree to the privacy terms', kind: 'legal', type: 'checkbox', badge: 'needs_you', value: null, required: true, options: []},
       {key: 'f0:jp-5', label: 'Cover letter', kind: 'open', type: 'textarea', badge: 'needs_you', value: null, required: false, options: []},
     ];
+    if (resume) answers.push({key: 'f0:jp-6', label: 'Resume/CV', kind: 'file', type: 'file', badge: 'vault', value: '__resume__',
+                              flagged: false, required: true, options: [], note: 'Applicant attaches your tailored resume (Ada_Example_Resume.pdf).'});
     const reply = message => {
       calls.push({path: message.path, body: message.body});
       if (message.path === '/extension/me') return {ok: true, data: {name: 'Ada Example'}};
       if (message.path === '/extension/page') return {ok: true, data: {case: {id: 'c1', company: 'Acme', role: 'Engineer'}, answer_set_id: 's1'}};
       if (message.path === '/extension/answer-set') return {ok: true, data: {status: 'ready', answer_set_id: 's1', answers, counts: {needs_you: 3, vault: 2}, notes: []}};
       if (message.path === '/extension/answer-set/approve') return {ok: true, data: {saved: 1}};
+      if (message.path === '/extension/resume') return {ok: true, data: {name: 'Ada_Example_Resume.pdf', sha256: 'f'.repeat(64), size_bytes: 9, pdf_base64: 'JVBERi0xLjQK'}};
+      if (message.path === '/extension/fill-report') return {ok: true, data: {summary: 'ok'}};
       if (message.path === '/extension/case/applied') return {ok: true, data: {stage: message.body.applied === false ? 'ready' : 'applied'}};
       return {ok: false, data: {}};
     };
@@ -43,7 +47,7 @@ async function openPanel(page) {
       },
     };
     window.__switchTab = () => listeners.activated.forEach(f => f({tabId: 8}));
-  });
+  }, {resume});
   await page.goto(pathToFileURL(path.resolve(__dirname, '../../sidepanel.html')).href);
 }
 
@@ -129,4 +133,45 @@ test('submittedPage needs confirmation wording and no form left', async ({page})
   expect(await check(fixtures.shell('<p>We’ve received your application for Engineer.</p><button>View jobs</button>'))).toBe(true);
   expect(await check(fixtures.native)).toBe(false);
   expect(await check(fixtures.shell('<p>Thank you for applying! Just a few questions.</p><label>Phone<input></label>'))).toBe(false);
+});
+
+test('a resume field gets the tailored PDF: fetched once, passed to the frame, reported as attached', async ({page}) => {
+  await openPanel(page, {resume: true});
+  const resumeCard = page.locator('#answers li', {hasText: 'Resume/CV'});
+  await expect(resumeCard.locator('.badge')).toHaveText('From your vault');
+  await expect(resumeCard).toContainText('Applicant attaches your tailored resume');
+  await page.locator('#approve').click();
+  await expect(page.locator('#approve')).toHaveText('Fill again');
+  await expect(resumeCard.locator('.result')).toHaveText('Attached your tailored resume');
+  await expect(page.locator('#approve-note')).toContainText('resume attached');
+  const calls = await page.evaluate(() => window.__calls.map(c => c.path));
+  expect(calls.filter(c => c === '/extension/resume')).toHaveLength(1);
+  const run = await page.evaluate(() => window.__injected.find(i => i.args));
+  expect(run.args[1]).toEqual({name: 'Ada_Example_Resume.pdf', sha256: 'f'.repeat(64), size_bytes: 9, pdf_base64: 'JVBERi0xLjQK'});
+  const report = await page.evaluate(() => window.__calls.find(c => c.path === '/extension/fill-report').body);
+  expect(report.attached_resume).toBe(true);
+  expect(report.results.find(r => r.label === 'Resume/CV')).toEqual({label: 'Resume/CV', outcome: 'filled'});
+});
+
+test('fillFrame attaches the tailored PDF to the resume field and leaves the consent alone', async ({page}) => {
+  const crypto = require('node:crypto');
+  const raw = Buffer.from('%PDF-1.4\nfixture-only\n%%EOF');
+  const doc = {name: 'Ada_Example_Resume.pdf', pdf_base64: raw.toString('base64'), size_bytes: raw.length,
+               sha256: crypto.createHash('sha256').update(raw).digest('hex')};
+  await page.route('https://jobs.example.invalid/**', route => route.fulfill({contentType: 'text/html', body: fixtures.native}));
+  await page.goto('https://jobs.example.invalid/apply');
+  await page.addScriptTag({path: path.resolve(__dirname, '../../content/form-engine.js')});
+  await page.addScriptTag({path: path.resolve(__dirname, '../../sidepanel-lib.js')});
+  const results = await page.evaluate(async doc => {
+    const fields = JOBPILOT_FORM_ENGINE.collect().fields;
+    const key = label => fields.find(f => f.label.startsWith(label)).key;
+    return JOBDOTS_PANEL.fillFrame([
+      {key: key('Resume/CV'), panelKey: 'f0:r', label: 'Resume/CV', kind: 'file', value: '__resume__', required: true, flagged: false},
+      {key: key('First name'), panelKey: 'f0:a', label: 'First name', kind: 'name', value: 'Ada', required: true, flagged: false},
+    ], doc);
+  }, doc);
+  expect(Object.fromEntries(results.map(r => [r.panelKey, r.outcome]))).toEqual({'f0:r': 'filled', 'f0:a': 'filled'});
+  expect(await page.locator('#resume').evaluate(n => [n.files[0].name, n.files[0].size])).toEqual(['Ada_Example_Resume.pdf', raw.length]);
+  await expect(page.locator('#consent')).not.toBeChecked();
+  expect(await page.evaluate(() => submits)).toBe(0);
 });

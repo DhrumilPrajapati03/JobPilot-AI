@@ -159,8 +159,34 @@ def answerer_suite() -> list[Metric]:
     ]
 
 
+def connector_suite() -> list[Metric]:
+    """Connector: the Reviewer's LinkedIn checks on labelled notes. A note with a claim the vault
+    doesn't support, over LinkedIn's limit, or to something that isn't a person's profile must
+    never pass; true, specific notes must not be blocked."""
+    from app.experts import reviewer
+    from app.tailor import vault as vault_mod
+    vault = vault_mod.load(ROOT / "tests" / "fixtures" / "resume" / "fact_vault.yaml")
+    job = "Acme is hiring an ML Engineer to build RAG on pgvector with FastAPI."
+    brief = {"summary": "Acme builds support search for support teams.", "product": [{"text": "Support search on pgvector", "sources": [1]}]}
+    cases = [json.loads(line) for line in (DATASETS / "connector_notes.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
+    wrong = []
+    for c in cases:
+        payload = {"contact_id": "c1", "name": "Jane Example", "title": "Recruiter", "company": "Acme", "role": "ML Engineer",
+                   "profile_url": c.get("url", "https://www.linkedin.com/in/jane-example/"), "note": c["note"]}
+        review = reviewer.check_linkedin(payload, kind="send_linkedin_invite", company="Acme", role="ML Engineer", job=job,
+                                         brief=brief, vault=vault)
+        if review.ok != (c["expect"] == "pass"):
+            wrong.append({"note": c["note"][:80], "expected": c["expect"], "blocks": review.blocks})
+    leaked = [w for w in wrong if w["expected"] == "block"]
+    return [
+        Metric("connector", "connector_notes", "bad_notes_passed", len(leaked), 0, higher_is_better=False,
+               details={"of": sum(c["expect"] == "block" for c in cases), "passed": leaked}),
+        Metric("connector", "connector_notes", "review_accuracy", (len(cases) - len(wrong)) / len(cases), 1.0, details={"wrong": wrong}),
+    ]
+
+
 SUITES = {"matching": matching_suite, "policy": policy_suite, "tailor": tailor_suite, "recon": recon_suite,
-          "answerer": answerer_suite}
+          "answerer": answerer_suite, "connector": connector_suite}
 
 
 def run(names: list[str] | None = None, *, semantic: bool = False) -> list[Metric]:

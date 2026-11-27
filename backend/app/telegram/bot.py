@@ -36,7 +36,31 @@ STATUS_LINE = {
 }
 
 
+LINKEDIN_KINDS = ("send_linkedin_invite", "send_linkedin_dm")
+LINKEDIN_STATUS = {"approved": "✅ Approved. Waiting in your LinkedIn queue.", "executing": "🔗 Opened from the queue.",
+                   "provider_accepted": "📬 You sent it on LinkedIn.", "failed": "✖️ Not sent (you skipped it)."}
+
+
+def linkedin_card(action: dict) -> str:
+    p = action["payload"]
+    invite = action["kind"] == "send_linkedin_invite"
+    who = esc(p.get("name") or "someone") + (f", {esc(p.get('title'))}" if p.get("title") else "")
+    lines = [f"<b>LinkedIn {'invitation' if invite else 'message'} at {esc(p.get('company') or 'a company')}</b> "
+             f"({'Connector' if invite else 'DM Outreach'})", f"<b>To:</b> {who}", esc(p.get("profile_url") or ""), "",
+             esc(p.get("note") or p.get("body") or "(no note)")[:1500]]
+    notes = (action.get("review") or {}).get("notes") or []
+    if notes:
+        lines += ["", "<b>Reviewer:</b> " + esc("; ".join(notes))]
+    if action.get("block_reason"):
+        lines += ["", "<b>Blocked:</b> " + esc(action["block_reason"])]
+    if action["status"] == "reviewed":
+        lines += ["", "Approved ones wait in the LinkedIn queue in the JobDots side panel; you send each one yourself."]
+    return "\n".join(lines)
+
+
 def card(action: dict) -> str:
+    if action.get("kind") in LINKEDIN_KINDS:
+        return linkedin_card(action)
     p = action["payload"]
     to = f"{esc(p.get('to_name'))} &lt;{esc(p.get('to'))}&gt;" if p.get("to_name") else esc(p.get("to") or "(no recipient)")
     review = action.get("review") or {}
@@ -54,7 +78,8 @@ def card(action: dict) -> str:
 
 def buttons(action: dict) -> list[list[dict]]:
     tag = f"{action['id']}:{action['payload_sha256'][:8]}"
-    return [[{"text": "Approve and send", "callback_data": f"ap:{tag}"}, {"text": "Reject", "callback_data": f"rj:{tag}"}]]
+    verb = "Approve and queue" if action.get("kind") in LINKEDIN_KINDS else "Approve and send"
+    return [[{"text": verb, "callback_data": f"ap:{tag}"}, {"text": "Reject", "callback_data": f"rj:{tag}"}]]
 
 
 class Bot:
@@ -112,8 +137,11 @@ class Bot:
         try:
             if verb == "ap":
                 actions.approve(self.user_id, action_id, payload_sha256=action["payload_sha256"], channel="telegram")
-                courier.dispatch(self.user_id, action_id)
-                self.tg.answer(query["id"], "Approved. Sending…")
+                if action["kind"] in courier.SENDERS:
+                    courier.dispatch(self.user_id, action_id)
+                    self.tg.answer(query["id"], "Approved. Sending…")
+                else:
+                    self.tg.answer(query["id"], "Approved. It's in your LinkedIn queue in the side panel.")
             elif verb == "rj":
                 actions.reject(self.user_id, action_id, channel="telegram")
                 self.tg.answer(query["id"], "Rejected. Nothing will be sent.")
@@ -124,7 +152,8 @@ class Bot:
     # --- outgoing --------------------------------------------------------------------------
     def notify_new(self) -> int:
         rows = self.db.fetch("""select to_jsonb(a) from public.action a where a.user_id = %s::uuid
-                                and a.status in ('reviewed', 'blocked') and a.kind = 'send_email'
+                                and a.status in ('reviewed', 'blocked')
+                                and a.kind in ('send_email', 'send_linkedin_invite', 'send_linkedin_dm')
                                 and not exists (select 1 from public.telegram_message t where t.action_id = a.id)
                                 order by a.created_at limit 5""", [self.user_id])
         for (action,) in rows:
@@ -150,7 +179,7 @@ class Bot:
                                 where t.user_id = %s::uuid and a.status <> t.notified_status
                                 and (%s::uuid is null or a.id = %s::uuid)""", [self.user_id, action_id, action_id])
         for message_id, _old, action in rows:
-            line = STATUS_LINE.get(action["status"], action["status"])
+            line = (LINKEDIN_STATUS if action["kind"] in LINKEDIN_KINDS else {}).get(action["status"])                 or STATUS_LINE.get(action["status"], action["status"])
             if action["status"] == "failed" and action.get("error"):
                 line += " " + esc(action["error"])
             if action["status"] == "approved":

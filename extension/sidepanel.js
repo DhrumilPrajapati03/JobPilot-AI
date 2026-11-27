@@ -46,6 +46,13 @@
       status('Open a job posting or an application form to use the panel.');
       return;
     }
+    // On LinkedIn (profiles, feed, messages) the panel is your queue; only job posts are jobs.
+    if (/^https:\/\/([a-z]{2,3}\.)?(www\.)?linkedin\.com\//i.test(url) && !/linkedin\.com\/jobs\//i.test(url)) {
+      $('job').hidden = $('form').hidden = true;
+      state.page = null; state.set = null;
+      status('');
+      return;
+    }
     const page = await post('/extension/page', { url });
     if (token !== state.token) return;
     if (!page.ok) { status(detail(page, "Can't reach JobDots. Is it running?"), true); return; }
@@ -178,7 +185,7 @@
           locked ? null : el('button', { class: 'small', type: 'button', onclick: () => copy(a) }, 'Copy')),
         input,
         a.note ? el('p', { class: 'note' }, a.note) : null,
-        result(state.filled[a.key]),
+        result(state.filled[a.key], a),
         !locked && !['vault'].includes(a.badge) ? el('label', { class: 'skip' },
           el('input', { type: 'checkbox', checked: !!state.skipped[a.key], onchange: e => { state.skipped[a.key] = e.target.checked; } }),
           "Don't save this one to my answer bank") : null));
@@ -193,10 +200,15 @@
 
   const RESULT = { filled: 'Filled on the form', review: 'Filled; check it on the form', preserved: 'Already filled on the form; left as is',
     missing: 'Not filled; fill it yourself', invalid: 'The form rejected this value', skipped: 'Not filled' };
-  function result(r) {
+  function result(r, a) {
     if (!r) return null;
     const good = r.outcome === 'filled' || r.outcome === 'preserved';
-    return el('p', { class: `result ${good ? 'ok' : 'check'}` }, RESULT[r.outcome] || r.outcome, r.note && !good ? `: ${r.note}` : '');
+    const file = a && a.kind === 'file';
+    const words = file && r.outcome === 'filled' ? 'Attached your tailored resume'
+      : file && r.outcome === 'review' ? 'Attached your tailored resume; check it on the form'
+      : file && r.outcome === 'preserved' ? 'A file is already attached; left as is'
+      : RESULT[r.outcome] || r.outcome;
+    return el('p', { class: `result ${good ? 'ok' : 'check'}` }, words, r.note && !good && !(file && r.outcome === 'review') ? `: ${r.note}` : '');
   }
 
   async function copy(a) {
@@ -214,11 +226,26 @@
       const approved = lib.approval(state.set.answers, state.edits, state.skipped);
       const saved = await post('/extension/answer-set/approve', { case_id: state.set.case_id, answer_set_id: state.set.id, answers: approved });
       const tabId = state.tab.id;
-      await chrome.scripting.executeScript({ target: { tabId, allFrames: true }, files: ['content/form-engine.js'] });
       const results = [];
+      // The tailored resume, only when a resume field is in the plan (the form engine checks its hash again).
+      let resume = null;
+      const wantsResume = Object.values(plan).some(list => list.some(a => a.value === lib.RESUME));
+      if (wantsResume) {
+        const r = await post('/extension/resume', { case_id: state.set.case_id });
+        if (r.ok) resume = r.data;
+        else {
+          for (const [frameId, list] of Object.entries(plan)) {
+            for (const a of list.filter(x => x.value === lib.RESUME)) results.push({ panelKey: a.panelKey, outcome: 'review', note: detail(r, 'No tailored resume to attach; attach yours yourself.') });
+            plan[frameId] = list.filter(x => x.value !== lib.RESUME);
+          }
+        }
+      }
+      await chrome.scripting.executeScript({ target: { tabId, allFrames: true }, files: ['content/form-engine.js'] });
       for (const [frameId, answers] of Object.entries(plan)) {
+        if (!answers.length) continue;
+        const doc = answers.some(a => a.value === lib.RESUME) ? resume : null;
         try {
-          const [out] = await chrome.scripting.executeScript({ target: { tabId, frameIds: [Number(frameId)] }, func: lib.fillFrame, args: [answers] });
+          const [out] = await chrome.scripting.executeScript({ target: { tabId, frameIds: [Number(frameId)] }, func: lib.fillFrame, args: [answers, doc] });
           results.push(...((out && out.result) || []));
         } catch (e) {
           results.push(...answers.map(a => ({ panelKey: a.panelKey, outcome: 'review', note: 'That part of the form has reloaded. Read the questions again.' })));
@@ -226,8 +253,12 @@
       }
       state.filled = Object.fromEntries(results.map(r => [r.panelKey, r]));
       renderAnswers();
+      const byKey = Object.fromEntries(state.set.answers.map(a => [a.key, a]));
+      const attached = results.some(r => byKey[r.panelKey] && byKey[r.panelKey].kind === 'file' && ['filled', 'review'].includes(r.outcome) && resume);
+      post('/extension/fill-report', { case_id: state.set.case_id, url: state.tab.url || '', attached_resume: !!attached,
+        results: results.map(r => ({ label: (byKey[r.panelKey] || {}).label || '', outcome: r.outcome })) });
       const n = saved.ok && saved.data ? saved.data.saved : 0;
-      $('approve-note').textContent = `${lib.fillSummary(results)}. ${n ? `${n} new answer${n === 1 ? '' : 's'} saved to your bank. ` : ''}Check the form and click Submit yourself.`;
+      $('approve-note').textContent = `${lib.fillSummary(results)}${attached ? ', resume attached' : ''}. ${n ? `${n} new answer${n === 1 ? '' : 's'} saved to your bank. ` : ''}Check the form and click Submit yourself.`;
       status(saved.ok ? '' : detail(saved, "Filled, but couldn't save the answers to your bank."), !saved.ok);
     } catch (e) {
       status("Chrome doesn't let extensions fill this page.", true);
@@ -270,6 +301,103 @@
   $('mark-applied').addEventListener('click', () => markApplied(true, false));
   $('undo-applied').addEventListener('click', () => markApplied(false, false));
 
+  // LinkedIn queue: Connector's invitations (and later DMs). You approve each one, open the
+  // profile from here (the cap is counted then), paste the copied note, send it yourself on
+  // LinkedIn, and say whether you did. The panel never clicks anything on LinkedIn.
+  const PROFILE = /^https:\/\/([a-z]{2,3}\.)?(www\.)?linkedin\.com\/in\/[^/?#\s]+\/?$/i;
+  const queue = { items: [], edits: {}, busy: false };
+  async function loadQueue() {
+    const r = await post('/extension/linkedin/queue', {});
+    if (!r.ok) return;
+    queue.items = r.data.items || [];
+    for (const id of Object.keys(queue.edits)) if (!queue.items.some(i => i.id === id)) delete queue.edits[id];
+    $('queue').hidden = false;
+    const flags = [r.data.kill_switch ? 'The kill switch is on: nothing can be sent.' : '',
+      r.data.quiet_hours ? "Quiet hours: sending waits until they're over." : ''].filter(Boolean).join(' ');
+    $('queue-usage').textContent = `${lib.usageLine(r.data.usage)}${flags ? ' ' + flags : ''}`;
+    $('queue-empty').hidden = queue.items.length > 0;
+    renderQueue();
+  }
+  function queueText(item) { return Object.prototype.hasOwnProperty.call(queue.edits, item.id) ? queue.edits[item.id] : item.text; }
+  function renderQueue() {
+    const list = $('queue-items');
+    list.replaceChildren();
+    for (const item of queue.items) {
+      const [cls, words] = lib.QUEUE_STATE[item.status] || ['waiting', item.status];
+      const editable = ['reviewed', 'approved'].includes(item.status);
+      const text = queueText(item);
+      const changed = editable && text !== item.text;
+      const count = lib.noteCount(text, item.kind);
+      const id = `q-${item.id}`;
+      const countLine = el('p', { class: `count${count.over ? ' over' : ''}` }, count.text);
+      const field = editable
+        ? el('textarea', { id, rows: 4, 'aria-label': `${item.kind === 'invite' ? 'Note' : 'Message'} to ${item.name}`,
+            oninput: e => {
+              queue.edits[item.id] = e.target.value;
+              const c = lib.noteCount(e.target.value, item.kind);
+              countLine.textContent = c.text; countLine.className = `count${c.over ? ' over' : ''}`;
+              if ((e.target.value !== item.text) !== changed) {      // the buttons change: redraw, keep your cursor
+                const at = e.target.selectionStart;
+                renderQueue();
+                const again = $(id);
+                if (again) { again.focus(); again.setSelectionRange(at, at); }
+              }
+            } })
+        : el('p', { class: 'note' }, text || '(no note)');
+      if (editable) field.value = text;
+      const buttons = [];
+      if (changed) buttons.push(el('button', { class: 'primary', type: 'button', onclick: () => queueEdit(item) }, 'Save and check again'));
+      else if (item.status === 'reviewed') buttons.push(el('button', { class: 'primary', type: 'button', disabled: count.over, onclick: () => queueApprove(item) }, 'Approve'));
+      else if (item.status === 'approved') buttons.push(el('button', { class: 'primary', type: 'button', onclick: () => queueOpen(item) }, 'Open profile and copy note'));
+      else if (item.status === 'executing') {
+        buttons.push(el('button', { class: 'primary', type: 'button', onclick: () => queueDone(item, true) }, 'I sent it'));
+        buttons.push(el('button', { class: 'small', type: 'button', onclick: () => queueDone(item, false) }, "I didn't send it"));
+        buttons.push(el('button', { class: 'small', type: 'button', onclick: () => queueOpen(item) }, 'Open profile again'));
+      }
+      if (item.status !== 'executing') buttons.push(el('button', { class: 'small', type: 'button', onclick: () => queueReject(item) }, item.status === 'blocked' ? 'Discard' : 'Reject'));
+      list.append(el('li', { class: 'answer' },
+        el('p', { class: 'person' }, item.name || 'Someone'),
+        el('p', { class: 'person-meta' }, [item.title, item.company].filter(Boolean).join(' at ') + (item.kind === 'dm' ? ' (message)' : ' (invitation)')),
+        el('div', { class: 'row' }, el('span', { class: `badge ${cls}` }, words)),
+        field, editable ? countLine : null,
+        item.blocked ? el('p', { class: 'note result check' }, item.blocked) : null,
+        (item.notes || []).length ? el('p', { class: 'note' }, `Reviewer: ${item.notes.join(' ')}`) : null,
+        item.status === 'executing' ? el('p', { class: 'howto quiet' }, item.kind === 'invite'
+          ? 'On the profile: Connect, then "Add a note", paste (Ctrl+V), Send. Then tell JobDots below.'
+          : 'On the profile: Message, paste (Ctrl+V), Send. Then tell JobDots below.') : null,
+        el('div', { class: 'actions' }, buttons)));
+    }
+  }
+  async function queueCall(path, body, done) {
+    if (queue.busy) return;
+    queue.busy = true;
+    try {
+      const r = await post(path, body);
+      if (!r.ok) { status(detail(r, "Couldn't update the queue."), true); return; }
+      if (done) done(r.data);
+    } finally { queue.busy = false; await loadQueue(); }
+  }
+  const queueApprove = item => queueCall('/extension/linkedin/approve', { action_id: item.id, payload_sha256: item.payload_sha256 },
+    () => status(`Approved. Open ${item.name || 'the profile'} from the queue when you're ready to send it.`));
+  const queueReject = item => queueCall('/extension/linkedin/reject', { action_id: item.id }, () => status('Removed from the queue. Nothing was sent.'));
+  const queueEdit = item => queueCall('/extension/linkedin/edit', { action_id: item.id, text: queueText(item) }, d => {
+    delete queue.edits[item.id];
+    status(d.status === 'blocked' ? `The Reviewer blocked the new text: ${d.blocked}` : 'Saved. Check it again and approve it.', d.status === 'blocked');
+  });
+  async function queueOpen(item) {
+    if (!PROFILE.test(item.profile_url || '')) { status("That isn't a LinkedIn profile link; reject it.", true); return; }
+    let copied = true;
+    try { await navigator.clipboard.writeText(item.text || ''); } catch (e) { copied = false; }
+    await queueCall('/extension/linkedin/start', { action_id: item.id }, d => {
+      if (!d.ok) { status(`Not now: ${(d.reasons || []).join(' ')}`, true); return; }
+      chrome.tabs.create({ url: d.profile_url });
+      status(copied ? 'Note copied. Paste it in LinkedIn, send it, then tell JobDots here.' : "Couldn't copy the note; select it in the queue and copy it.", !copied);
+    });
+  }
+  const queueDone = (item, sent) => queueCall('/extension/linkedin/done', { action_id: item.id, sent },
+    () => status(sent ? `Recorded: you sent it to ${item.name || 'them'}.` : 'Recorded as not sent.'));
+  setInterval(() => { if (!document.hidden && !queue.busy && !document.activeElement?.closest?.('#queue')) loadQueue(); }, 60000);
+
   $('grant').addEventListener('click', async () => {
     const granted = await chrome.permissions.request(PAGES).catch(() => false);
     if (!granted) status('Without this the panel can’t read job pages.', true);
@@ -284,7 +412,7 @@
   (async () => {
     const me = await send({ type: 'api', path: '/extension/me' });
     if (!me.ok) { status(detail(me, 'Not connected. Open JobDots → Settings → Connect extension.'), true); }
-    else $('who').textContent = me.data.name || me.data.email || '';
+    else { $('who').textContent = me.data.name || me.data.email || ''; loadQueue(); }
     refresh();
   })();
 })();

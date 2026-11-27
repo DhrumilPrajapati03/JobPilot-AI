@@ -150,8 +150,28 @@ class AnswerSet(Strict):
     notes: list[str] = Field(default_factory=list, max_length=10)
 
 
+class InviteDraft(Strict):
+    """One LinkedIn invitation Connector proposed; the action holds the frozen payload."""
+    contact_id: str
+    name: str = Field(max_length=120)
+    title: str = Field(default="", max_length=160)
+    role_class: str = Field(default="unknown", max_length=30)
+    profile_url: HttpUrl
+    note: str = Field(max_length=300)
+    action_id: str | None = None
+    status: str = Field(default="proposed", max_length=30)
+    review: dict = Field(default_factory=dict)
+
+
+class InviteSet(Strict):
+    """Connector's LinkedIn invitations for one case (within max_people_per_company)."""
+    company: str = Field(min_length=1, max_length=200)
+    invites: list[InviteDraft] = Field(default_factory=list, max_length=10)
+    notes: list[str] = Field(default_factory=list, max_length=10)
+
+
 KINDS: dict[str, type[BaseModel]] = {"company_brief": CompanyBrief, "resume_version": ResumeVersion, "draft": EmailDraft,
-                                     "contact_list": ContactList, "answer_set": AnswerSet}
+                                     "contact_list": ContactList, "answer_set": AnswerSet, "invite_set": InviteSet}
 
 
 class ArtifactError(ValueError):

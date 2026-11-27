@@ -201,3 +201,205 @@ async def case_applied(body: AppliedIn, user: ExtensionUser = Depends(get_extens
     elif not body.applied and case["stage"] == "applied":
         case = await asyncio.to_thread(case_mod.set_stage, user.id, case["id"], "ready", actor="user")
     return {"stage": case["stage"], "applied_at": case.get("applied_at")}
+
+
+# --- Applicant: the resume to attach, and a record of each fill ---------------------------------
+
+class CaseIn(BaseModel):
+    case_id: uuid.UUID
+
+
+@router.post("/resume")
+async def resume_document(body: CaseIn, user: ExtensionUser = Depends(get_extension_user)):
+    """The case's tailored resume PDF for the form engine to attach (hash-checked on both ends)."""
+    from app.experts import applicant
+    doc = await asyncio.to_thread(applicant.document, user.id, str(body.case_id))
+    if doc is None:
+        raise HTTPException(404, "No tailored resume PDF for this case. Ask Tailor for one, or attach yours yourself.")
+    return doc
+
+
+class FillResult(BaseModel):
+    label: str = Field(default="", max_length=1000)
+    outcome: str = Field(max_length=20)
+
+
+class FillReportIn(BaseModel):
+    case_id: uuid.UUID
+    url: str = Field(default="", max_length=2000)
+    results: list[FillResult] = Field(default_factory=list, max_length=150)
+    attached_resume: bool = False
+
+
+@router.post("/fill-report")
+async def fill_report(body: FillReportIn, user: ExtensionUser = Depends(get_extension_user)):
+    """What Applicant filled on this form, for the case timeline."""
+    from app.experts import applicant
+    try:
+        event = await asyncio.to_thread(applicant.record_fill, user.id, str(body.case_id), body.url,
+                                        [r.model_dump() for r in body.results], body.attached_resume)
+    except LookupError:
+        raise HTTPException(404, "Case not found") from None
+    return {"summary": event["summary"]}
+
+
+# --- LinkedIn queue: approved invitations and DMs, sent by you one at a time ---------------------
+
+LINKEDIN = ("send_linkedin_invite", "send_linkedin_dm")
+
+
+def _queue(user_id: str) -> dict:
+    from datetime import datetime, timezone
+
+    from app.core.policy import load_policy
+    policy = load_policy()
+    now = datetime.now(timezone.utc)
+    db = get_db(user_id)
+    rows = db.fetch("""select to_jsonb(a) from (select id::text, case_id::text, kind, status, payload, payload_sha256, review,
+                              block_reason, created_at from public.action where user_id = %s::uuid and kind = any(%s)
+                              and status in ('reviewed', 'blocked', 'approved', 'executing')
+                              order by array_position(array['executing','approved','reviewed','blocked'], status), created_at
+                              limit 50) a""",
+                    [user_id, list(LINKEDIN)])
+    used = db.fetch("""select count(*) filter (where kind = 'send_linkedin_invite' and executing_at >= %s),
+                              count(*) filter (where kind = 'send_linkedin_invite' and executing_at >= %s),
+                              count(*) filter (where kind = 'send_linkedin_dm' and executing_at >= %s)
+                       from public.action where user_id = %s::uuid and kind = any(%s) and executing_at is not null""",
+                    [policy.day_start(now), policy.week_start(now), policy.day_start(now), user_id, list(LINKEDIN)])[0]
+    caps = policy.caps
+    items = []
+    for (a,) in rows:
+        p = a["payload"]
+        items.append({"id": a["id"], "case_id": a["case_id"], "kind": "invite" if a["kind"] == "send_linkedin_invite" else "dm",
+                      "status": a["status"], "name": p.get("name") or "", "title": p.get("title") or "",
+                      "company": p.get("company") or "", "profile_url": p.get("profile_url") or "",
+                      "text": p.get("note") or p.get("body") or "", "payload_sha256": a["payload_sha256"],
+                      "notes": [] if a["status"] == "blocked" else (a.get("review") or {}).get("notes") or [],
+                      "blocked": (a.get("block_reason") or "Blocked by the Reviewer.") if a["status"] == "blocked" else ""})
+    return {"items": items, "kill_switch": policy.kill_switch, "quiet_hours": policy.in_quiet_hours(now),
+            "usage": {"invites_today": used[0], "invites_per_day": caps["linkedin_invites_per_day"],
+                      "invites_this_week": used[1], "invites_per_week": caps["linkedin_invites_per_week"],
+                      "dms_today": used[2], "dms_per_day": caps["linkedin_dms_per_day"]}}
+
+
+@router.post("/linkedin/queue")
+async def linkedin_queue(user: ExtensionUser = Depends(get_extension_user)):
+    """Approved LinkedIn invitations and DMs waiting for you, and today's counts against your caps."""
+    return await asyncio.to_thread(_queue, user.id)
+
+
+class QueueItemIn(BaseModel):
+    action_id: uuid.UUID
+
+
+def _linkedin_action(user_id: str, action_id: str) -> dict:
+    rows = get_db(user_id).fetch("""select to_jsonb(a) from (select id::text, case_id::text, kind, status, payload
+                                    from public.action where id = %s::uuid and user_id = %s::uuid) a""", [action_id, user_id])
+    if not rows or rows[0][0]["kind"] not in LINKEDIN:
+        raise HTTPException(404, "Not in your LinkedIn queue")
+    return rows[0][0]
+
+
+@router.post("/linkedin/start")
+async def linkedin_start(body: QueueItemIn, user: ExtensionUser = Depends(get_extension_user)):
+    """Courier's door for one queued item: caps, cooldowns, quiet hours and the kill switch are
+    checked now. Allowed -> it counts against today's cap and the panel opens the profile."""
+    from app.core import actions
+    action = await asyncio.to_thread(_linkedin_action, user.id, str(body.action_id))
+    if action["status"] == "executing":           # opened before and not finished: open it again
+        p = action["payload"]
+        return {"ok": True, "profile_url": p.get("profile_url"), "text": p.get("note") or p.get("body") or ""}
+    try:
+        gate = await asyncio.to_thread(actions.start_execution, user.id, action["id"])
+    except actions.ActionError as exc:
+        raise HTTPException(409, str(exc)) from None
+    if not gate.run:
+        return {"ok": False, "reasons": gate.verdict.reasons}
+    p = gate.action["payload"]
+    return {"ok": True, "profile_url": p.get("profile_url"), "text": p.get("note") or p.get("body") or ""}
+
+
+class QueueApproveIn(BaseModel):
+    action_id: uuid.UUID
+    payload_sha256: str = Field(min_length=64, max_length=64)
+
+
+@router.post("/linkedin/approve")
+async def linkedin_approve(body: QueueApproveIn, user: ExtensionUser = Depends(get_extension_user)):
+    """Approve exactly the text you see in the panel (a stale hash is refused)."""
+    from app.core import actions
+    await asyncio.to_thread(_linkedin_action, user.id, str(body.action_id))
+    try:
+        done = await asyncio.to_thread(actions.approve, user.id, str(body.action_id), payload_sha256=body.payload_sha256,
+                                       channel="extension")
+    except actions.ActionError as exc:
+        raise HTTPException(409, str(exc)) from None
+    return {"status": done["status"]}
+
+
+@router.post("/linkedin/reject")
+async def linkedin_reject(body: QueueItemIn, user: ExtensionUser = Depends(get_extension_user)):
+    from app.core import actions
+    await asyncio.to_thread(_linkedin_action, user.id, str(body.action_id))
+    try:
+        done = await asyncio.to_thread(actions.reject, user.id, str(body.action_id), channel="extension")
+    except actions.ActionError as exc:
+        raise HTTPException(409, str(exc)) from None
+    return {"status": done["status"]}
+
+
+class QueueEditIn(BaseModel):
+    action_id: uuid.UUID
+    text: str = Field(max_length=2000)
+
+
+@router.post("/linkedin/edit")
+async def linkedin_edit(body: QueueEditIn, user: ExtensionUser = Depends(get_extension_user)):
+    """Change the note before it goes out; the Reviewer checks the new text again."""
+    from app.core import actions
+    from app.experts import connector
+    await asyncio.to_thread(_linkedin_action, user.id, str(body.action_id))
+    try:
+        done = await asyncio.to_thread(connector.revise, user.id, str(body.action_id), body.text)
+    except actions.ActionError as exc:
+        raise HTTPException(409, str(exc)) from None
+    return {"status": done["status"], "payload_sha256": done["payload_sha256"],
+            "notes": (done.get("review") or {}).get("notes") or [], "blocked": done.get("block_reason") or ""}
+
+
+class QueueDoneIn(BaseModel):
+    action_id: uuid.UUID
+    sent: bool
+
+
+@router.post("/linkedin/done")
+async def linkedin_done(body: QueueDoneIn, user: ExtensionUser = Depends(get_extension_user)):
+    """You say whether you sent it on LinkedIn. Sent -> recorded on the contact and the case."""
+    from app.core import actions
+    action = await asyncio.to_thread(_linkedin_action, user.id, str(body.action_id))
+    if action["status"] != "executing":
+        raise HTTPException(409, "Open it from the queue first.")
+    invite = action["kind"] == "send_linkedin_invite"
+    p, who = action["payload"], action["payload"].get("name") or "them"
+    db = get_db(user.id)
+    if body.sent:
+        await asyncio.to_thread(actions.record_outcome, user.id, action["id"], "provider_accepted", provider_ref="sent_by_you")
+        if p.get("contact_id"):
+            await asyncio.to_thread(db.fetch, """insert into public.contact_touch (contact_id, user_id, case_id, channel, action_id,
+                                                  sent_at, outcome) values (%s::uuid, %s::uuid, %s::uuid, %s, %s::uuid, now(), 'sent')""",
+                                    [p["contact_id"], user.id, action["case_id"], "linkedin_invite" if invite else "linkedin_dm",
+                                     action["id"]])
+            before = ["unknown", "discovered", "classified", "invite_proposed", "invite_approved"] if invite \
+                else ["accepted", "message_proposed", "message_approved"]
+            await asyncio.to_thread(db.fetch, """update public.contact set stage = %s where id = %s::uuid and user_id = %s::uuid
+                                                  and stage = any(%s)""",
+                                    ["invite_sent" if invite else "message_sent", p["contact_id"], user.id, before])
+        summary = f"You sent the LinkedIn {'invitation' if invite else 'message'} to {who}"
+    else:
+        # It still counts against today's cap: it was opened, and LinkedIn may have seen it.
+        await asyncio.to_thread(actions.record_outcome, user.id, action["id"], "failed", error="Not sent: you skipped it on LinkedIn.")
+        summary = f"You didn't send the LinkedIn {'invitation' if invite else 'message'} to {who}"
+    if action["case_id"]:
+        await asyncio.to_thread(case_mod.add_event, user.id, action["case_id"], "note", actor="user", summary=summary,
+                                data={"action_id": action["id"], "sent": body.sent})
+    return {"status": "provider_accepted" if body.sent else "failed"}

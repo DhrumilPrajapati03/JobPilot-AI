@@ -17,7 +17,7 @@ from pydantic import BaseModel, Field, field_validator
 from app.core.policy import Policy, load_policy
 
 BUILTIN = Path(__file__).with_name("builtin.yaml")
-ARTIFACT_KINDS = {"resume_version", "company_brief", "comp_report", "contact_list", "draft", "answer_set",
+ARTIFACT_KINDS = {"resume_version", "company_brief", "comp_report", "contact_list", "draft", "answer_set", "invite_set",
                   "interview_prep", "case"}
 
 

@@ -1,4 +1,4 @@
-# JobDots — Final End-to-End Plan (v1.8, 26 Nov 2026)
+# JobDots — Final End-to-End Plan (v1.9, 27 Nov 2026)
 
 Owner: Dhrumil. Single-user personal job-hunting assistant. Python backend, React frontend, local-first hosting on his laptop (Render with credit later), Postgres + pgvector (local; Neon in Phase B), Groq + local Ollama models, backups to his Google Drive.
 Status of claims: items marked **[unverified]** come from memory or third-party sources and must be checked before relying on them.
@@ -20,6 +20,31 @@ Status of claims: items marked **[unverified]** come from memory or third-party 
 4. **Hunter is optional.** Its signup refuses webmail addresses, so Recon works without it: it uses emails published on company pages, plus a recipient Dhrumil sets himself. When `HUNTER_API_KEY` is present, Hunter is used for email lookup.
 5. Brave's MIT-licensed API reference skills (`brave-web-search`, `brave-llm-context`) are in `.claude/skills/` for the coding agent. The key stays in `.env` and is never put into the agent's environment.
 6. **As built on Day 6:** Recon is **deterministic** (rules, no model). It accepts a person only with evidence that they work at the company now: the result title, the profile's "Experience" line, or a first-person post. It checks the company with an exact match, so "Acme Infotech" is not "Acme AI". A labelled eval (`recon_cases`) requires zero wrong-company people. The local 8B model stays an option for ambiguous titles. Supervisor runs Recon **after Researcher and before Tailor**, so Email Outreach can write to the recruiter or hiring mailbox Recon found. Searches are capped per run and per day (`recon_searches_per_run`, `recon_searches_per_day` in `policy.yaml`).
+
+### As built on Day 8 (27 Nov: Applicant, Connector, LinkedIn queue)
+
+1. **Applicant** fills the open form from the side panel (**Fill the form**), through the existing form engine: exact options only, consents never ticked, no submit path.
+   - It attaches the case's latest tailored resume PDF that you haven't rejected. The PDF is hash-checked on the server and again in the browser.
+   - The Answerer gives the resume file field the value `__resume__`. A field labelled resume/CV gets it; when no field says resume, the first file field gets it as a guess and is flagged for you to check. Cover letters, portfolios and other files are left for you.
+   - Each fill is one `form_filled` event on the case timeline: what was filled and what to check.
+   - Earlier the same day, the panel gained **Fill the form** (it had only copied answers) and **marks a case applied** when it sees the employer's confirmation page. It also has an "I submitted it" button and an undo. `applied_at` is stamped on the first move to applied.
+   - Coverage: locally authored Greenhouse, Lever and Ashby forms (`tests/browser/ats-fill.spec.cjs`), including Ashby's hidden upload input.
+2. **Connector** (now active) runs after Email Outreach in the Supervisor graph and saves an `invite_set` artifact (migration 0007).
+   - It drafts a note for each person Recon suggested who is reached on LinkedIn: not reachable by email, not already a connection, not blocked.
+   - It stays within `max_people_per_company`, counting people already contacted and invitations still pending.
+   - Notes stay under LinkedIn's 200-character limit for a free account. Over-long notes get one shortening pass from the model, then code drops trailing sentences.
+   - Reviewer's new `check_linkedin` applies the email claim checks plus a real profile URL, the note length and the cooldown. Only notes it passes become `send_linkedin_invite` actions; blocked ones are reported on the card, so drafting mistakes never trip the refused-actions circuit.
+   - The new `connector_notes` eval requires zero bad notes passing.
+3. **LinkedIn queue** in the side panel. Every action goes through Courier's gate (`start_execution`) and is recorded on the contact and the case.
+   - You approve (the `extension` channel, bound to the exact text you saw), reject, or edit (the Reviewer checks the edited text again).
+   - **Open profile and copy note** checks the caps, quiet hours, cooldown and kill switch first, counts against today's cap, then opens the profile with the note on the clipboard.
+   - You send it on LinkedIn yourself and click **I sent it** or **I didn't send it**.
+   - Telegram shows LinkedIn cards with "Approve and queue". `POST /experts/cases/{id}/connect` runs Connector manually.
+4. **Structured output** retries once with `reasoning_effort: low` when a Groq gpt-oss model spends its whole budget reasoning and returns no JSON. This was seen live on Connector, and the fix covers every expert.
+5. **Deviations from the plan:**
+   - The extension never clicks anything on LinkedIn. "One click" opens the profile with the note copied; you press Connect and Send yourself. Automating LinkedIn's own buttons would break its terms of use and the `scrape_behind_login: never` rule.
+   - DMs use the same queue, but they need an accepted invitation (`min_hours_accept_to_dm`), which arrives with Inbox's acceptance watcher on Day 10. DM drafting stays on Day 11.
+   - The panel stays plain JavaScript; the queue didn't need Vite + TS.
 
 ### As built on Day 7 (26 Nov: extension side panel + Answerer)
 
