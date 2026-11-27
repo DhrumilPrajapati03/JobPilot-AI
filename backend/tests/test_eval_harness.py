@@ -6,7 +6,7 @@ def test_seeded_suites_pass_their_thresholds():
     metrics = run(list(SUITES))
     failed = [(m.agent, m.metric, m.score, m.details) for m in metrics if not m.passed]
     assert not failed, failed
-    assert {m.agent for m in metrics} == {"scout", "courier", "tailor", "recon", "answerer", "connector"}
+    assert {m.agent for m in metrics} == {"scout", "courier", "tailor", "recon", "answerer", "connector", "comp_analyst"}
     assert next(m for m in metrics if m.metric == "accuracy").details["wrong"] == []
 
 

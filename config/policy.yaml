@@ -46,6 +46,9 @@ caps:
   recon_searches_per_day: 40
   # Inbox: one follow-up in the same thread when an email gets no reply for this many days.
   follow_up_after_days: 5
+  # Comp Analyst's pay searches (Brave): per case and per day.
+  comp_searches_per_run: 3
+  comp_searches_per_day: 15
   quiet_hours: "22:00-08:00"
   timezone: Asia/Kolkata
 

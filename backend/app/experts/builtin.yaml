@@ -60,10 +60,15 @@
 - id: comp_analyst
   name: Comp Analyst
   role: Estimates the pay range for each role, with sources
+  description: Reads the job description's own band and a few public pay sources, keeps only figures quoted word for word, and suggests an ask that never goes below your floor. The Answerer shows it next to pay questions.
+  instructions: See app/experts/comp_analyst.py. The model only picks quotes; code reads the numbers and checks every quote against its source.
+  policy_notes: Read-only. Searches are capped per run and per day (comp_searches_per_run, comp_searches_per_day in policy.yaml). Pay answers are always yours to confirm.
   model: {provider: default}
-  tools: [read_case, fetch_public_page, save_artifact]
+  tools: [read_case, search_pay, save_artifact]
   outputs: [comp_report]
-  status: draft
+  triggers: [{kind: event, event: routed}, {kind: manual}]
+  budgets: {steps: 30, tokens: 30000, seconds: 300}
+  status: active
 
 - id: tailor
   name: Tailor

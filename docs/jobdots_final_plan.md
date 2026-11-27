@@ -21,6 +21,21 @@ Status of claims: items marked **[unverified]** come from memory or third-party 
 5. Brave's MIT-licensed API reference skills (`brave-web-search`, `brave-llm-context`) are in `.claude/skills/` for the coding agent. The key stays in `.env` and is never put into the agent's environment.
 6. **As built on Day 6:** Recon is **deterministic** (rules, no model). It accepts a person only with evidence that they work at the company now: the result title, the profile's "Experience" line, or a first-person post. It checks the company with an exact match, so "Acme Infotech" is not "Acme AI". A labelled eval (`recon_cases`) requires zero wrong-company people. The local 8B model stays an option for ambiguous titles. Supervisor runs Recon **after Researcher and before Tailor**, so Email Outreach can write to the recruiter or hiring mailbox Recon found. Searches are capped per run and per day (`recon_searches_per_run`, `recon_searches_per_day` in `policy.yaml`).
 
+### As built on Day 12 (27 Nov: Comp Analyst)
+
+1. **Comp Analyst** (active) runs after Researcher in the Supervisor graph and saves a `comp_report`.
+   - **Searches:** the JD's own band, plus up to `comp_searches_per_run` (3) Brave searches, capped by `comp_searches_per_day` (15). Queries hold the company, the role and a country, never your own details. When the JD names no location, the country comes from your home country, as just "India".
+   - **The model picks; code checks.**
+     - Code splits every source into sentences and keeps those with a pay figure (`app/comp/money.py`). The model only picks sentence ids and says what each describes; it can't add or change a figure.
+     - Code reads the amounts: LPA, lakhs, crore, ₹/$/€/£, k, per month, ranges with a "(25th percentile)" note. Per-hour figures and monthly restatements of the same pay are ignored.
+     - Code keeps only figures stated word for word in their source. One posting syndicated to several sites counts once. Outliers are judged within one currency, never across currencies.
+   - **Market band** is the middle half (25th–75th percentile) of all reported figures in your home currency.
+   - **Suggested ask** runs from the band's midpoint (or your vault floor, whichever is higher) to its top. The JD's own band comes first. Figures only in another currency, such as a US band, produce a note to ask the recruiter, not a converted ask.
+2. **Answerer:** pay questions keep your confirmed vault figure, always marked to check, with the Comp Analyst's band and suggested ask in the note. If your vault has no figure, the answer stays "Needs you" with the research beside it. A model never answers a pay question.
+3. **Evals:** `comp_cases` requires zero invented or altered figures accepted, and every pay phrasing and quote check right; the phrasings found live were added to it. A pay card renders in the case thread.
+4. **Live, on a real Lead AI Engineer case in India:** market 18.8–31.1 LPA from 3 sources (Glassdoor, Salary.com, AmbitionBox).
+   - Earlier runs found and fixed: a syndicated US band counted three times; a USD band offered as an ask; per-hour and per-month restatements read as salaries; a currency-mixing outlier filter.
+
 ### As built on Day 11 (27 Nov: the outreach loop)
 
 1. **DM Outreach** (active), the second half of the LinkedIn loop: invite (Connector) → you send it → accepted (Inbox reads LinkedIn's email) → wait `min_hours_accept_to_dm` → message (DM Outreach) → you send it from the queue.

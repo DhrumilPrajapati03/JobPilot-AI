@@ -185,8 +185,27 @@ def connector_suite() -> list[Metric]:
     ]
 
 
+def comp_suite() -> list[Metric]:
+    """Comp Analyst: reading pay from text, and refusing a figure its source doesn't state.
+    An invented or altered pay figure accepted would put a false number in front of you."""
+    from app.comp import money
+    cases = [json.loads(line) for line in (DATASETS / "comp_cases.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
+    parse = [c for c in cases if c["type"] == "parse"]
+    quotes = [c for c in cases if c["type"] == "quote"]
+    misread = [c["text"] for c in parse
+               if [[round(a.low), round(a.high), a.currency] for a in money.ranges(c["text"])] != c["expect"]]
+    wrong = [{"quote": c["quote"][:60], "expected": c["expect"]} for c in quotes
+             if money.supported(c["quote"], c["source"], c["low"], c["high"], c["currency"]) != (c["expect"] == "accept")]
+    leaked = [w for w in wrong if w["expected"] == "reject"]
+    return [
+        Metric("comp_analyst", "comp_cases", "invented_figures_accepted", len(leaked), 0, higher_is_better=False, details={"accepted": leaked}),
+        Metric("comp_analyst", "comp_cases", "pay_reading_accuracy", (len(parse) - len(misread)) / len(parse), 1.0, details={"misread": misread}),
+        Metric("comp_analyst", "comp_cases", "quote_check_accuracy", (len(quotes) - len(wrong)) / len(quotes), 1.0, details={"wrong": wrong}),
+    ]
+
+
 SUITES = {"matching": matching_suite, "policy": policy_suite, "tailor": tailor_suite, "recon": recon_suite,
-          "answerer": answerer_suite, "connector": connector_suite}
+          "answerer": answerer_suite, "connector": connector_suite, "comp": comp_suite}
 
 
 def run(names: list[str] | None = None, *, semantic: bool = False) -> list[Metric]:

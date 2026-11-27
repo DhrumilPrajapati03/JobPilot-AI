@@ -207,6 +207,40 @@ function InvitesCard({ a }: { a: Artifact }) {
   </>;
 }
 
+// Pay amounts are annual, in whole currency units; INR reads as lakhs per annum.
+function pay(amount: number, currency: string) {
+  if (currency === 'INR') return `${(amount / 100000).toFixed(1).replace(/\.0$/, '')} LPA`;
+  const sign: Record<string, string> = { USD: '$', EUR: '€', GBP: '£' };
+  return `${sign[currency] ?? currency + ' '}${Math.round(amount / 1000)}k`;
+}
+function band(b?: { low: number; high: number; currency: string } | null) {
+  if (!b) return '';
+  const lo = pay(b.low, b.currency), hi = pay(b.high, b.currency);
+  return lo === hi ? lo : `${lo} to ${hi}`;
+}
+
+function CompCard({ a }: { a: Artifact }) {
+  const c = a.content;
+  const [open, setOpen] = useState(false);
+  const src = Object.fromEntries((c.sources ?? []).map((s: any) => [s.n, s]));
+  return <>
+    <dl className="jd-fields">
+      {c.jd_range && <><dt>Job description</dt><dd>{band(c.jd_range)}</dd></>}
+      {c.market && <><dt>Market</dt><dd>{band(c.market)} ({c.market.n} source{c.market.n > 1 ? 's' : ''})</dd></>}
+      {c.suggested && <><dt>Suggested ask</dt><dd><strong>{band(c.suggested)}</strong></dd></>}
+      {(c.yours?.expected_floor || c.yours?.current) && <><dt>Yours</dt><dd>{[c.yours.current && `now ${c.yours.current}`, c.yours.expected_floor && `floor ${c.yours.expected_floor}`].filter(Boolean).join(', ')}</dd></>}
+    </dl>
+    {c.suggested?.rationale && <p className="jd-meta">{c.suggested.rationale}</p>}
+    {(c.notes ?? []).length > 0 && <p className="jd-note">{c.notes.join(' ')}</p>}
+    {(c.ranges ?? []).length > 0 && <button className="jd-link" onClick={() => setOpen(!open)}>{open ? 'Hide the quotes' : 'See where each figure comes from'}</button>}
+    {open && <ol className="jd-sources">{c.ranges.map((r: any, i: number) => <li key={i}>
+      <strong>{band(r)}</strong> {r.basis && <span className="jd-meta">{r.basis}</span>}
+      <p className="jd-meta">"{r.quote}" {src[r.source]?.url ? <a href={src[r.source].url} target="_blank" rel="noreferrer">{src[r.source].title || 'source'}</a> : src[r.source]?.title}</p>
+    </li>)}</ol>}
+    <p className="jd-meta">Confidence: {c.confidence}. Pay answers on forms stay yours to confirm.</p>
+  </>;
+}
+
 function MessagesCard({ a }: { a: Artifact }) {
   const messages: any[] = a.content.messages ?? [];
   if (!messages.length) return <p>{a.content.notes?.[0] ?? 'Nobody to message.'}</p>;
@@ -244,7 +278,7 @@ const ARTIFACT_WORDS: Record<string, string> = {
 export function ArtifactCard({ a, caseId }: { a: Artifact; caseId: string }) {
   const body = a.kind === 'company_brief' ? <BriefCard a={a} /> : a.kind === 'resume_version' ? <ResumeCard a={a} caseId={caseId} />
     : a.kind === 'contact_list' ? <PeopleCard a={a} /> : a.kind === 'invite_set' ? <InvitesCard a={a} />
-    : a.kind === 'dm_set' ? <MessagesCard a={a} /> : a.kind === 'answer_set' ? <AnswersCard a={a} /> : a.kind === 'draft' ? <DraftCard a={a} /> : <pre className="jd-json">{JSON.stringify(a.content, null, 2).slice(0, 2000)}</pre>;
+    : a.kind === 'comp_report' ? <CompCard a={a} /> : a.kind === 'dm_set' ? <MessagesCard a={a} /> : a.kind === 'answer_set' ? <AnswersCard a={a} /> : a.kind === 'draft' ? <DraftCard a={a} /> : <pre className="jd-json">{JSON.stringify(a.content, null, 2).slice(0, 2000)}</pre>;
   return (
     <article className="jd-card" data-kind={a.kind}>
       <header className="jd-card-head">
