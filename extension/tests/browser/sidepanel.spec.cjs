@@ -25,7 +25,9 @@ test('side panel asks for page access before reading anything', async ({}, info)
     await expect(panel.getByRole('button', {name: 'Allow on job pages'})).toBeEnabled();
     await expect(panel.locator('#who')).toHaveText('Ada Example');
     await expect(panel.locator('#job')).toBeHidden();
-    expect(calls).toEqual(['/api/v1/extension/me']);     // nothing else until you allow page access
+    await expect(panel.getByRole('heading', {name: 'LinkedIn queue'})).toBeVisible();
+    // Before page access: who you are and the LinkedIn queue (no page is read); nothing about the page.
+    expect(calls.sort()).toEqual(['/api/v1/extension/linkedin/queue', '/api/v1/extension/me']);
     expect(errors).toEqual([]);
   } finally {
     await context.close();

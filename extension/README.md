@@ -18,9 +18,26 @@ pages (Chrome asks once; you can revoke it in `chrome://extensions`).
   also go to your answer bank (as new versions), so next time they are reused. Tick "Don't
   save this one" to keep an answer out of the bank.
 
-The panel never ticks consents, never attaches files yet, and never submits: you check the
-form and click Submit yourself. It never sees your token; the service worker
-makes every call, and only the panel may call the side panel routes.
+  A resume field gets the case's tailored PDF (hash-checked twice); a field that only might
+  be the resume is flagged for you to check. Cover letters and other files stay with you.
+- **Applied**: after a fill, the panel watches for the employer's confirmation page and
+  marks the case applied; **I submitted it** does it by hand, **Undo** takes it back.
+
+### LinkedIn queue
+
+Connector proposes LinkedIn invitations for the people Recon suggested (with a short note
+the Reviewer checked). They appear in the panel's **LinkedIn queue**, with today's counts
+against your caps:
+
+1. **Approve** the note you see (or edit it: the Reviewer checks the new text), or **Reject**.
+2. **Open profile and copy note**: JobDots checks your caps, quiet hours and cooldowns, then
+   opens the profile with the note on your clipboard.
+3. On LinkedIn: **Connect**, **Add a note**, paste, **Send**. Then click **I sent it** (or
+   **I didn't send it**) in the panel; it's recorded on the contact and the case.
+
+The panel never ticks consents and never submits: you check the form and click Submit
+yourself. It never clicks anything on LinkedIn either. It never sees your token; the service
+worker makes every call, and only the panel may call the side panel routes.
 
 ---
 

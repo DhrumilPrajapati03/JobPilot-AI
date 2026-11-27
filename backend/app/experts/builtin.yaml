@@ -93,11 +93,13 @@
 
 - id: applicant
   name: Applicant
-  role: Fills application forms for your review
-  model: {provider: default}
+  role: Fills application forms in your Chrome
+  description: Fills the form you have open from the Answerer's answers and attaches the case's tailored resume PDF, through the extension's side panel. Marks what you should check, never ticks consents and never submits.
+  instructions: Deterministic (no model); runs in the extension (sidepanel.js, content/form-engine.js). You review the form and click Submit yourself.
+  policy_notes: fill_form is act_with_preview; submitting is always yours.
+  model: {provider: none}
   tools: [read_case]
-  action_kinds: [fill_form, submit_application]
-  status: draft
+  status: active
 
 - id: recon
   name: Recon
@@ -115,10 +117,16 @@
 - id: connector
   name: Connector
   role: Proposes LinkedIn invitations within your caps
-  model: {provider: default}
-  tools: [read_case]
+  description: Writes a short personal note for each person Recon suggested who is best reached on LinkedIn, within your limit of people per company, and proposes each invitation for your approval. Approved ones wait in the extension's LinkedIn queue for you to send.
+  instructions: See app/experts/connector.py (INSTRUCTIONS). Proposals only; you send each invitation yourself from the queue.
+  policy_notes: Every invitation needs your approval; daily and weekly invite caps, cooldowns and max people per company from policy.yaml apply.
+  model: {provider: default, task: quality}
+  tools: [read_case, save_artifact, propose_action]
+  outputs: [invite_set]
   action_kinds: [send_linkedin_invite]
-  status: draft
+  triggers: [{kind: event, event: routed}, {kind: manual}]
+  budgets: {steps: 30, tokens: 30000, seconds: 300}
+  status: active
 
 - id: email_outreach
   name: Email Outreach

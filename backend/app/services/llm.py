@@ -284,11 +284,35 @@ class Structured:
         except (json.JSONDecodeError, ValidationError) as error:
             raise OutputParserException(f"Model output did not match {getattr(self.schema, '__name__', 'the schema')}") from error
 
+    # A reasoning model (gpt-oss) can spend its whole budget thinking and return nothing; Groq
+    # then reports json_validate_failed. One retry with less reasoning leaves room for the answer.
+    def _retry_extra(self) -> dict | None:
+        model = getattr(self.model, "model", "") or ""
+        if getattr(self.model, "provider", "") == "groq" and "gpt-oss" in model:
+            return {"extra_body": {"reasoning_effort": "low"}}
+        return None
+
+    @staticmethod
+    def _empty_or_invalid(error: Exception) -> bool:
+        return isinstance(error, OutputParserException) or "json_validate_failed" in str(error)
+
     def invoke(self, value, config=None):
-        return self._parse(self.model.invoke(self._messages(value), response_format={"type": "json_object"}))
+        try:
+            return self._parse(self.model.invoke(self._messages(value), response_format={"type": "json_object"}))
+        except Exception as error:
+            extra = self._retry_extra()
+            if extra is None or not self._empty_or_invalid(error):
+                raise
+            return self._parse(self.model.invoke(self._messages(value), response_format={"type": "json_object"}, **extra))
 
     async def ainvoke(self, value, config=None):
-        return self._parse(await self.model.ainvoke(self._messages(value), response_format={"type": "json_object"}))
+        try:
+            return self._parse(await self.model.ainvoke(self._messages(value), response_format={"type": "json_object"}))
+        except Exception as error:
+            extra = self._retry_extra()
+            if extra is None or not self._empty_or_invalid(error):
+                raise
+            return self._parse(await self.model.ainvoke(self._messages(value), response_format={"type": "json_object"}, **extra))
 
 
 def get_llm_client(provider: str = "groq", model: str | None = None, temperature: float = 0.0,

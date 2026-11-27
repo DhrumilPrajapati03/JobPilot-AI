@@ -31,6 +31,7 @@ from app.services.runs import PermanentRunError
 
 CHOICE = ("select", "radio", "multiselect", "checkbox")
 MAX_DRAFTS = 8
+RESUME = "__resume__"          # the form engine attaches the case's tailored PDF in place of this value
 INSTRUCTIONS = """You answer job application questions for one candidate, in their voice (first person).
 Rules:
 - Use only the candidate facts given. Never invent employers, titles, numbers, tools or years.
@@ -134,6 +135,10 @@ async def run(ctx) -> dict:
         brief_text = " ".join([c.get("summary") or ""] + [x["text"] for k in ("product", "recent_news", "tech_stack")
                                                           for x in c.get(k) or []])
 
+    from app.experts import applicant
+    resume = await asyncio.to_thread(applicant.resume_file, ctx.user_id, ctx.case_id)
+    file_labels = [f["label"].strip() for f in fields if (f.get("type") or "") == "file"]
+
     results: dict[str, dict] = {}
     pending: list[tuple[dict, str, str, bank.Hit | None]] = []     # (field, kind, mode, hit)
     vectors_used = True
@@ -145,7 +150,18 @@ async def run(ctx) -> dict:
             results[key] = item(field, kind, None, "needs_you", note="Legal agreement or consent: read it and answer it yourself.")
             continue
         if kind == "file":
-            results[key] = item(field, kind, None, "needs_you", note="Attach the file yourself (filling files comes with Applicant).")
+            takes, guessed = applicant.is_resume_field(label, file_labels)
+            if takes and resume:
+                why = [f"Applicant attaches your tailored resume ({resume['filename']})"]
+                if guessed:
+                    why.append("check this is the resume field")
+                if not resume["approved"]:
+                    why.append("you haven't approved this resume version yet")
+                results[key] = item(field, kind, RESUME, "vault", flagged=guessed or not resume["approved"], note="; ".join(why) + ".")
+            elif takes:
+                results[key] = item(field, kind, None, "needs_you", note="No tailored resume for this case yet; attach yours yourself.")
+            else:
+                results[key] = item(field, kind, None, "needs_you", note="Attach this file yourself.")
             continue
         value, note = profile_value(kind, label, p)
         if value:

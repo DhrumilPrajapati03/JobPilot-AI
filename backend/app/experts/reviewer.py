@@ -106,3 +106,55 @@ def check_email(payload: dict, *, company: str, role: str, job: str, brief: dict
     if last_touch and now - last_touch < timedelta(days=cooldown_days):
         review.blocks.append(f"You emailed this person on {last_touch:%d %b}; wait {cooldown_days} days between contacts.")
     return review
+
+
+# --- LinkedIn invitations and messages -------------------------------------------------------
+
+INVITE_MAX_CHARS = 200     # LinkedIn's limit for a personal note on a free account (premium allows 300)
+DM_MAX_WORDS = 120
+PROFILE = re.compile(r"^https://([a-z]{2,3}\.)?(www\.)?linkedin\.com/in/[^/?#\s]+/?$", re.I)
+
+
+def check_linkedin(payload: dict, *, kind: str, company: str, role: str, job: str, brief: dict | None, vault: Vault,
+                   last_touch: datetime | None = None, cooldown_days: int = 14,
+                   now: datetime | None = None) -> EmailReview:
+    """The same claim checks as an email, plus LinkedIn's limits: a real profile URL, the note's
+    length, and the cooldown. An invitation without a note is allowed (noted, not blocked)."""
+    review = EmailReview()
+    now = now or datetime.now(timezone.utc)
+    url = (payload.get("profile_url") or "").strip()
+    if not PROFILE.match(url):
+        review.blocks.append("No LinkedIn profile link for this person." if not url else f"'{url}' is not a LinkedIn profile link.")
+    text = (payload.get("note") or payload.get("body") or "").strip()
+    if kind == "send_linkedin_invite":
+        if not text:
+            review.notes.append("No note; LinkedIn sends the invitation without one.")
+        elif len(text) > INVITE_MAX_CHARS:
+            review.blocks.append(f"The note is {len(text)} characters; LinkedIn allows {INVITE_MAX_CHARS} on a free account.")
+    elif not text:
+        review.blocks.append("The message is empty.")
+    elif len(text.split()) > DM_MAX_WORDS:
+        review.notes.append(f"{len(text.split())} words; under {DM_MAX_WORDS} reads better in a DM.")
+    brief_text = " ".join(c.get("text", "") for key in ("product", "stage", "recent_news", "tech_stack", "fit_notes")
+                          for c in ((brief or {}).get(key) or [])) + " " + ((brief or {}).get("summary") or "")
+    context = " ".join([vault_text(vault), job, brief_text, company, role, payload.get("name") or "",
+                        payload.get("title") or "", vault.name or ""])
+    numbers = set(_NUMBER.findall(text)) - set(_NUMBER.findall(context))
+    if numbers:
+        review.blocks.append(f"Numbers that aren't in your vault, the JD or the brief: {', '.join(sorted(numbers))}.")
+    exact = sorted(n for n in set(_NUMBER.findall(text)) & hedged_numbers(vault_text(vault)) if n not in hedged_numbers(text))
+    if exact:
+        review.blocks.append(f"States {', '.join(exact)} as exact; your vault says it is approximate.")
+    known = words(context) | ALWAYS_OK
+    unknown = sorted(t for t in notable_terms(text) if t not in known and t.rstrip("s") not in known)
+    if unknown:
+        review.blocks.append(f"Names or tools not in your vault, the JD or the brief: {', '.join(unknown[:8])}.")
+    for years in _YEARS.findall(text):
+        if vault.total_years is None or float(years) > vault.total_years:
+            review.blocks.append(f"Claims {years} years of experience; your vault says {vault.total_years}.")
+    stock = [p for p in STOCK if p in text.lower()]
+    if stock:
+        review.notes.append(f'Stock phrase: "{stock[0]}".')
+    if last_touch and now - last_touch < timedelta(days=cooldown_days):
+        review.blocks.append(f"You contacted this person on {last_touch:%d %b}; wait {cooldown_days} days between contacts.")
+    return review

@@ -1,0 +1,13 @@
+{"note": "Hi Jane, I applied for the ML Engineer role at Acme. I built a RAG service on PostgreSQL and pgvector at Example Labs.", "expect": "pass"}
+{"note": "Hi Jane, I applied for the ML Engineer role at Acme; at Example Labs I reduced serving latency by 35% by batching requests in FastAPI.", "expect": "pass"}
+{"note": "Hi Raj, I applied for the ML Engineer role at Acme; at Example Labs I reduced serving latency by 35% by batching requests in FastAPI.", "expect": "block", "why": "greets someone other than the person it goes to"}
+{"note": "Hi Jane, Acme's support search on pgvector is close to the RAG service I built at Example Labs. I applied for the ML Engineer role.", "expect": "pass"}
+{"note": "", "expect": "pass", "why": "LinkedIn sends an invitation without a note"}
+{"note": "Hi Jane, I applied for the ML Engineer role at Acme. I cut serving latency by 60% at Example Labs.", "expect": "block", "why": "number not in the vault"}
+{"note": "Hi Jane, I have 8 years of experience building RAG systems and applied to Acme.", "expect": "block", "why": "years above the vault"}
+{"note": "Hi Jane, I applied at Acme; I led the Kubernetes migration at Example Labs.", "expect": "block", "why": "tool not in the vault"}
+{"note": "Hi Jane, I applied for the ML Engineer role at Acme after building RAG at Google DeepMind.", "expect": "block", "why": "employer not in the vault"}
+{"note": "Hi Jane, I applied for the ML Engineer role at Acme. I built a RAG service on PostgreSQL and pgvector at Example Labs, answering questions for many support teams across several regions every single day.", "expect": "block", "why": "over 200 characters"}
+{"note": "Hi Jane, I applied for the ML Engineer role at Acme. I built RAG on pgvector.", "url": "https://www.linkedin.com/company/acme/", "expect": "block", "why": "a company page, not a person"}
+{"note": "Hi Jane, I applied for the ML Engineer role at Acme. I built RAG on pgvector.", "url": "https://linkedin.example.com/in/jane/", "expect": "block", "why": "not linkedin.com"}
+{"note": "Hi Jane, I applied at Acme. I trained models on 500 GPUs at Example Labs.", "expect": "block", "why": "invented number"}
