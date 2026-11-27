@@ -21,6 +21,24 @@ Status of claims: items marked **[unverified]** come from memory or third-party 
 5. Brave's MIT-licensed API reference skills (`brave-web-search`, `brave-llm-context`) are in `.claude/skills/` for the coding agent. The key stays in `.env` and is never put into the agent's environment.
 6. **As built on Day 6:** Recon is **deterministic** (rules, no model). It accepts a person only with evidence that they work at the company now: the result title, the profile's "Experience" line, or a first-person post. It checks the company with an exact match, so "Acme Infotech" is not "Acme AI". A labelled eval (`recon_cases`) requires zero wrong-company people. The local 8B model stays an option for ambiguous titles. Supervisor runs Recon **after Researcher and before Tailor**, so Email Outreach can write to the recruiter or hiring mailbox Recon found. Searches are capped per run and per day (`recon_searches_per_run`, `recon_searches_per_day` in `policy.yaml`).
 
+### As built on Day 9 (27 Nov: command center and dashboards)
+
+1. **Web app is now JobDots-first.** The left rail is the **expert roster**: live `ExpertAvatar` and one line of what each expert last did. Below it: Command, Cases, Approvals (with a count), Contacts, Answer bank and Dashboard. The JobPilot pages stay under "More".
+2. **Command** (`/`): paste a JD to hand it to Supervisor (`/experts/cases/quick`). It also shows a deck of what needs you, grouped by kind, cases in motion, and the experts' latest steps.
+3. **Case thread** (`/cases/:id`): one timeline of events and typed cards:
+   - brief with sources, people, resume diff (approve/reject, open the PDF), email draft, invitations, answers;
+   - approval cards pinned at the top;
+   - a recipient form when the email has no address;
+   - "ask an expert again" buttons, including Propose LinkedIn invitations.
+4. **Approvals** (`/approvals`): the same approval cards stacked by kind, plus "check these first" for send results that are unknown and a Blocked group.
+5. **Editing a draft from the web** goes back through the Reviewer (`app/experts/rereview.py`). Before this, an edit left it at `proposed`, where it could never be approved.
+6. **Contacts**, **Answer bank** (search, versions, delete), the **expert page** (spec, routines in words, recent steps), and the **Dashboard** (`GET /api/v1/dashboard`):
+   - Pipeline this week and all time; imported applications count only in all time;
+   - Live Ops: kill switch, quiet hours, what's running, failures from the last day with credentials scrubbed, sends against caps, model spend against the budget.
+7. **Deviations:**
+   - The approval deck is CSS (stacked edges), not React Bits `Stack`; numbers are plain, not `CountUp`. That's one less dependency, and nothing animates without a reason.
+   - There is no expert-browser preview or takeover yet, because no expert drives a browser: Researcher and Recon use APIs, and Applicant runs in your Chrome.
+
 ### As built on Day 8 (27 Nov: Applicant, Connector, LinkedIn queue)
 
 1. **Applicant** fills the open form from the side panel (**Fill the form**), through the existing form engine: exact options only, consents never ticked, no submit path.

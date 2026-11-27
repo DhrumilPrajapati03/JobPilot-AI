@@ -4,6 +4,14 @@ import { AppShell } from './components/layout/AppShell'
 import { ROUTES } from './lib/constants'
 import { useAuthStore } from './stores/auth-store'
 import {
+  AnswerBank,
+  Approvals,
+  CaseThread,
+  Cases,
+  Command,
+  Contacts,
+  Dashboard,
+  ExpertPage,
   Analytics,
   ApplicationDetail,
   Applications,
@@ -30,11 +38,18 @@ function App() {
       <Suspense fallback={<div className="min-h-screen bg-background" />}>
       <Routes>
         {/* Public Routes */}
-        <Route path="/" element={<Navigate to={ROUTES.OVERVIEW} replace />} />
         <Route path={ROUTES.LOGIN} element={<Login />} />
 
         {/* Authenticated/App Routes */}
         <Route element={<AppShell />}>
+          <Route path={ROUTES.HOME} element={<Command />} />
+          <Route path={ROUTES.CASES} element={<Cases />} />
+          <Route path={ROUTES.CASE} element={<CaseThread />} />
+          <Route path={ROUTES.APPROVALS} element={<Approvals />} />
+          <Route path={ROUTES.CONTACTS} element={<Contacts />} />
+          <Route path={ROUTES.ANSWERS} element={<AnswerBank />} />
+          <Route path={ROUTES.DASHBOARD} element={<Dashboard />} />
+          <Route path={ROUTES.EXPERT} element={<ExpertPage />} />
           <Route path={ROUTES.OVERVIEW} element={<Overview />} />
           <Route path={ROUTES.CHAT} element={<Chat />} />
           <Route path={ROUTES.JOBS} element={<JobFeed />} />
@@ -50,7 +65,7 @@ function App() {
         </Route>
 
         {/* Fallback Redirect */}
-        <Route path="*" element={<Navigate to={ROUTES.CHAT} replace />} />
+        <Route path="*" element={<Navigate to={ROUTES.HOME} replace />} />
       </Routes>
       </Suspense>
     </BrowserRouter>

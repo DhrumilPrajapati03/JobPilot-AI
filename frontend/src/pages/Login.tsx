@@ -31,7 +31,7 @@ function SleepingTeam() {
 
 export default function Login() {
   const { isAuthenticated, initialized } = useAuth();
-  if (isAuthenticated) return <Navigate to={ROUTES.OVERVIEW} replace />;
+  if (isAuthenticated) return <Navigate to={ROUTES.HOME} replace />;
 
   return (
     <main className="login-page">

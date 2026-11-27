@@ -23,7 +23,9 @@ export function AppShell() {
   const { isAuthenticated, loading } = useAuth();
   const { pathname } = useLocation();
   const isChat = pathname.startsWith(ROUTES.CHAT);
-  const pageName = NAV_ITEMS.find(item=>item.path===pathname)?.label || (pathname.startsWith('/applications/')?'Application workspace':'Workspace');
+  const jobdots: [RegExp, string][] = [[/^\/$/, 'Command'], [/^\/cases\/./, 'Case'], [/^\/cases$/, 'Cases'], [/^\/approvals/, 'Approvals'],
+    [/^\/contacts/, 'Contacts'], [/^\/answers/, 'Answer bank'], [/^\/dashboard/, 'Dashboard'], [/^\/experts\//, 'Expert']];
+  const pageName = jobdots.find(([re]) => re.test(pathname))?.[1] || NAV_ITEMS.find(item=>item.path===pathname)?.label || (pathname.startsWith('/applications/')?'Application workspace':'Workspace');
   const shellRef=useRef<HTMLDivElement>(null);
   const bodyRef=useRef<HTMLDivElement>(null);
 
@@ -109,7 +111,7 @@ export function AppShell() {
           </main>
         ) : (
           <main id="workspace-main" tabIndex={-1} className="workspace-main min-h-0 flex-1 overflow-y-auto">
-            <div className="workspace-context"><span>Career Desk</span><span aria-hidden="true">/</span><span>{pageName}</span><span className="workspace-context-note">AI preparation. Your decisions.</span></div>
+            <div className="workspace-context"><span>JobDots</span><span aria-hidden="true">/</span><span>{pageName}</span><span className="workspace-context-note">The experts draft. You decide.</span></div>
             <div className="workspace-content @container mx-auto w-full max-w-6xl px-4 py-6 sm:px-8 sm:py-8">
               <Suspense fallback={fallback}>
                 <Outlet />

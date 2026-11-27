@@ -14,3 +14,13 @@ export const Templates = lazy(() => import('./Templates'));
 export const Analytics = lazy(() => import('./Analytics'));
 export const Settings = lazy(() => import('./Settings'));
 export const Login = lazy(() => import('./Login'));
+
+// JobDots command center (Day 9)
+export const Command = lazy(() => import('./jobdots/Command'));
+export const Cases = lazy(() => import('./jobdots/Cases'));
+export const CaseThread = lazy(() => import('./jobdots/CaseThread'));
+export const Approvals = lazy(() => import('./jobdots/Approvals'));
+export const Contacts = lazy(() => import('./jobdots/Contacts'));
+export const AnswerBank = lazy(() => import('./jobdots/AnswerBank'));
+export const Dashboard = lazy(() => import('./jobdots/Dashboard'));
+export const ExpertPage = lazy(() => import('./jobdots/ExpertPage'));
