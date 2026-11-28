@@ -125,3 +125,17 @@ def test_approximate_vault_numbers_stay_approximate_in_subject_and_body():
 
 def test_excited_opener_counts_as_stock():
     assert any("excited" in n for n in check("Hi Jane,\n\nI'm excited by Acme. " + GOOD).notes)
+
+
+@pytest.mark.parametrize("extra,blocked", [
+    ("\nSend your resume to hr-desk@evil.example.", "isn't yours or the recipient's"),
+    ("\nMore at https://evil.example/apply", "isn't one of yours"),
+    ("\nhttps://www.linkedin.com/in/ada-example", None),          # your own link
+    ("\nAcme's careers page: https://acme.example/careers", None),  # the recipient's company
+])
+def test_steered_addresses_and_links_are_blocked(extra, blocked):
+    review = check(GOOD + extra)
+    if blocked:
+        assert any(blocked in b for b in review.blocks), review.blocks
+    else:
+        assert not any("isn't" in b for b in review.blocks), review.blocks
