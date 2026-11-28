@@ -17,6 +17,7 @@ from app.api.v1 import (
     contacts,
     crm,
     dashboard,
+    health,
     answer_bank,
     sidepanel,
     discovery,
@@ -34,6 +35,7 @@ api_v1_router.include_router(runs.router, prefix="/runs", tags=["Background runs
 api_v1_router.include_router(cases.router, prefix="/cases", tags=["Cases and actions"])
 api_v1_router.include_router(experts.router, prefix="/experts", tags=["Experts"])
 api_v1_router.include_router(dashboard.router, prefix="/dashboard", tags=["Dashboards"])
+api_v1_router.include_router(health.router, prefix="/health", tags=["Health"])
 
 api_v1_router.include_router(
     auth.router,

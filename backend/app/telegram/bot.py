@@ -227,6 +227,16 @@ class Bot:
         self.notify_new()
         self.refresh()
         self.warn_gmail()
+        self.send_alerts()
+
+    def send_alerts(self) -> None:
+        """Replies, interview invites, failing experts, budget (app/telegram/alerts.py); each once."""
+        from app.telegram import alerts
+        try:
+            for text in alerts.pending(self.user_id):
+                self.tg.send(self.chat_id, text)
+        except Exception as exc:                      # an alert must never stop approvals
+            log.warning("Alerts skipped (%s)", type(exc).__name__)
 
 
 def main() -> None:
