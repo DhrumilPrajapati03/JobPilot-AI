@@ -18,7 +18,7 @@ from app.core.policy import Policy, load_policy
 
 BUILTIN = Path(__file__).with_name("builtin.yaml")
 ARTIFACT_KINDS = {"resume_version", "company_brief", "comp_report", "contact_list", "draft", "answer_set", "invite_set", "dm_set",
-                  "interview_prep", "case"}
+                  "interview_prep", "note", "case"}
 
 
 class SpecError(ValueError):

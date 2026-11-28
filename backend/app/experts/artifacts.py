@@ -226,6 +226,21 @@ class InterviewPrep(Strict):
     negotiation: list[str] = Field(default_factory=list, max_length=6)
 
 
+class NoteSource(Strict):
+    n: int = Field(ge=1, le=20)
+    url: str = Field(max_length=2000)
+    title: str = Field(default="", max_length=200)
+
+
+class Note(Strict):
+    """What a custom expert wrote on a case (cited; numbers it couldn't find flagged)."""
+    title: str = Field(min_length=1, max_length=200)
+    body: str = Field(default="", max_length=8000)
+    expert: str = Field(max_length=40)
+    sources: list[NoteSource] = Field(default_factory=list, max_length=15)
+    checks: list[str] = Field(default_factory=list, max_length=5)
+
+
 class DmDraft(Strict):
     """One LinkedIn message (after an accepted invitation) or referral ask DM Outreach proposed."""
     contact_id: str
@@ -249,7 +264,7 @@ class DmSet(Strict):
 KINDS: dict[str, type[BaseModel]] = {"company_brief": CompanyBrief, "resume_version": ResumeVersion, "draft": EmailDraft,
                                      "contact_list": ContactList, "answer_set": AnswerSet, "invite_set": InviteSet,
                                      "dm_set": DmSet, "comp_report": CompReport,
-                                     "interview_prep": InterviewPrep}
+                                     "interview_prep": InterviewPrep, "note": Note}
 
 
 class ArtifactError(ValueError):

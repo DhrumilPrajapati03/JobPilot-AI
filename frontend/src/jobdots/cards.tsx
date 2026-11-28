@@ -266,6 +266,15 @@ function PrepCard({ a }: { a: Artifact }) {
   </>;
 }
 
+function NoteCard({ a }: { a: Artifact }) {
+  const c = a.content;
+  return <>
+    <p className="jd-body">{c.body}</p>
+    {(c.checks ?? []).map((x: string) => <p key={x} className="jd-note jd-warn">{x}</p>)}
+    {(c.sources ?? []).length > 0 && <ol className="jd-sources">{c.sources.map((s: any) => <li key={s.n}><a href={s.url} target="_blank" rel="noreferrer">{s.title || s.url}</a></li>)}</ol>}
+  </>;
+}
+
 function MessagesCard({ a }: { a: Artifact }) {
   const messages: any[] = a.content.messages ?? [];
   if (!messages.length) return <p>{a.content.notes?.[0] ?? 'Nobody to message.'}</p>;
@@ -303,7 +312,7 @@ const ARTIFACT_WORDS: Record<string, string> = {
 export function ArtifactCard({ a, caseId }: { a: Artifact; caseId: string }) {
   const body = a.kind === 'company_brief' ? <BriefCard a={a} /> : a.kind === 'resume_version' ? <ResumeCard a={a} caseId={caseId} />
     : a.kind === 'contact_list' ? <PeopleCard a={a} /> : a.kind === 'invite_set' ? <InvitesCard a={a} />
-    : a.kind === 'interview_prep' ? <PrepCard a={a} /> : a.kind === 'comp_report' ? <CompCard a={a} /> : a.kind === 'dm_set' ? <MessagesCard a={a} /> : a.kind === 'answer_set' ? <AnswersCard a={a} /> : a.kind === 'draft' ? <DraftCard a={a} /> : <pre className="jd-json">{JSON.stringify(a.content, null, 2).slice(0, 2000)}</pre>;
+    : a.kind === 'note' ? <NoteCard a={a} /> : a.kind === 'interview_prep' ? <PrepCard a={a} /> : a.kind === 'comp_report' ? <CompCard a={a} /> : a.kind === 'dm_set' ? <MessagesCard a={a} /> : a.kind === 'answer_set' ? <AnswersCard a={a} /> : a.kind === 'draft' ? <DraftCard a={a} /> : <pre className="jd-json">{JSON.stringify(a.content, null, 2).slice(0, 2000)}</pre>;
   return (
     <article className="jd-card" data-kind={a.kind}>
       <header className="jd-card-head">

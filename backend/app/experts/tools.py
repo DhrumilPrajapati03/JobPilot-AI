@@ -131,6 +131,14 @@ async def search_people(ctx, company: str, query: str, role_class: str = ""):
     return {"results": len(results), "people": found}
 
 
+@tool("web_search", "Search the public web (Brave Search); returns result snippets (custom experts)")
+async def web_search(ctx, query: str):
+    from app.services import brave
+    results = await brave.web_search(query, count=6, extra_snippets=True)
+    return {"results": [{"url": r.url, "title": r.title, "text": " ".join([r.description, *r.extra_snippets])[:2000]}
+                        for r in results]}
+
+
 @tool("search_pay", "Search public pay data for a role (Brave Search); returns result snippets as numbered sources")
 async def search_pay(ctx, query: str):
     from app.services import brave

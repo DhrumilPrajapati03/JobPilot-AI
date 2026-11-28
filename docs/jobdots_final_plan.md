@@ -21,6 +21,21 @@ Status of claims: items marked **[unverified]** come from memory or third-party 
 5. Brave's MIT-licensed API reference skills (`brave-web-search`, `brave-llm-context`) are in `.claude/skills/` for the coding agent. The key stays in `.env` and is never put into the agent's environment.
 6. **As built on Day 6:** Recon is **deterministic** (rules, no model). It accepts a person only with evidence that they work at the company now: the result title, the profile's "Experience" line, or a first-person post. It checks the company with an exact match, so "Acme Infotech" is not "Acme AI". A labelled eval (`recon_cases`) requires zero wrong-company people. The local 8B model stays an option for ambiguous titles. Supervisor runs Recon **after Researcher and before Tailor**, so Email Outreach can write to the recruiter or hiring mailbox Recon found. Searches are capped per run and per day (`recon_searches_per_run`, `recon_searches_per_day` in `policy.yaml`).
 
+### As built on Day 14 (28 Nov: custom experts)
+
+1. **"+ Add an expert"** opens a template chooser (Referral Hunter, LinkedIn Post Writer, Salary Research, Interview Prep Coach) or Blank. The expert's page is the spec editor: name, roster line, instructions, and the tools it may use.
+2. **Code fixes what a custom expert can do** (`app/experts/custom.py`), whatever its instructions say:
+   - tools only from `read_case`, `fetch_public_page`, `web_search` (new, read-only), `search_answers` and `save_artifact`;
+   - no action kinds, so it can never send, invite, apply or schedule anything;
+   - output is one `note` (migration 0010);
+   - runs only when you ask, with small budgets.
+3. **Policy preview** shows, in words, what it can do, what it can never do, and its limits. "Before it can run" lists any problems.
+4. **Dry run on a real case** shows what it would write and saves nothing.
+   - Web searches the model plans that contain your own name or an email are skipped.
+   - Numbers that aren't in your facts, the case or the sources are flagged; citations and list numbers don't count.
+5. **Lifecycle:** it starts as a draft and can be activated only after a dry run; any edit puts it back to draft. Pause and delete are available.
+6. **On a case:** active custom experts appear under "Your experts", and their note lands on the case timeline.
+
 ### As built on Day 13 (28 Nov: Interview Buddy)
 
 1. **Interview Buddy** (active) runs when Inbox reads an interview invite (queued once per case), or from "Prepare for the interview" on a case. It saves an `interview_prep` artifact:

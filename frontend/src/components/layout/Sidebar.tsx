@@ -41,7 +41,7 @@ export function Sidebar() {
   const waiting = (pending.data ?? []).filter(a => a.status === 'reviewed').length;
   const displayName = user?.email?.split('@')[0] || 'You';
   const ThemeIcon = THEME_ICON[theme];
-  const experts = (roster.data ?? []).filter(e => e.status !== 'draft');
+  const experts = (roster.data ?? []).filter(e => e.status !== 'draft' || e.owner === 'user');
 
   const cycleTheme = () => {
     const next = NEXT_THEME[theme];
@@ -68,6 +68,8 @@ export function Sidebar() {
             <ExpertAvatar expert={e.id} name={e.name} state={e.state} step={e.step} approvals={e.approvals} size={26} />
             <span><strong>{e.name}</strong><small>{e.approvals ? `${e.approvals} to approve` : e.state === 'working' ? e.step || 'Working' : e.step || e.role}</small></span>
           </NavLink></li>)}</ul>
+
+        <NavLink to="/experts/new" className="jd-roster-add">+ Add an expert</NavLink>
 
         <details className="jd-more">
           <summary className="px-2.5 text-xs font-medium text-muted-foreground">More (JobPilot pages)</summary>

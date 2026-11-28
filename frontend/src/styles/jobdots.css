@@ -180,3 +180,11 @@ p .jd-meta, li .jd-meta, h2 .jd-meta { display: inline; }
 .jd-mark i { width: 9px; height: 9px; border-radius: 50%; background: currentColor; }
 .jd-mark i + i { background: var(--primary); }
 .jd-columns > aside > .jd-link, .jd-columns > aside > p { justify-self: start; }
+
+/* custom experts */
+.jd-custom { display: grid; gap: 10px; max-width: 760px; }
+.jd-field { display: grid; gap: 4px; font-size: 0.8125rem; color: var(--muted-foreground); border: 0; padding: 0; margin: 0; }
+.jd-field legend { margin-bottom: 4px; }
+.jd-preview { grid-template-columns: 1fr 1fr; gap: 18px; }
+.jd-roster-add { display: block; margin: 8px 0 0; padding: 5px 8px; font-size: 0.8125rem; color: var(--muted-foreground); border-radius: 8px; }
+.jd-roster-add:hover { background: var(--muted); color: var(--foreground); }

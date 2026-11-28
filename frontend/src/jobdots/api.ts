@@ -8,7 +8,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
 
 export interface Expert {
-  id: string; name: string; role: string; status: string;
+  id: string; name: string; role: string; status: string; owner?: 'builtin' | 'user';
   state: string; step: string; step_at: string | null; approvals: number;
 }
 
