@@ -1,37 +1,39 @@
-/* JobDots side panel. Tokens match the web app (frontend/src/index.css). */
+/* JobDots side panel: the command deck, same tokens as the web app (frontend/src/index.css). */
 :root {
-  --bg: #f6f6f2;
-  --ink: #202722;
-  --quiet: #5b6a63;
+  --bg: #f7f7fa;
+  --ink: #14151a;
+  --quiet: #5e6170;
   --card: #ffffff;
-  --line: #dbe2d9;
-  --accent: #225dcc;
+  --line: #e4e4ea;
+  --accent: #6d28d9;
   --on-accent: #ffffff;
-  --amber: #8a4a06;
-  --amber-bg: #fdf1df;
-  --vault: #0d6b47;
-  --vault-bg: #e4f4ec;
-  --draft: #4a3aa7;
-  --draft-bg: #ecebfa;
-  --focus: #225dcc;
+  --amber: #b45309;
+  --amber-bg: #fdf3e2;
+  --vault: #047857;
+  --vault-bg: #e6f6ef;
+  --draft: #1d4ed8;
+  --draft-bg: #e8effd;
+  --focus: #6d28d9;
+  --glow: rgb(109 40 217 / 0.22);
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #101716;
-    --ink: #edf2ee;
-    --quiet: #a8bab0;
-    --card: #18211e;
-    --line: #33463b;
-    --accent: #86bdff;
-    --on-accent: #0c1d35;
-    --amber: #ffc47d;
-    --amber-bg: #33240f;
-    --vault: #7fdcb0;
-    --vault-bg: #12301f;
-    --draft: #b7aef5;
-    --draft-bg: #262147;
-    --focus: #86bdff;
+    --bg: #0e0f13;
+    --ink: #e7e7ea;
+    --quiet: #9497a6;
+    --card: #16171d;
+    --line: #2a2c36;
+    --accent: #8b5cf6;
+    --on-accent: #ffffff;
+    --amber: #fbbf24;
+    --amber-bg: #2e2410;
+    --vault: #34d399;
+    --vault-bg: #0f2a22;
+    --draft: #60a5fa;
+    --draft-bg: #12213a;
+    --focus: #a78bfa;
+    --glow: rgb(139 92 246 / 0.45);
     color-scheme: dark;
   }
 }
@@ -108,3 +110,7 @@ textarea { resize: vertical; min-height: 64px; }
 .actions .primary { width: auto; flex: 1 1 100%; }
 .howto { font-size: 12px; margin: 8px 0 0; }
 #job-applied.done { color: var(--vault); font-weight: 600; }
+
+/* command deck accents */
+button.primary { box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 60%, transparent), 0 6px 18px -8px var(--glow); }
+.block { border-radius: 12px; }

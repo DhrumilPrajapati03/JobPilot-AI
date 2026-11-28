@@ -1,16 +1,32 @@
+/* JobDots popup: the command deck, same tokens as the side panel and the web app. */
+:root {
+  --bg: #f7f7fa; --ink: #14151a; --quiet: #5e6170; --card: #ffffff; --line: #e4e4ea;
+  --accent: #6d28d9; --on-accent: #ffffff; --ok: #047857; --err: #c62828; --glow: rgb(109 40 217 / 0.22);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e0f13; --ink: #e7e7ea; --quiet: #9497a6; --card: #16171d; --line: #2a2c36;
+    --accent: #8b5cf6; --on-accent: #ffffff; --ok: #34d399; --err: #f87171; --glow: rgb(139 92 246 / 0.45);
+    color-scheme: dark;
+  }
+}
 * { box-sizing: border-box; }
-body { width: 300px; margin: 0; font: 13px/1.45 -apple-system, "Segoe UI", Roboto, sans-serif; color: #1f1e1d; background: #faf9f7; }
-header { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid #e7e4de; font-weight: 600; background: #fff; }
-.logo { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; background: #1f1e1d; color: #fff; font-size: 10px; }
+body { width: 300px; margin: 0; font: 13px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink); background: var(--bg); }
+header { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--line); font-weight: 650; background: var(--card); }
+.logo { display: inline-flex; gap: 3px; }
+.logo i { width: 8px; height: 8px; border-radius: 50%; background: var(--ink); }
+.logo i + i { background: var(--accent); }
 main { padding: 12px 14px 14px; }
-button { display: block; width: 100%; margin-top: 8px; padding: 8px; border: 1px solid #dedad3; border-radius: 6px; background: #fff; font: 600 13px inherit; cursor: pointer; }
-button.primary { background: #1f1e1d; border-color: #1f1e1d; color: #fff; }
+button { display: block; width: 100%; margin-top: 8px; padding: 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--ink); font: 600 13px inherit; cursor: pointer; }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); box-shadow: 0 6px 18px -8px var(--glow); }
 button:disabled { opacity: 0.5; cursor: default; }
-.muted { color: #6b6966; margin: 0 0 4px; }
+button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.muted { color: var(--quiet); margin: 0 0 4px; }
 .small { font-size: 11px; margin-top: 10px; }
-.ok { color: #0f7b6c; }
-.err { color: #c4321f; }
-details { margin-top: 12px; border-top: 1px solid #e7e4de; padding-top: 10px; }
-summary { cursor: pointer; color: #6b6966; font-size: 12px; }
-label { display: block; margin: 8px 0 3px; font-size: 11px; color: #6b6966; }
-input { width: 100%; padding: 6px 8px; border: 1px solid #dedad3; border-radius: 6px; font: 12px inherit; }
+.ok { color: var(--ok); }
+.err { color: var(--err); }
+details { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px; }
+summary { cursor: pointer; color: var(--quiet); font-size: 12px; }
+label { display: block; margin: 8px 0 3px; font-size: 11px; color: var(--quiet); }
+input { width: 100%; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; font: 12px inherit; background: var(--bg); color: var(--ink); }
