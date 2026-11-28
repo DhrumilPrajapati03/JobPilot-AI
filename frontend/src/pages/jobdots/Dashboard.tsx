@@ -1,7 +1,7 @@
 // JobDots — Pipeline and Live Ops on one page: how the search is going, and whether the
 // machinery is healthy (queue, failures, spend, sends against caps, kill switch).
 import { Link } from 'react-router-dom';
-import { useDashboard } from '../../jobdots/api';
+import { useDashboard, useHealth } from '../../jobdots/api';
 import { Chip, expertName, when } from '../../jobdots/cards';
 
 const STEPS: [string, string][] = [['found', 'Found'], ['tailored', 'Tailored'], ['applied', 'Applied'], ['replied', 'Replied'], ['interviews', 'Interviews']];
@@ -14,6 +14,7 @@ function Meter({ label, used, cap, unit = '' }: { label: string; used: number; c
 
 export default function Dashboard() {
   const d = useDashboard();
+  const health = useHealth();
   if (d.isLoading) return <div className="jd-page"><p className="jd-meta">Loading the numbers…</p></div>;
   if (!d.data) return <div className="jd-page"><p className="jd-empty">The dashboard couldn't load. Is the API running?</p></div>;
   const { pipeline, ops, approvals } = d.data;
@@ -28,6 +29,14 @@ export default function Dashboard() {
           <tr><th scope="row">All time</th>{STEPS.map(([k]) => <td key={k}>{pipeline.all_time[k as keyof typeof pipeline.all_time]}</td>)}</tr>
         </tbody></table>
         <p className="jd-meta">All time includes {pipeline.all_time.imported} applications imported from JobPilot. Replies and interviews are counted from case stages until Inbox reads your mail.</p>
+      </section>
+
+      <section aria-labelledby="health"><h2 id="health">Health {health.data && <Chip tone={health.data.status === 'ok' ? 'ok' : 'warn'}>
+        {health.data.status === 'ok' ? 'Everything works' : health.data.status === 'warn' ? 'Needs a look' : 'Something is down'}</Chip>}</h2>
+        {health.data ? <ul className="jd-list">{health.data.checks.map(c => <li key={c.name}>
+          <span><strong>{c.name}</strong> <span className="jd-meta">{c.detail}</span></span>
+          <Chip tone={c.status === 'ok' ? 'ok' : 'warn'}>{c.status === 'ok' ? 'OK' : c.status === 'warn' ? 'Check' : 'Down'}</Chip></li>)}</ul>
+          : <p className="jd-meta">Checking…</p>}
       </section>
 
       <section aria-labelledby="ops"><h2 id="ops">Live Ops</h2>

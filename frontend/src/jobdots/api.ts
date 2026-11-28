@@ -74,6 +74,10 @@ export const usePending = () =>
 export const useDashboard = () =>
   useQuery({ queryKey: ['jd', 'dashboard'], queryFn: () => api.get<Dashboard>('/dashboard'), refetchInterval: 10000 });
 
+export interface Health { status: 'ok' | 'warn' | 'down'; checks: { name: string; status: 'ok' | 'warn' | 'down'; detail: string }[] }
+export const useHealth = () =>
+  useQuery({ queryKey: ['jd', 'health'], queryFn: () => api.get<Health>('/health/deep'), refetchInterval: 30000 });
+
 export const useContacts = (q: string, includeImported: boolean) =>
   useQuery({ queryKey: ['jd', 'contacts', q, includeImported],
              queryFn: () => api.get<{ contacts: Contact[] }>(`/crm/contacts?limit=300&q=${encodeURIComponent(q)}&include_imported=${includeImported}`).then(r => r.contacts) });
