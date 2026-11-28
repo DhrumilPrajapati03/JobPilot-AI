@@ -108,6 +108,9 @@ async def run_expert(ctx: ExpertContext) -> dict:
     if ctx.spec.status != "active":
         raise PermanentRunError(f"{ctx.spec.name} is {ctx.spec.status}; nothing was run.")
     handler = handlers.get(ctx.spec.id)
+    if ctx.spec.owner == "user":                      # custom experts (Day 14): one checked, read-only runner
+        from app.experts import custom
+        handler = custom.run
     if handler is None:
         raise PermanentRunError(f"{ctx.spec.name} is not built yet.")
     reasons = await asyncio.to_thread(budgets.check, ctx.user_id, ctx.case_id)

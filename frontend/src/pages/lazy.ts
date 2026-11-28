@@ -24,3 +24,4 @@ export const Contacts = lazy(() => import('./jobdots/Contacts'));
 export const AnswerBank = lazy(() => import('./jobdots/AnswerBank'));
 export const Dashboard = lazy(() => import('./jobdots/Dashboard'));
 export const ExpertPage = lazy(() => import('./jobdots/ExpertPage'));
+export const NewExpert = lazy(() => import('./jobdots/CustomExpert').then(m => ({ default: m.NewExpert })));

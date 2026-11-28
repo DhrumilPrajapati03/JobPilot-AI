@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ExternalLink } from 'lucide-react';
 import { ExpertAvatar } from '../../components/experts/ExpertAvatar';
-import { type Artifact, type CaseEvent, useCase, useCaseMutations } from '../../jobdots/api';
+import { type Artifact, type CaseEvent, useCase, useCaseMutations, useRoster } from '../../jobdots/api';
+import api from '../../lib/api';
 import { ApprovalCard, ArtifactCard, STAGE_WORDS, expertName, when } from '../../jobdots/cards';
 
 const STAGES = ['found', 'researched', 'tailored', 'ready', 'applied', 'replied', 'interview', 'offer', 'closed'];
@@ -21,6 +22,8 @@ export default function CaseThread() {
   const { stage, rerun, recipient } = useCaseMutations();
   const [to, setTo] = useState({ email: '', name: '' });
   const [showJd, setShowJd] = useState(false);
+  const mine = (useRoster().data ?? []).filter(e => e.owner === 'user' && e.status === 'active');
+  const [ran, setRan] = useState('');
   if (q.isLoading) return <div className="jd-page"><p className="jd-meta">Opening the case…</p></div>;
   if (q.isError || !q.data) return <div className="jd-page"><p className="jd-empty">This case couldn't be opened. <Link to="/cases">Back to cases</Link></p></div>;
   const c = q.data;
@@ -78,6 +81,10 @@ export default function CaseThread() {
           <h2>Ask an expert again</h2>
           <div className="jd-stack">{RERUN.map(([label, expert]) =>
             <button key={expert} className="jd-btn" disabled={rerun.isPending} onClick={() => rerun.mutate({ caseId: c.id, expert })}>{label}</button>)}</div>
+          {mine.length > 0 && <><h2>Your experts</h2><div className="jd-stack">{mine.map(e =>
+            <button key={e.id} className="jd-btn" onClick={() => api.post(`/experts/cases/${c.id}/run/${e.id}`)
+              .then(() => setRan(`Queued ${e.name}; its note lands on this case.`), err => setRan(String(err.message)))}>{e.name}</button>)}</div>
+            {ran && <p className="jd-meta">{ran}</p>}</>}
           {rerun.isSuccess && <p className="jd-meta">Queued. The expert's avatar shows when it starts.</p>}
           {rerun.error && <p className="jd-note jd-warn">{(rerun.error as Error).message}</p>}
           <h2>Job description</h2>

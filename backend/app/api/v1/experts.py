@@ -40,7 +40,7 @@ def _state(spec: dict, run: dict | None, step: dict | None, pending: int, kill_s
 
 def roster(user_id: str) -> list[dict]:
     db = get_db(user_id)
-    specs = [r[0] for r in db.fetch("""select jsonb_build_object('id', id, 'name', name, 'role', role, 'status', status)
+    specs = [r[0] for r in db.fetch("""select jsonb_build_object('id', id, 'name', name, 'role', role, 'status', status, 'owner', owner)
                                        from public.agent_spec order by array_position(array['supervisor','scout','researcher',
                                        'comp_analyst','tailor','answerer','applicant','recon','connector','email_outreach',
                                        'dm_outreach','inbox','interview_buddy','reviewer'], id), id""")]
@@ -286,3 +286,157 @@ async def connections_status(user: CurrentUser = Depends(get_current_user)):
                                                  "expires_hint": conn.expires_hint,
                                                  "can_send": any(s.endswith("gmail.send") for s in conn.scopes)},
             "telegram": {"configured": bool(settings.TELEGRAM_BOT_TOKEN), "linked": bool(settings.TELEGRAM_CHAT_ID)}}
+
+
+# --- custom experts (Day 14): write, preview, dry-run, activate ----------------------------------
+
+def _custom(user_id: str, agent_id: str):
+    from app.experts import spec as spec_mod
+    rows = get_db(user_id).fetch("""select to_jsonb(s) from public.agent_spec s where id = %s and owner = 'user'
+                                    and user_id = %s::uuid""", [agent_id, user_id])
+    if not rows:
+        raise HTTPException(404, "No custom expert with that id")
+    row = rows[0][0]
+    return spec_mod.AgentSpec.model_validate({k: row[k] for k in spec_mod.AgentSpec.model_fields if k in row})
+
+
+def _save_custom(user_id: str, spec) -> None:
+    import json
+    get_db(user_id).fetch("""
+        insert into public.agent_spec (id, owner, user_id, name, role, description, instructions, policy_notes, model, tools,
+                                       outputs, triggers, action_kinds, budgets, autonomy, status, spec_sha256)
+        values (%s, 'user', %s::uuid, %s, %s, %s, %s, %s, %s::jsonb, %s, %s::jsonb, %s::jsonb, %s, %s::jsonb, %s::jsonb, %s, %s)
+        on conflict (id) do update set name = excluded.name, role = excluded.role, description = excluded.description,
+            instructions = excluded.instructions, tools = excluded.tools, budgets = excluded.budgets, autonomy = excluded.autonomy,
+            status = excluded.status, version = public.agent_spec.version + (public.agent_spec.spec_sha256 <> excluded.spec_sha256)::int,
+            spec_sha256 = excluded.spec_sha256, updated_at = now()
+        where public.agent_spec.owner = 'user' and public.agent_spec.user_id = excluded.user_id""",
+        [spec.id, user_id, spec.name, spec.role, spec.description, spec.instructions, spec.policy_notes,
+         json.dumps(spec.model.model_dump()), spec.tools, json.dumps(spec.outputs), json.dumps(spec.triggers), spec.action_kinds,
+         json.dumps(spec.budgets), json.dumps(spec.autonomy), spec.status, spec.digest()])
+
+
+def _view(spec) -> dict:
+    from app.experts import custom
+    policy = load_policy()
+    return {"spec": spec.model_dump(), "problems": custom.problems(spec, policy), "preview": custom.preview(spec, policy),
+            "dry_run_ok_at": (spec.autonomy or {}).get("dry_run_ok_at")}
+
+
+@router.get("/custom/templates")
+async def custom_templates(user: CurrentUser = Depends(get_current_user)):
+    from app.experts import custom
+    return {"templates": [{"id": k, **v} for k, v in custom.TEMPLATES.items()], "tools": custom.TOOL_WORDS}
+
+
+class NewCustomIn(BaseModel):
+    template: str | None = Field(default=None, max_length=40)
+    name: str = Field(default="", max_length=60)
+
+
+@router.post("/custom", status_code=201)
+async def create_custom(body: NewCustomIn, user: CurrentUser = Depends(get_current_user)):
+    from app.experts import custom
+    if body.template and body.template not in custom.TEMPLATES:
+        raise HTTPException(422, "Unknown template")
+    base = custom.slug(body.name or custom.TEMPLATES.get(body.template or "", {}).get("name", "expert"))
+
+    def make():
+        taken = {r[0] for r in get_db(user.id).fetch("select id from public.agent_spec where id like %s", [base + "%"])}
+        agent_id = next(f"{base}{'' if i == 0 else f'_{i}'}" for i in range(100) if f"{base}{'' if i == 0 else f'_{i}'}" not in taken)
+        spec = custom.new_spec(agent_id, body.template, body.name)
+        _save_custom(user.id, spec)
+        return _view(spec)
+    return await asyncio.to_thread(make)
+
+
+@router.get("/custom/{agent_id}")
+async def get_custom(agent_id: str, user: CurrentUser = Depends(get_current_user)):
+    return _view(await asyncio.to_thread(_custom, user.id, agent_id))
+
+
+class EditCustomIn(BaseModel):
+    name: str = Field(max_length=60)
+    role: str = Field(default="", max_length=120)
+    description: str = Field(default="", max_length=600)
+    instructions: str = Field(default="", max_length=4000)
+    tools: list[str] = Field(default_factory=list, max_length=10)
+
+
+@router.put("/custom/{agent_id}")
+async def edit_custom(agent_id: str, body: EditCustomIn, user: CurrentUser = Depends(get_current_user)):
+    """Any edit puts it back to draft: run it dry again before it can be used."""
+    def work():
+        spec = _custom(user.id, agent_id)
+        spec = spec.model_copy(update={**body.model_dump(), "status": "draft",
+                                       "autonomy": {k: v for k, v in (spec.autonomy or {}).items() if k != "dry_run_ok_at"}})
+        _save_custom(user.id, spec)
+        return _view(spec)
+    return await asyncio.to_thread(work)
+
+
+class DryRunIn(BaseModel):
+    case_id: str = Field(min_length=36, max_length=36)
+
+
+@router.post("/custom/{agent_id}/dry-run")
+async def dry_run_custom(agent_id: str, body: DryRunIn, user: CurrentUser = Depends(get_current_user)):
+    """Run it on a real case and show what it would write. Nothing is saved on the case."""
+    from app.experts import custom
+    from app.experts.runtime import ExpertContext
+    from app.services.runs import PermanentRunError
+    spec = await asyncio.to_thread(_custom, user.id, agent_id)
+    ctx = ExpertContext(user.id, spec, body.case_id, {})
+    try:
+        result = await asyncio.wait_for(custom.run(ctx, dry_run=True), timeout=240)
+    except PermanentRunError as exc:
+        raise HTTPException(422, str(exc)) from None
+    except asyncio.TimeoutError:
+        raise HTTPException(504, "The dry run took too long; try again.") from None
+    spec = spec.model_copy(update={"autonomy": {**(spec.autonomy or {}), "dry_run_ok_at": custom.now_iso()}})
+    await asyncio.to_thread(_save_custom, user.id, spec)
+    return {**result, **_view(spec)}
+
+
+@router.post("/custom/{agent_id}/activate")
+async def activate_custom(agent_id: str, user: CurrentUser = Depends(get_current_user)):
+    from app.experts import custom
+
+    def work():
+        spec = _custom(user.id, agent_id)
+        issues = custom.problems(spec, load_policy())
+        if issues:
+            raise HTTPException(422, " ".join(issues))
+        if not custom.dry_run_recorded(spec):
+            raise HTTPException(409, "Run it dry on a case first, so you've seen what it writes.")
+        spec = spec.model_copy(update={"status": "active"})
+        _save_custom(user.id, spec)
+        return _view(spec)
+    return await asyncio.to_thread(work)
+
+
+@router.post("/custom/{agent_id}/pause")
+async def pause_custom(agent_id: str, user: CurrentUser = Depends(get_current_user)):
+    def work():
+        spec = _custom(user.id, agent_id).model_copy(update={"status": "paused"})
+        _save_custom(user.id, spec)
+        return _view(spec)
+    return await asyncio.to_thread(work)
+
+
+@router.delete("/custom/{agent_id}", status_code=204)
+async def delete_custom(agent_id: str, user: CurrentUser = Depends(get_current_user)):
+    await asyncio.to_thread(_custom, user.id, agent_id)
+    await asyncio.to_thread(get_db(user.id).fetch, "delete from public.agent_spec where id = %s and owner = 'user' and user_id = %s::uuid",
+                            [agent_id, user.id])
+
+
+@router.post("/cases/{case_id}/run/{agent_id}", status_code=202)
+async def run_custom(case_id: str, agent_id: str, user: CurrentUser = Depends(get_current_user)):
+    """Run an active custom expert on a case (its note lands on the case)."""
+    _require_worker()
+    spec = await asyncio.to_thread(_custom, user.id, agent_id)
+    if spec.status != "active":
+        raise HTTPException(409, f"{spec.name} is {spec.status}; activate it first.")
+    run = await asyncio.to_thread(runtime.enqueue_expert, user.id, agent_id, case_id=case_id, trigger="manual")
+    return {"run_id": run["id"]}

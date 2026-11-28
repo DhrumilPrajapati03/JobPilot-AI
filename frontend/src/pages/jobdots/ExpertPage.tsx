@@ -5,9 +5,10 @@ import api from '../../lib/api';
 import { ExpertAvatar } from '../../components/experts/ExpertAvatar';
 import { useRoster } from '../../jobdots/api';
 import { Chip, when } from '../../jobdots/cards';
+import { CustomEditor } from './CustomExpert';
 
 interface Detail {
-  spec: { id: string; name: string; role: string; description: string; policy_notes: string; status: string; tools: string[]; action_kinds: string[] };
+  spec: { id: string; name: string; role: string; description: string; policy_notes: string; status: string; tools: string[]; action_kinds: string[]; owner: string };
   routines: { key: string; name: string; schedule: { kind: string; hour?: number; minute?: number; weekday?: number }; enabled: boolean; last_run_at: string | null }[];
   steps: { id: number; kind: string; summary: string; case_id: string | null; at: string }[];
 }
@@ -30,9 +31,10 @@ export default function ExpertPage() {
       <header className="jd-expert-head">
         <ExpertAvatar expert={spec.id} name={spec.name} state={live?.state} step={live?.step} approvals={live?.approvals} size={72} interactive />
         <div><h1>{spec.name}</h1><p className="jd-lede">{spec.role}</p>
-          {spec.status !== 'active' && <Chip tone="quiet">{spec.status === 'draft' ? 'Not built yet' : 'Paused'}</Chip>}</div>
+          {spec.status !== 'active' && spec.owner !== 'user' && <Chip tone="quiet">{spec.status === 'draft' ? 'Not built yet' : 'Paused'}</Chip>}</div>
       </header>
-      {spec.description && <p>{spec.description}</p>}
+      {spec.owner === 'user' && <CustomEditor id={spec.id} />}
+      {spec.description && spec.owner !== 'user' && <p>{spec.description}</p>}
       {spec.policy_notes && <p className="jd-meta">{spec.policy_notes}</p>}
       {routines.length > 0 && <section><h2>Routines</h2><ul className="jd-list">{routines.map(r => <li key={r.key}>
         <span>{r.name} <span className="jd-meta">{schedule(r.schedule)}</span></span>

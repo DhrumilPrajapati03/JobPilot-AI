@@ -12,6 +12,7 @@ import {
   Contacts,
   Dashboard,
   ExpertPage,
+  NewExpert,
   Analytics,
   ApplicationDetail,
   Applications,
@@ -49,6 +50,7 @@ function App() {
           <Route path={ROUTES.CONTACTS} element={<Contacts />} />
           <Route path={ROUTES.ANSWERS} element={<AnswerBank />} />
           <Route path={ROUTES.DASHBOARD} element={<Dashboard />} />
+          <Route path="/experts/new" element={<NewExpert />} />
           <Route path={ROUTES.EXPERT} element={<ExpertPage />} />
           <Route path={ROUTES.OVERVIEW} element={<Overview />} />
           <Route path={ROUTES.CHAT} element={<Chat />} />
