@@ -177,7 +177,12 @@
 - id: interview_buddy
   name: Interview Buddy
   role: Prepares you for each interview
-  model: {provider: default}
+  description: When an interview invite arrives (or when you ask), writes a prep pack - likely rounds and questions, which of your stories answers each, gaps against the job description with honest ways to address them, questions to ask, strategy and negotiation notes from the pay research.
+  instructions: See app/experts/interview_buddy.py (INSTRUCTIONS). Stories are your vault achievements word for word; numbers not in your facts are flagged.
+  policy_notes: Private to you; nothing leaves JobDots.
+  model: {provider: default, task: quality}
   tools: [read_case, save_artifact]
   outputs: [interview_prep]
-  status: draft
+  triggers: [{kind: event, event: interview}, {kind: manual}]
+  budgets: {steps: 15, tokens: 40000, seconds: 300}
+  status: active

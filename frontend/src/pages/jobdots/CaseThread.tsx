@@ -8,9 +8,9 @@ import { type Artifact, type CaseEvent, useCase, useCaseMutations } from '../../
 import { ApprovalCard, ArtifactCard, STAGE_WORDS, expertName, when } from '../../jobdots/cards';
 
 const STAGES = ['found', 'researched', 'tailored', 'ready', 'applied', 'replied', 'interview', 'offer', 'closed'];
-const RERUN: [string, 'research' | 'recon' | 'tailor' | 'connect' | 'supervise'][] = [
+const RERUN: [string, 'research' | 'recon' | 'tailor' | 'connect' | 'prep' | 'supervise'][] = [
   ['Research again', 'research'], ['Find people again', 'recon'], ['New resume version', 'tailor'],
-  ['Propose LinkedIn invitations', 'connect'], ['Let Supervisor continue', 'supervise'],
+  ['Propose LinkedIn invitations', 'connect'], ['Prepare for the interview', 'prep'], ['Let Supervisor continue', 'supervise'],
 ];
 
 type Item = { at: string; event?: CaseEvent; artifact?: Artifact };

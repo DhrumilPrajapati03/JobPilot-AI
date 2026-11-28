@@ -140,6 +140,8 @@ def test_interview_invite_proposes_a_calendar_event_and_rejection_only_notes(own
     event = get_db().fetch("""select status, payload from public.action where case_id = %s::uuid and kind = 'create_calendar_event'""",
                            [case["id"]])[0]
     assert event[0] == "reviewed" and event[1]["summary"] == "Interview with Acme" and "attendees" not in event[1]
+    prep = get_db().fetch("""select inputs from public.agent_runs where user_id = %s::uuid and inputs->>'agent' = 'interview_buddy'""", [uid])
+    assert [r[0]["case_id"] for r in prep] == [case["id"]] and prep[0][0]["trigger"] == "interview"    # Interview Buddy is on it
     g = cases.get_case(uid, other["id"])
     assert g["stage"] == "applied" and g["status"] == "open"                     # a rejection never closes the case itself
     assert any("Looks like a no from Globex" in e["summary"] for e in g["events"])

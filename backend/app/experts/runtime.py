@@ -100,11 +100,11 @@ def enqueue_expert(user_id: str, agent: str, *, case_id: str | None = None, key:
 
 async def run_expert(ctx: ExpertContext) -> dict:
     """Budget gate, the expert's own work, then charges and the hand-back to Supervisor."""
-    from app.experts import answerer, comp_analyst, connector, dm_outreach, email_outreach, inbox, recon, researcher, scout, supervisor, tailor
+    from app.experts import answerer, comp_analyst, connector, dm_outreach, email_outreach, inbox, interview_buddy, recon, researcher, scout, supervisor, tailor
     handlers = {"supervisor": supervisor.run, "scout": scout.run, "researcher": researcher.run, "tailor": tailor.run,
                 "email_outreach": email_outreach.run, "recon": recon.run, "answerer": answerer.run,
                 "connector": connector.run, "inbox": inbox.run, "dm_outreach": dm_outreach.run,
-                "comp_analyst": comp_analyst.run}
+                "comp_analyst": comp_analyst.run, "interview_buddy": interview_buddy.run}
     if ctx.spec.status != "active":
         raise PermanentRunError(f"{ctx.spec.name} is {ctx.spec.status}; nothing was run.")
     handler = handlers.get(ctx.spec.id)

@@ -91,9 +91,11 @@ def coverage(job: str, tex: str, vault: Vault, company: str = "") -> Coverage:
     keywords = [s for s in skills if re.search(r"(?<![a-z0-9])" + re.escape(s.lower()) + r"(?![a-z0-9])", job_l)]
     covered = [s for s in keywords if s.lower() in tex_words]
     known = words(" ".join(skills)) | words(" ".join(a.text for a in vault.achievements.values()))
+    from app.tailor.terms import job_terms
     skip = COMMON | BOARDS | words(company)
-    missing = sorted({t for t in _TECHISH.findall(job) if t.lower() not in known and len(t) > 2
-                      and t.lower() not in skip and not _NOT_SKILLS.search(t)})[:15]
+    # Tools and skills only (app/tailor/terms.py): a cookie banner or a capitalised sentence
+    # start in the posting is never a "missing skill".
+    missing = [t for t in job_terms(job, skip=skip) if t.lower() not in known and not (words(t) and words(t) <= known)][:15]
     return Coverage(keywords, covered, missing)
 
 

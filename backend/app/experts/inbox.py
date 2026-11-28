@@ -211,6 +211,9 @@ async def handle(ctx, msg: gmail.Message, sent: list[dict]) -> dict | None:
         await asyncio.to_thread(_advance, uid, s["case_id"], "replied")
     if s["case_id"] and kind == "interview":
         await asyncio.to_thread(_advance, uid, s["case_id"], "interview")
+        from app.experts.runtime import enqueue_expert          # Interview Buddy prepares you, once per case
+        await asyncio.to_thread(enqueue_expert, uid, "interview_buddy", case_id=s["case_id"],
+                                key=f"interview_buddy:{s['case_id']}:invite", trigger="interview")
         event = await propose_event(ctx, s["case_id"], s["company"] or "the company", msg)
         if event is None:
             await asyncio.to_thread(cases.add_event, uid, s["case_id"], "note", actor="agent", actor_name="inbox",
