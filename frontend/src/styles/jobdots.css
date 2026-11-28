@@ -1,22 +1,24 @@
-/* JobDots command center (Day 9). Built on the app's tokens (index.css) and the side panel's
-   meaning colours, so the web app and the extension read as one product. States are always
+/* JobDots command deck. Built on the app's tokens (index.css): near-black, one electric-violet
+   accent, status colours that always come with words. The web app and the extension share it. States are always
    words; colour only reinforces them. Hairlines and type carry structure, not boxed cards. */
 
 :root {
-  --jd-ok: #0d6b47; --jd-ok-bg: #e4f4ec;
-  --jd-warn: #8a4a06; --jd-warn-bg: #fdf1df;
-  --jd-draft: #4a3aa7; --jd-draft-bg: #ecebfa;
-  --jd-wait: #225dcc; --jd-wait-bg: #e6eefc;
+  --jd-ok: #047857; --jd-ok-bg: #e6f6ef;
+  --jd-warn: #b45309; --jd-warn-bg: #fdf3e2;
+  --jd-draft: #1d4ed8; --jd-draft-bg: #e8effd;
+  --jd-wait: #6d28d9; --jd-wait-bg: #f1ebfd;
+  --jd-danger: #c62828;
+  --jd-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --jd-ok: #7fdcb0; --jd-ok-bg: #12301f; --jd-warn: #ffc47d; --jd-warn-bg: #33240f;
-    --jd-draft: #b7aef5; --jd-draft-bg: #262147; --jd-wait: #86bdff; --jd-wait-bg: #14263f;
+    --jd-ok: #34d399; --jd-ok-bg: #0f2a22; --jd-warn: #fbbf24; --jd-warn-bg: #2e2410;
+    --jd-draft: #60a5fa; --jd-draft-bg: #12213a; --jd-wait: #a78bfa; --jd-wait-bg: #241b3d; --jd-danger: #f87171;
   }
 }
 :root[data-theme="dark"], .dark {
-  --jd-ok: #7fdcb0; --jd-ok-bg: #12301f; --jd-warn: #ffc47d; --jd-warn-bg: #33240f;
-  --jd-draft: #b7aef5; --jd-draft-bg: #262147; --jd-wait: #86bdff; --jd-wait-bg: #14263f;
+  --jd-ok: #34d399; --jd-ok-bg: #0f2a22; --jd-warn: #fbbf24; --jd-warn-bg: #2e2410;
+  --jd-draft: #60a5fa; --jd-draft-bg: #12213a; --jd-wait: #a78bfa; --jd-wait-bg: #241b3d; --jd-danger: #f87171;
 }
 
 .jd-page { display: grid; gap: 28px; max-width: 1080px; min-width: 0; width: 100%; }
@@ -188,3 +190,32 @@ p .jd-meta, li .jd-meta, h2 .jd-meta { display: inline; }
 .jd-preview { grid-template-columns: 1fr 1fr; gap: 18px; }
 .jd-roster-add { display: block; margin: 8px 0 0; padding: 5px 8px; font-size: 0.8125rem; color: var(--muted-foreground); border-radius: 8px; }
 .jd-roster-add:hover { background: var(--muted); color: var(--foreground); }
+
+/* --- command deck ------------------------------------------------------------------------ */
+body { background: var(--background); }
+.jd-page h1 { letter-spacing: -0.025em; }
+.jd-ask h1 { font-size: 2.25rem; font-weight: 650; }
+.jd-card { background: var(--card); border-color: var(--border); border-radius: 14px; }
+.jd-approval[data-status="reviewed"] { border-color: color-mix(in srgb, var(--primary) 55%, var(--border));
+  box-shadow: inset 3px 0 0 var(--primary), 0 0 0 1px color-mix(in srgb, var(--primary) 18%, transparent), 0 8px 30px -12px var(--glow); }
+.jd-primary { box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 60%, transparent), 0 6px 20px -8px var(--glow); }
+.jd-primary:hover:not(:disabled) { filter: brightness(1.12); }
+.jd-btn { border-radius: 10px; }
+.jd-input, .jd-textarea, .jd-stage select { background: var(--background); border-radius: 10px; }
+.jd-input:focus, .jd-textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 25%, transparent); }
+/* numbers read as instruments */
+.jd-funnel td, .jd-meter strong, .jd-count, .jd-count-pill, td time { font-family: var(--jd-mono); font-variant-numeric: tabular-nums; }
+.jd-funnel td { font-size: 1.75rem; font-weight: 500; color: var(--foreground); }
+.jd-meter-track > span { background: var(--primary); box-shadow: 0 0 10px var(--glow); }
+/* the roster: a working expert glows, the rest stay calm */
+.jd-roster-row { position: relative; }
+.jd-roster-row:has([data-state="working"]) .expert-avatar,
+.jd-expert-head .expert-avatar[data-state="working"] { border-radius: 50%; box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 60%, transparent), 0 0 18px 2px var(--glow); }
+.jd-roster-row:has([data-state="waiting_approval"]) .expert-avatar { border-radius: 50%; box-shadow: 0 0 0 2px color-mix(in srgb, var(--jd-warn) 55%, transparent); }
+.jd-roster-row.jd-on, .jd-roster-row:hover { background: color-mix(in srgb, var(--primary) 12%, transparent); }
+.jd-count-pill { background: var(--primary); box-shadow: 0 0 10px var(--glow); }
+.jd-timeline { border-left-color: color-mix(in srgb, var(--primary) 30%, var(--border)); }
+@media (prefers-reduced-motion: no-preference) {
+  .jd-roster-row:has([data-state="working"]) .expert-avatar { animation: jd-breathe 2.4s ease-in-out infinite; }
+  @keyframes jd-breathe { 50% { box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 80%, transparent), 0 0 26px 4px var(--glow); } }
+}

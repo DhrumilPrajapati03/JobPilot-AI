@@ -1,21 +1,21 @@
 /* Career Desk: semantic surfaces, purposeful color, readable agent workflows. */
-:root{--agent-ink:#6650b4;--agent-surface:#f0edfa;--complete-ink:#446523;--complete-surface:#eef5e3;--review-ink:#82501c;--review-surface:#fff4df;--desk-shadow:0 4px 24px rgb(24 41 30 / .035)}
-@media(prefers-color-scheme:dark){:root:not([data-theme='light']){--agent-ink:#c7b6ff;--agent-surface:#2b2540;--complete-ink:#c5e79b;--complete-surface:#27391e;--review-ink:#f3cc86;--review-surface:#362c1d;--desk-shadow:none}}
-:root[data-theme='dark']{--agent-ink:#c7b6ff;--agent-surface:#2b2540;--complete-ink:#c5e79b;--complete-surface:#27391e;--review-ink:#f3cc86;--review-surface:#362c1d;--desk-shadow:none}
-.app-shell .sidebar{--foreground:#e6efe9;--muted-foreground:#a4b7ac;--secondary:#25382e;--primary:#c9ee9d;--primary-foreground:#19291b;--border:#344b3c;background:#151e1b;color:var(--foreground);color-scheme:dark;width:240px}
+:root{--agent-ink:#6d28d9;--agent-surface:#f1ebfd;--complete-ink:#047857;--complete-surface:#e6f6ef;--review-ink:#b45309;--review-surface:#fdf3e2;--desk-shadow:0 1px 2px rgb(20 21 26 / .06)}
+@media(prefers-color-scheme:dark){:root:not([data-theme='light']){--agent-ink:#c4b5fd;--agent-surface:#241b3d;--complete-ink:#34d399;--complete-surface:#0f2a22;--review-ink:#fbbf24;--review-surface:#2e2410;--desk-shadow:none}}
+:root[data-theme='dark']{--agent-ink:#c4b5fd;--agent-surface:#241b3d;--complete-ink:#34d399;--complete-surface:#0f2a22;--review-ink:#fbbf24;--review-surface:#2e2410;--desk-shadow:none}
+.app-shell .sidebar{background:var(--sidebar);color:var(--foreground);border-right:1px solid var(--border);width:248px}
 .app-shell .sidebar-brand-row{display:flex;align-items:center;justify-content:space-between;order:0;min-height:84px;padding-right:12px}
 .app-shell .sidebar-brand{min-height:84px;padding:20px}
 .app-shell .sidebar .brand{font-size:21px;letter-spacing:-.05em}
-.app-shell .sidebar .brand-mark{background:none;color:#bce998;box-shadow:none;width:28px;height:28px}
+.app-shell .sidebar .brand-mark{background:none;color:var(--primary);box-shadow:none;width:28px;height:28px}
 .app-shell .sidebar-close{padding:8px;border-radius:6px;background:none;border:1px solid var(--border);color:var(--foreground)}
 .app-shell .sidebar-new-chat{order:1}
-.app-shell .sidebar .sidebar-new-chat>button{border:1px solid #486146;background:#293d2c;color:#d6edc6;min-height:40px}
+.app-shell .sidebar .sidebar-new-chat>button{border:1px solid var(--border);background:var(--secondary);color:var(--foreground);min-height:40px}
 .app-shell .sidebar-workspace{order:2;max-height:54dvh;overflow-y:auto;margin-top:16px;padding-top:8px;padding-bottom:8px}
 .app-shell .sidebar-link{min-height:38px;border-radius:6px;font-size:13px;padding-top:8px;padding-bottom:8px;margin-bottom:2px}
-.app-shell .sidebar-link[aria-current='page']{background:#293e30;border-color:#486548;color:#d4efb8}
+.app-shell .sidebar-link[aria-current='page']{background:color-mix(in srgb,var(--primary) 16%,transparent);border-color:color-mix(in srgb,var(--primary) 40%,transparent);color:var(--foreground);box-shadow:inset 2px 0 0 var(--primary)}
 .app-shell .sidebar-history{order:3;min-height:76px;margin-top:8px;padding-top:10px}
 .app-shell .sidebar>div:last-child{order:4}
-.app-shell .sidebar :is(a,button):focus-visible{outline:2px solid #bce998;outline-offset:2px}
+.app-shell .sidebar :is(a,button):focus-visible{outline:2px solid var(--ring);outline-offset:2px}
 .workspace-context-note{margin-left:auto;color:var(--muted-foreground)!important;font-weight:400!important;text-transform:none!important;letter-spacing:0!important;font-size:11px}
 .workspace-content{padding-top:32px!important}
 .workspace-content :is(.rounded-xl,.card){box-shadow:var(--desk-shadow)}

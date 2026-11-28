@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "minimum_chrome_version": "116",
   "name": "JobDots",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "Captures job posts and reviews application answers in a side panel; also fills forms with your saved data. You review and click Submit yourself.",
   "permissions": [
     "storage",

@@ -31,7 +31,7 @@ async function exercise(info,navigate=false) {
     cdp.on('Runtime.executionContextCreated',({context})=>worlds.push(context));
     await cdp.send('Runtime.enable');
     await page.goto(application.apply_url);
-    await expect(page.getByRole('button',{name:'JobPilot · Fill this application'})).toBeVisible();
+    await expect(page.getByRole('button',{name:'JobDots · Fill this application'})).toBeVisible();
     const extensionId=new URL(worker.url()).host;
     const isolated=worlds.find(world=>world.origin===`chrome-extension://${extensionId}`);
     expect(isolated,'extension isolated-world execution context').toBeTruthy();
@@ -39,7 +39,7 @@ async function exercise(info,navigate=false) {
     expect(access.result.value).toBe('blocked');
     // Page scripts cannot invoke isolated-world extension functions.
     expect(await page.evaluate(()=>typeof window.__jobpilot)).toBe('undefined');
-    await page.getByRole('button',{name:'JobPilot · Fill this application'}).click();
+    await page.getByRole('button',{name:'JobDots · Fill this application'}).click();
     await page.getByRole('button',{name:'Fill form',exact:true}).click();
     await expect.poll(()=>events.filter(e=>e.kind==='form_prepared').length).toBe(1);
     expect(await page.evaluate(()=>submits)).toBe(0);

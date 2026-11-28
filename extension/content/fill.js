@@ -12,10 +12,12 @@
     :host { all: initial; }
     * { box-sizing: border-box; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; }
     .pill, .card { position: fixed; right: 16px; bottom: 16px; z-index: 2147483647; color: #1f1e1d; }
-    .pill { background: #1f1e1d; color: #fff; border: 0; border-radius: 999px; padding: 10px 16px; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 6px 20px rgba(0,0,0,.25); }
+    .pill { background: #6d28d9; color: #fff; border: 0; border-radius: 999px; padding: 10px 16px; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 0 0 1px rgba(109,40,217,.6), 0 8px 24px -6px rgba(109,40,217,.55); }
     .card { width: 340px; max-height: 70vh; display: flex; flex-direction: column; background: #fff; border: 1px solid #e7e4de; border-radius: 12px; box-shadow: 0 12px 32px rgba(0,0,0,.2); font-size: 13px; }
     header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid #e7e4de; font-weight: 600; }
-    header .logo { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; background: #1f1e1d; color: #fff; font-size: 10px; }
+    header .logo { display: inline-flex; gap: 3px; }
+    header .logo i { width: 8px; height: 8px; border-radius: 50%; background: #14151a; }
+    header .logo i + i { background: #6d28d9; }
     header button { margin-left: auto; border: 0; background: none; cursor: pointer; font-size: 16px; color: #6b6966; }
     .body { padding: 10px 12px; overflow-y: auto; }
     label { display: block; font-size: 11px; color: #6b6966; margin-bottom: 4px; }
@@ -48,7 +50,7 @@
     root.innerHTML = '';
     root.append(el('style', {}, STYLE));
     if (!state.open) {
-      root.append(el('button', { class: 'pill', onclick: event => { if (event.isTrusted) openPanel(false); } }, 'JobPilot · Fill this application'));
+      root.append(el('button', { class: 'pill', onclick: event => { if (event.isTrusted) openPanel(false); } }, 'JobDots · Fill this application'));
       return;
     }
     const options = [el('option', { value: '' }, 'Not linked (profile answers only)'), ...state.queue.map((q) => {
@@ -57,8 +59,8 @@
       return o;
     })];
     const flags = (state.last || []).filter((a) => a.flagged);
-    root.append(el('div', { class: 'card', role: 'dialog', 'aria-label': 'JobPilot autofill' },
-      el('header', {}, el('span', { class: 'logo' }, 'JP'), 'JobPilot', el('button', { 'aria-label': 'Close', onclick: () => { state.open = false; render(); } }, '×')),
+    root.append(el('div', { class: 'card', role: 'dialog', 'aria-label': 'JobDots autofill' },
+      el('header', {}, el('span', { class: 'logo', 'aria-hidden': 'true' }, el('i', {}), el('i', {})), 'JobDots', el('button', { 'aria-label': 'Close', onclick: () => { state.open = false; render(); } }, '×')),
       el('div', { class: 'body' },
         el('label', {}, 'Application'),
         el('select', { ...(state.busy ? {disabled:''} : {}), onchange: (e) => { if (!e.isTrusted) return; state.applicationId = e.target.value || null; state.session = null; state.last = null; state.attempt = null; state.document = null; state.epoch++; render('Application changed. Fill again to start a new session.'); } }, options),
@@ -169,16 +171,16 @@
   async function markApplied(event) {
     if (!event?.isTrusted) return;
     if (!state.applicationId) return;
-    if (!confirm('Did you click Submit on this application? JobPilot will move it to Applied and remind you to follow up in 5 days.')) return;
+    if (!confirm('Did you click Submit on this application? JobDots will move it to Applied and remind you to follow up in 5 days.')) return;
     const res = await api('/extension/applied', 'POST', { application_id: state.applicationId, session_id:state.session?.id, request_key:crypto.randomUUID() });
     render(res.ok ? 'Saved as user-reported submitted. Employer acceptance has not been independently verified.' : res.data?.detail || 'Update failed', !res.ok);
   }
 
   async function openPanel(autoFill) {
     state.open = true;
-    render('Connecting to JobPilot…');
+    render('Connecting to JobDots…');
     const [queue, match, pending] = await Promise.all([api('/extension/queue'), api('/extension/match', 'POST', { url: location.href, title: document.title }), send({type:'execution-context'})]);
-    if (!queue.ok) return render(queue.data?.detail || 'Not connected to JobPilot.', true);
+    if (!queue.ok) return render(queue.data?.detail || 'Not connected to JobDots.', true);
     state.queue = queue.data.queue || [];
     if (pending.ok && pending.context) { state.session = pending.context.session; state.applicationId = state.session.application_id; state.attempt = pending.context.attempt; if (pending.context.application && !state.queue.some(q => q.id === state.applicationId)) state.queue.unshift(pending.context.application); }
     const matched = match.ok && match.data.application;
