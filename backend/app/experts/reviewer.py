@@ -105,7 +105,46 @@ def check_email(payload: dict, *, company: str, role: str, job: str, brief: dict
         review.notes.append("No resume attached.")
     if last_touch and now - last_touch < timedelta(days=cooldown_days):
         review.blocks.append(f"You emailed this person on {last_touch:%d %b}; wait {cooldown_days} days between contacts.")
+    review.blocks += foreign_contacts(text, vault, allowed_emails={to.lower()}, allowed_domains={_domain(to)})
     return review
+
+
+_EMAIL_IN_TEXT = re.compile(r"[A-Za-z0-9._%+'-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
+_URL_IN_TEXT = re.compile(r"(?:https?://|www\.)[^\s)>\]]+", re.I)
+
+
+def _domain(address: str) -> str:
+    return address.rsplit("@", 1)[-1].lower() if "@" in address else ""
+
+
+def _host(url: str) -> str:
+    host = re.sub(r"^(?:https?://)?(?:www\.)?", "", url.lower()).split("/")[0]
+    return host
+
+
+def foreign_contacts(text: str, vault: Vault, *, allowed_emails: set[str] = frozenset(), allowed_domains: set[str] = frozenset()) -> list[str]:
+    """An address or link that isn't yours, the recipient's or the company's: a sign the draft was
+    steered (an injected "send your resume to…"), so it is blocked, not noted."""
+    own_links = {_host(u) + re.sub(r"^(?:https?://)?(?:www\.)?[^/]+", "", u.lower()).rstrip("/") for u in vault.links.values()}
+    try:                                              # your own address (confirmed in the vault) may appear in a signature
+        from app.answers import profile
+        own_email = {profile.load().email.lower()} - {""}
+    except Exception:
+        own_email = set()
+    blocks = []
+    emails = sorted({e.lower() for e in _EMAIL_IN_TEXT.findall(text or "")} - set(allowed_emails) - own_email)
+    emails = [e for e in emails if _domain(e) not in {d for d in allowed_domains if d}]
+    if emails:
+        blocks.append(f"Contains an email address that isn't yours or the recipient's: {', '.join(emails[:3])}.")
+    links = []
+    for u in _URL_IN_TEXT.findall(text or ""):
+        clean = _host(u) + re.sub(r"^(?:https?://)?(?:www\.)?[^/]+", "", u.lower()).rstrip("/.,;")
+        if clean in own_links or _host(u) in {d for d in allowed_domains if d}:
+            continue
+        links.append(u)
+    if links:
+        blocks.append(f"Contains a link that isn't one of yours: {', '.join(links[:3])}.")
+    return blocks
 
 
 # --- LinkedIn invitations and messages -------------------------------------------------------
@@ -157,4 +196,5 @@ def check_linkedin(payload: dict, *, kind: str, company: str, role: str, job: st
         review.notes.append(f'Stock phrase: "{stock[0]}".')
     if last_touch and now - last_touch < timedelta(days=cooldown_days):
         review.blocks.append(f"You contacted this person on {last_touch:%d %b}; wait {cooldown_days} days between contacts.")
+    review.blocks += foreign_contacts(text, vault)
     return review
