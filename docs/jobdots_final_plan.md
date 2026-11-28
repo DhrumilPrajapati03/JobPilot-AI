@@ -21,6 +21,21 @@ Status of claims: items marked **[unverified]** come from memory or third-party 
 5. Brave's MIT-licensed API reference skills (`brave-web-search`, `brave-llm-context`) are in `.claude/skills/` for the coding agent. The key stays in `.env` and is never put into the agent's environment.
 6. **As built on Day 6:** Recon is **deterministic** (rules, no model). It accepts a person only with evidence that they work at the company now: the result title, the profile's "Experience" line, or a first-person post. It checks the company with an exact match, so "Acme Infotech" is not "Acme AI". A labelled eval (`recon_cases`) requires zero wrong-company people. The local 8B model stays an option for ambiguous titles. Supervisor runs Recon **after Researcher and before Tailor**, so Email Outreach can write to the recruiter or hiring mailbox Recon found. Searches are capped per run and per day (`recon_searches_per_run`, `recon_searches_per_day` in `policy.yaml`).
 
+### As built on Day 13 (28 Nov: Interview Buddy)
+
+1. **Interview Buddy** (active) runs when Inbox reads an interview invite (queued once per case), or from "Prepare for the interview" on a case. It saves an `interview_prep` artifact:
+   - 2–4 likely rounds, each with likely questions, why they'd be asked, which of your stories answers each, and an answer outline;
+   - your stories, which are your vault achievements word for word (the model only chooses them; unknown ids are dropped);
+   - gaps against the JD, each with an honest way to address it; advice that claims experience you don't have is dropped;
+   - questions to ask them, and strategy;
+   - pay notes taken from the Comp Analyst report, never a model's number.
+2. **Number check:** a number in an outline that isn't in your vault, the JD, the brief or the pay report is flagged "check".
+3. **Job terms** (`app/tailor/terms.py`), shared by Tailor's "not in your vault" list and Interview Buddy's gaps:
+   - a curated tool and skill vocabulary, plus tool-shaped tokens (CamelCase, all caps, GPT-4, C++, Node.js);
+   - page chrome is ignored: cookie banners, capitalised sentence starts, emails, links, requisition ids and handles with numbers.
+   - This fixed Tailor's list, which on a real case read "Accept, Ago, Cookies…".
+4. **Live:** 4 rounds and 13 questions for a real Lead AI Engineer case, with pay notes from the report.
+
 ### As built on Day 12 (27 Nov: Comp Analyst)
 
 1. **Comp Analyst** (active) runs after Researcher in the Supervisor graph and saves a `comp_report`.

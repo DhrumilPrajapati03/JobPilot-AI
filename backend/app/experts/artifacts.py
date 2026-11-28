@@ -200,6 +200,32 @@ class CompReport(Strict):
     notes: list[str] = Field(default_factory=list, max_length=10)
 
 
+class PrepQuestion(Strict):
+    question: str = Field(min_length=1, max_length=300)
+    why: str = Field(default="", max_length=300)
+    stories: list[str] = Field(default_factory=list, max_length=3)    # vault achievement ids
+    outline: str = Field(default="", max_length=600)
+    check: str = ""                                                   # numbers not found in your facts or research
+
+
+class PrepRound(Strict):
+    name: str = Field(min_length=1, max_length=80)
+    focus: str = Field(default="", max_length=200)
+    questions: list[PrepQuestion] = Field(default_factory=list, max_length=6)
+
+
+class InterviewPrep(Strict):
+    """Interview Buddy's pack for one case: rounds, your stories, gaps, questions to ask."""
+    company: str = Field(min_length=1, max_length=200)
+    role: str = Field(default="", max_length=300)
+    rounds: list[PrepRound] = Field(default_factory=list, max_length=4)
+    stories: list[dict] = Field(default_factory=list)       # {id, text, owner}: your vault achievements, verbatim
+    gaps: list[dict] = Field(default_factory=list, max_length=10)
+    questions_to_ask: list[str] = Field(default_factory=list, max_length=6)
+    strategy: list[str] = Field(default_factory=list, max_length=5)
+    negotiation: list[str] = Field(default_factory=list, max_length=6)
+
+
 class DmDraft(Strict):
     """One LinkedIn message (after an accepted invitation) or referral ask DM Outreach proposed."""
     contact_id: str
@@ -222,7 +248,8 @@ class DmSet(Strict):
 
 KINDS: dict[str, type[BaseModel]] = {"company_brief": CompanyBrief, "resume_version": ResumeVersion, "draft": EmailDraft,
                                      "contact_list": ContactList, "answer_set": AnswerSet, "invite_set": InviteSet,
-                                     "dm_set": DmSet, "comp_report": CompReport}
+                                     "dm_set": DmSet, "comp_report": CompReport,
+                                     "interview_prep": InterviewPrep}
 
 
 class ArtifactError(ValueError):

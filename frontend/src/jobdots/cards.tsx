@@ -241,6 +241,31 @@ function CompCard({ a }: { a: Artifact }) {
   </>;
 }
 
+function PrepCard({ a }: { a: Artifact }) {
+  const c = a.content;
+  const [open, setOpen] = useState(0);
+  const story = Object.fromEntries((c.stories ?? []).map((s: any) => [s.id, s]));
+  const rounds: any[] = c.rounds ?? [];
+  return <>
+    <div className="jd-filters" role="tablist" aria-label="Rounds">{rounds.map((r, i) =>
+      <button key={i} role="tab" aria-selected={open === i} className={`jd-btn${open === i ? ' jd-on' : ''}`} onClick={() => setOpen(i)}>{r.name}</button>)}</div>
+    {rounds[open] && <div className="jd-detail">
+      {rounds[open].focus && <p className="jd-meta">{rounds[open].focus}</p>}
+      <ol className="jd-claims">{rounds[open].questions.map((q: any, i: number) => <li key={i}>
+        <strong>{q.question}</strong>{q.why && <span className="jd-meta"> {q.why}</span>}
+        {q.outline && <p>{q.outline}</p>}
+        {q.stories?.length > 0 && <p className="jd-meta">Your story: {q.stories.map((s: string) => story[s]?.text).filter(Boolean).join(' / ')}</p>}
+        {q.check && <p className="jd-note jd-warn">{q.check}</p>}
+      </li>)}</ol>
+    </div>}
+    {(c.gaps ?? []).length > 0 && <><h4>Gaps against the job description</h4>
+      <ul className="jd-claims">{c.gaps.map((g: any) => <li key={g.term}><strong>{g.term}</strong>: {g.how}</li>)}</ul></>}
+    {(c.questions_to_ask ?? []).length > 0 && <><h4>Questions to ask them</h4><ul className="jd-claims">{c.questions_to_ask.map((q: string) => <li key={q}>{q}</li>)}</ul></>}
+    {(c.strategy ?? []).length > 0 && <><h4>Strategy</h4><ul className="jd-claims">{c.strategy.map((q: string) => <li key={q}>{q}</li>)}</ul></>}
+    {(c.negotiation ?? []).length > 0 && <><h4>Pay</h4><ul className="jd-claims">{c.negotiation.map((q: string) => <li key={q}>{q}</li>)}</ul></>}
+  </>;
+}
+
 function MessagesCard({ a }: { a: Artifact }) {
   const messages: any[] = a.content.messages ?? [];
   if (!messages.length) return <p>{a.content.notes?.[0] ?? 'Nobody to message.'}</p>;
@@ -278,7 +303,7 @@ const ARTIFACT_WORDS: Record<string, string> = {
 export function ArtifactCard({ a, caseId }: { a: Artifact; caseId: string }) {
   const body = a.kind === 'company_brief' ? <BriefCard a={a} /> : a.kind === 'resume_version' ? <ResumeCard a={a} caseId={caseId} />
     : a.kind === 'contact_list' ? <PeopleCard a={a} /> : a.kind === 'invite_set' ? <InvitesCard a={a} />
-    : a.kind === 'comp_report' ? <CompCard a={a} /> : a.kind === 'dm_set' ? <MessagesCard a={a} /> : a.kind === 'answer_set' ? <AnswersCard a={a} /> : a.kind === 'draft' ? <DraftCard a={a} /> : <pre className="jd-json">{JSON.stringify(a.content, null, 2).slice(0, 2000)}</pre>;
+    : a.kind === 'interview_prep' ? <PrepCard a={a} /> : a.kind === 'comp_report' ? <CompCard a={a} /> : a.kind === 'dm_set' ? <MessagesCard a={a} /> : a.kind === 'answer_set' ? <AnswersCard a={a} /> : a.kind === 'draft' ? <DraftCard a={a} /> : <pre className="jd-json">{JSON.stringify(a.content, null, 2).slice(0, 2000)}</pre>;
   return (
     <article className="jd-card" data-kind={a.kind}>
       <header className="jd-card-head">

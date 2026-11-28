@@ -134,6 +134,19 @@ async def recon_case(case_id: str, user: CurrentUser = Depends(get_current_user)
     return {"run_id": run["id"]}
 
 
+@router.post("/cases/{case_id}/prep", status_code=202)
+async def prep_case(case_id: str, user: CurrentUser = Depends(get_current_user)):
+    """Ask Interview Buddy for a prep pack for this case."""
+    _require_worker()
+    try:
+        run = await asyncio.to_thread(runtime.enqueue_expert, user.id, "interview_buddy", case_id=case_id, trigger="manual")
+    except Exception as exc:
+        if "case_not_found" in str(exc):
+            raise HTTPException(404, "Case not found") from None
+        raise
+    return {"run_id": run["id"]}
+
+
 @router.post("/cases/{case_id}/connect", status_code=202)
 async def connect_case(case_id: str, user: CurrentUser = Depends(get_current_user)):
     """Ask Connector for LinkedIn invitations to the people Recon suggested (proposals only)."""

@@ -172,9 +172,11 @@ def test_paused_and_draft_experts_do_not_run_and_roster_shows_state(owner):
         assert spec.sync_builtins(get_db()) and spec.load_spec(get_db(), "scout").status == "paused"  # owner's pause kept
         with pytest.raises(Exception, match="paused"):
             asyncio.run(runtime.run_expert(ctx_for(owner, "scout")))
+        # Every built-in expert is built now; a draft (a custom expert being written) never runs.
+        get_db().fetch("update public.agent_spec set status = 'draft' where id = 'interview_buddy'")
         with pytest.raises(Exception, match="draft"):
             asyncio.run(runtime.run_expert(ctx_for(owner, "interview_buddy")))
         states = {e["id"]: e["state"] for e in roster(owner)}
         assert states["scout"] == "paused" and states["interview_buddy"] == "draft" and states["researcher"] == "idle"
     finally:
-        get_db().fetch("update public.agent_spec set status = 'active' where id = 'scout'")
+        get_db().fetch("update public.agent_spec set status = 'active' where id in ('scout', 'interview_buddy')")

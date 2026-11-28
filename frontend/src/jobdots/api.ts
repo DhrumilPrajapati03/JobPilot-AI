@@ -108,7 +108,7 @@ export function useCaseMutations() {
     stage: useMutation({ mutationFn: ({ id, stage }: { id: string; stage: string }) => api.patch(`/cases/${id}/stage`, { stage }), onSettled: refresh }),
     reviewResume: useMutation({ mutationFn: ({ caseId, artifactId, decision }: { caseId: string; artifactId: string; decision: 'approved' | 'rejected' }) =>
       api.post(`/cases/${caseId}/artifacts/${artifactId}/review`, { decision }), onSettled: refresh }),
-    rerun: useMutation({ mutationFn: ({ caseId, expert }: { caseId: string; expert: 'research' | 'recon' | 'tailor' | 'connect' | 'supervise' }) =>
+    rerun: useMutation({ mutationFn: ({ caseId, expert }: { caseId: string; expert: 'research' | 'recon' | 'tailor' | 'connect' | 'prep' | 'supervise' }) =>
       api.post(`/experts/cases/${caseId}/${expert}`, expert === 'research' ? {} : undefined), onSettled: refresh }),
     recipient: useMutation({ mutationFn: ({ caseId, email, name }: { caseId: string; email: string; name: string }) =>
       api.post(`/experts/cases/${caseId}/recipient`, { email, name }), onSettled: refresh }),
